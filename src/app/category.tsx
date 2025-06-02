@@ -15,7 +15,13 @@ export default function Categories() {
       try {
         const response = await fetch('/api/categories')
         const data = await response.json()
-        setCategories(data)
+        
+        if (response.ok && Array.isArray(data)) {
+          setCategories(data)
+        } else {
+          console.error('Categories API error:', data)
+          setCategories([])
+        }
       } catch (error) {
         console.error('Error fetching categories:', error)
       } finally {

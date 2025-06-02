@@ -24,12 +24,24 @@ export default function ShopPage() {
         // Fetch products
         const productsResponse = await fetch('/api/products')
         const productsData = await productsResponse.json()
-        setProducts(productsData)
+        
+        if (productsResponse.ok && Array.isArray(productsData)) {
+          setProducts(productsData)
+        } else {
+          console.error('Products API error:', productsData)
+          setProducts([])
+        }
 
         // Fetch categories
         const categoriesResponse = await fetch('/api/categories')
         const categoriesData = await categoriesResponse.json()
-        setCategories(categoriesData)
+        
+        if (categoriesResponse.ok && Array.isArray(categoriesData)) {
+          setCategories(categoriesData)
+        } else {
+          console.error('Categories API error:', categoriesData)
+          setCategories([])
+        }
       } catch (error) {
         console.error('Error fetching data:', error)
       } finally {

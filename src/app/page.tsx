@@ -41,7 +41,13 @@ export default function Home() {
         // Fetch categories
         const response = await fetch('/api/categories')
         const categoriesData = await response.json()
-        setCategories(categoriesData.slice(0, 5))
+        
+        if (response.ok && Array.isArray(categoriesData)) {
+          setCategories(categoriesData.slice(0, 5))
+        } else {
+          console.error('Categories API error:', categoriesData)
+          setCategories([])
+        }
 
         // Fetch products
         const { data: productsData, error } = await supabase
@@ -442,7 +448,7 @@ export default function Home() {
               </p>
             </div>
             <div>
-              <div className="grid grid-cols-2 gap-4 sm:gap-6 max-w-2xl mx-auto">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 max-w-2xl md:max-w-6xl mx-auto">
                 {categories.slice(0, 4).map((category, index) => (
                   <Link 
                     href={`/shop/${category.id}`} 

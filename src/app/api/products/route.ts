@@ -8,11 +8,15 @@ export async function GET() {
       .select('*')
       .order('created_at', { ascending: false })
 
-    if (error) throw error
+    if (error) {
+      console.error('Database error:', error)
+      return NextResponse.json({ error: 'Error fetching products', details: error.message }, { status: 500 })
+    }
 
-    return NextResponse.json(products)
+    return NextResponse.json(products || [])
   } catch (error) {
-    return NextResponse.json({ error: 'Error fetching products' }, { status: 500 })
+    console.error('Server error:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
 
