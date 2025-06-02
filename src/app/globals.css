@@ -1,0 +1,535 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 30 30% 98%;
+    --foreground: 20 10% 15%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 20 10% 15%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 20 10% 15%;
+
+    --primary: 355 65% 60%;
+    --primary-foreground: 355 100% 97%;
+
+    --secondary: 30 50% 97%;
+    --secondary-foreground: 20 10% 15%;
+
+    --muted: 30 10% 94%;
+    --muted-foreground: 20 5% 45%;
+
+    --accent: 355 80% 95%;
+    --accent-foreground: 20 10% 15%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 20 5% 90%;
+    --input: 20 5% 90%;
+    --ring: 355 65% 60%;
+
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    --background: 20 10% 5%;
+    --foreground: 0 0% 95%;
+
+    --card: 0 0% 8%;
+    --card-foreground: 0 0% 95%;
+
+    --popover: 0 0% 8%;
+    --popover-foreground: 0 0% 95%;
+
+    --primary: 355 65% 60%;
+    --primary-foreground: 355 100% 97%;
+
+    --secondary: 20 5% 12%;
+    --secondary-foreground: 0 0% 95%;
+
+    --muted: 0 0% 15%;
+    --muted-foreground: 0 0% 65%;
+
+    --accent: 355 85% 30%;
+    --accent-foreground: 0 0% 95%;
+
+    --destructive: 0 84.2% 50.2%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 0 0% 20%;
+    --input: 0 0% 20%;
+    --ring: 355 65% 60%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground font-montserrat;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+
+  .font-sans {
+    font-family: var(--font-sans);
+  }
+
+  .font-saans {
+    font-family: var(--font-saans);
+  }
+
+  .font-montserrat {
+    font-family: var(--font-montserrat);
+  }
+
+  .font-playfair {
+    font-family: var(--font-playfair);
+  }
+
+  h1, h2, h3 {
+    @apply font-playfair;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+
+  h4, h5, h6 {
+    @apply font-saans;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+
+  p {
+    @apply font-montserrat text-foreground/80;
+  }
+}
+
+/* Luminous Labs-style container */
+.container {
+  @apply px-4 md:px-8 mx-auto;
+  max-width: 1400px;
+}
+
+/* Luminous Labs card style */
+.benefit-card {
+  @apply relative rounded-2xl overflow-hidden bg-card p-8 md:p-10;
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.02);
+}
+
+/* Gradients */
+.gradient-primary {
+  @apply bg-gradient-to-r from-primary/80 to-primary/30;
+}
+
+.gradient-accent {
+  @apply bg-gradient-to-r from-accent via-primary/20 to-secondary;
+}
+
+.gradient-blue {
+  @apply bg-gradient-to-r from-blue-500/20 to-primary/10;
+}
+
+/* Hero section */
+.hero-img-container {
+  @apply relative w-full overflow-hidden;
+  height: calc(100vh - 64px);
+  min-height: 600px;
+  max-height: 800px;
+}
+
+.overlay-gradient {
+  @apply absolute inset-0 z-10 bg-gradient-to-r from-black/50 to-transparent;
+}
+
+/* Category cards */
+.category-card {
+  @apply relative overflow-hidden rounded-xl p-4 transition-all duration-300;
+  height: 180px;
+}
+
+.category-card:hover {
+  transform: translateY(-5px);
+}
+
+.category-card .category-image {
+  @apply absolute inset-0 z-0;
+}
+
+.category-card .category-content {
+  @apply relative z-10 h-full flex flex-col justify-end;
+}
+
+.category-card::after {
+  content: '';
+  @apply absolute inset-0 bg-gradient-to-t from-black/60 to-transparent z-0;
+}
+
+/* Animation utilities */
+@keyframes float {
+  0% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+  100% {
+    transform: translateY(0px);
+  }
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+@keyframes pulse-gentle {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+
+.animate-pulse-gentle {
+  animation: pulse-gentle 4s ease-in-out infinite;
+}
+
+.stagger-animation > * {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.stagger-animation > *:nth-child(1) { transition-delay: 0.2s; }
+.stagger-animation > *:nth-child(2) { transition-delay: 0.4s; }
+.stagger-animation > *:nth-child(3) { transition-delay: 0.6s; }
+.stagger-animation > *:nth-child(4) { transition-delay: 0.8s; }
+.stagger-animation > *:nth-child(5) { transition-delay: 1.0s; }
+.stagger-animation > *:nth-child(6) { transition-delay: 1.2s; }
+
+.stagger-animation.animate-in > * {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.card-hover-effect {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card-hover-effect:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+}
+
+/* Product card styles */
+.product-card {
+  @apply rounded-xl overflow-hidden bg-white;
+  width: 220px;
+}
+
+.product-card-image {
+  @apply relative overflow-hidden;
+  height: 220px;
+}
+
+/* Text color adjustments */
+.text-subtle {
+  @apply text-foreground/80;
+}
+
+.text-very-subtle {
+  @apply text-foreground/60;
+}
+
+.text-on-dark {
+  @apply text-white/90;
+}
+
+.text-on-dark-subtle {
+  @apply text-white/70;
+}
+
+/* Animated background glow */
+.bg-glow {
+  position: relative;
+  overflow: hidden;
+}
+
+.bg-glow::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: linear-gradient(
+    45deg,
+    rgba(var(--primary), 0.02) 0%,
+    rgba(var(--primary), 0.08) 50%,
+    rgba(var(--primary), 0.02) 100%
+  );
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+
+.bg-glow:hover::after {
+  opacity: 1;
+}
+
+/* Add a smooth transition to all button hovers */
+button, a {
+  @apply transition-all duration-100;
+}
+.animate-on-scroll {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+}
+
+.animate-on-scroll.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Fade animations */
+.fade-up {
+  transform: translateY(30px);
+}
+
+.fade-down {
+  transform: translateY(-30px);
+}
+
+.fade-left {
+  transform: translateX(30px);
+}
+
+.fade-right {
+  transform: translateX(-30px);
+}
+
+/* Staggered animations */
+.stagger-item {
+  transition-delay: calc(var(--index) * 100ms);
+}
+
+/* Fade-in animations */
+.fade-in {
+  transform: translateY(0);
+}
+
+/* Scale animations */
+.scale-up {
+  transform: scale(0.95);
+}
+
+/* Rotate animations */
+.rotate-in {
+  transform: rotate(-5deg) scale(0.95);
+}
+/* Add these additional animations to your global CSS file */
+
+/* Parallax scroll effect */
+.parallax-bg {
+  background-attachment: fixed;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+
+/* Smooth reveal animations */
+.reveal-up {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity 0.8s cubic-bezier(0.5, 0, 0, 1), transform 0.8s cubic-bezier(0.5, 0, 0, 1);
+}
+
+.reveal-up.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Fade-in with scale effect */
+.fade-scale {
+  opacity: 0;
+  transform: scale(0.95);
+  transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1), transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.fade-scale.is-visible {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* Text reveal animation */
+.text-reveal {
+  position: relative;
+  overflow: hidden;
+}
+
+.text-reveal > * {
+  opacity: 0;
+  transform: translateY(100%);
+  transition: opacity 0.5s ease-out, transform 0.5s ease-out;
+}
+
+.text-reveal.is-visible > * {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Staggered item animations */
+.stagger-animation > * {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.5s ease-out, transform 0.5s ease-out;
+}
+
+.stagger-animation.is-visible > *:nth-child(1) {
+  opacity: 1;
+  transform: translateY(0);
+  transition-delay: 0ms;
+}
+
+.stagger-animation.is-visible > *:nth-child(2) {
+  opacity: 1;
+  transform: translateY(0);
+  transition-delay: 100ms;
+}
+
+.stagger-animation.is-visible > *:nth-child(3) {
+  opacity: 1;
+  transform: translateY(0);
+  transition-delay: 200ms;
+}
+
+.stagger-animation.is-visible > *:nth-child(4) {
+  opacity: 1;
+  transform: translateY(0);
+  transition-delay: 300ms;
+}
+
+.stagger-animation.is-visible > *:nth-child(n+5) {
+  opacity: 1;
+  transform: translateY(0);
+  transition-delay: 400ms;
+}
+
+/* Subtle hover effects */
+.hover-lift {
+  transition: transform 0.3s ease-out;
+}
+
+.hover-lift:hover {
+  transform: translateY(-5px);
+}
+
+/* Enhanced card hover effect */
+.card-hover-effect {
+  transition: transform 0.3s ease-out, box-shadow 0.3s ease-out;
+}
+
+.card-hover-effect:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+}
+
+/* Continuous floating animation */
+.float-animation {
+  animation: float 6s ease-in-out infinite;
+}
+
+@keyframes float {
+  0% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+  100% {
+    transform: translateY(0px);
+  }
+}
+.glow-effect {
+  box-shadow: 0 0 10px 2px rgba(130, 230, 255, 0.7);
+}
+
+.animate-pulse-fast {
+  animation: pulse-fast 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.animate-pulse-elegant {
+  animation: pulse-elegant 1s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+@keyframes pulse-elegant {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(0.1);
+  }
+  50% {
+    opacity: 0.9;
+    transform: scale(1.05);
+  }
+}
+
+/* Loading Animation */
+.lds-ellipsis,
+.lds-ellipsis div {
+  box-sizing: border-box;
+}
+.lds-ellipsis {
+  display: inline-block;
+  position: relative;
+  width: 80px;
+  height: 80px;
+}
+.lds-ellipsis div {
+  position: absolute;
+  top: 33.33333px;
+  width: 13.33333px;
+  height: 13.33333px;
+  border-radius: 50%;
+  background: currentColor;
+  animation-timing-function: cubic-bezier(0, 1, 1, 0);
+}
+.lds-ellipsis div:nth-child(1) {
+  left: 8px;
+  animation: lds-ellipsis1 0.6s infinite;
+}
+.lds-ellipsis div:nth-child(2) {
+  left: 8px;
+  animation: lds-ellipsis2 0.6s infinite;
+}
+.lds-ellipsis div:nth-child(3) {
+  left: 32px;
+  animation: lds-ellipsis2 0.6s infinite;
+}
+.lds-ellipsis div:nth-child(4) {
+  left: 56px;
+  animation: lds-ellipsis3 0.6s infinite;
+}
+@keyframes lds-ellipsis1 {
+  0% {
+    transform: scale(0);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+@keyframes lds-ellipsis3 {
+  0% {
+    transform: scale(1);
+  }
+  100% {
+    transform: scale(0);
+  }
+}
+@keyframes lds-ellipsis2 {
+  0% {
+    transform: translate(0, 0);
+  }
+  100% {
+    transform: translate(24px, 0);
+  }
+}
