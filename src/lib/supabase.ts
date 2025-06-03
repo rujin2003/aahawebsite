@@ -61,11 +61,16 @@ export type TeamMember = {
 
 export type User = {
   id: string
-  email: string
-  created_at: string
+  email?: string
+  created_at?: string
   full_name?: string
   phone?: string
   address?: string
+  is_admin?: boolean
+  user_metadata?: any
+  app_metadata?: any
+  aud?: string
+  role?: string
 }
 
 export type OrderStatus = 
@@ -116,10 +121,43 @@ export type ReturnItem = {
   reason: string
 }
 
-// Helper function to get current user
+// Helper function to check if user is admin
+export const checkAdminStatus = async (userId: string) => {
+  try {
+    const { data, error } = await supabase
+      .from('admins')
+      .select('*')
+      .eq('user_id', userId)
+      .single()
+
+    if (error) {
+      console.error('Error checking admin status:', error)
+      return false
+    }
+
+    return !!data
+  } catch (error) {
+    console.error('Error checking admin status:', error)
+    return false
+  }
+}
+
+// Helper function to get current user with admin status
 export const getCurrentUser = async () => {
-  const { data: { user } } = await supabase.auth.getUser()
-  return user
+  try {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (user) {
+      const isAdmin = await checkAdminStatus(user.id)
+      return { ...user, is_admin: isAdmin }
+    }
+    return null
+  } catch (error) {
+    if (error instanceof Error && error.message.includes('Auth session missing')) {
+      return null
+    }
+    console.error('Error getting current user:', error)
+    return null
+  }
 }
 
 // Helper function to get user profile
