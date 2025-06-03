@@ -20,16 +20,23 @@ export function SignInForm() {
     setIsLoading(true);
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
       if (error) throw error;
 
-      toast.success("Signed in successfully!");
-      // The AuthGuard will handle the redirect automatically
+      if (data.session) {
+        // Set the session in localStorage
+        localStorage.setItem('supabase.auth.token', JSON.stringify(data.session));
+        
+        toast.success("Signed in successfully!");
+        router.push("/");
+        router.refresh(); // Refresh the page to update the auth state
+      }
     } catch (error: unknown) {
+      console.error('Sign in error:', error);
       toast.error(error instanceof Error ? error.message : 'Failed to sign in');
     } finally {
       setIsLoading(false);

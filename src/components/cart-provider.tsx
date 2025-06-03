@@ -9,7 +9,7 @@ type CartItem = {
   price: number;
   image: string;
   quantity: number;
-  size?: string;
+  size: string;
   color?: string;
 };
 
@@ -79,7 +79,6 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
       if (existingItem) {
         // Item already exists, update quantity
-        toast.success(`Updated quantity of ${newItem.name} in cart`);
         return prevItems.map(item =>
           (item.id === newItem.id &&
            item.size === newItem.size &&
@@ -89,7 +88,6 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         );
       } else {
         // Add new item
-        toast.success(`Added ${newItem.name} to cart`);
         return [...prevItems, { ...newItem, quantity }];
       }
     });
@@ -148,8 +146,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     </CartContext.Provider>
   );
 }
-
 export function useCart() {
   const context = useContext(CartContext);
   return context;
 }
+

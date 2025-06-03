@@ -151,7 +151,7 @@ export function SiteHeader() {
 
           <div className="flex items-center space-x-3">
             <Link
-              href={isLoggedIn ? "/account" : "/auth"}
+              href={isLoggedIn ? "/account" : "/signin"}
               className={cn(
                 "hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full",
                 "text-sm font-medium transition-all duration-300 hover:scale-105",
@@ -236,7 +236,7 @@ export function SiteHeader() {
                     </Link>
                   ))}
                   <Link
-                    href={isLoggedIn ? "/account" : "/auth"}
+                    href={isLoggedIn ? "/account" : "/signin"}
                     className="text-foreground hover:text-primary transition-all duration-300 text-lg font-medium py-2 px-4 rounded-lg hover:bg-primary/10 transform hover:translate-x-2"
                   >
                     {isLoggedIn ? "Account" : "Sign In"}

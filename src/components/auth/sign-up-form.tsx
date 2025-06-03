@@ -24,6 +24,8 @@ export function SignUpForm() {
     setIsLoading(true);
 
     try {
+      console.log('Starting registration process...');
+      
       // First, sign up the user
       const { data: authData, error: signUpError } = await supabase.auth.signUp({
         email,
@@ -33,40 +35,73 @@ export function SignUpForm() {
             full_name: fullName,
             username: username,
           },
+          emailRedirectTo: `${window.location.origin}/signin`,
         },
       });
 
-      if (signUpError) throw signUpError;
+      console.log('Auth response:', { authData, signUpError });
 
-      if (authData.user) {
-        // Then create the profile
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .insert([
-            {
-              id: authData.user.id,
-              full_name: fullName,
-              email: email,
-              username: username,
-              phone: phone,
-              address: address,
-            },
-          ]);
-
-        if (profileError) throw profileError;
-
-        toast.success("Account created successfully! Please check your email for verification.");
-        router.push("/signin");
+      if (signUpError) {
+        console.error('Sign up error:', signUpError);
+        throw signUpError;
       }
+
+      if (!authData.user) {
+        console.error('No user data returned from sign up');
+        throw new Error('Registration failed - no user data returned');
+      }
+
+      console.log('User created successfully, creating profile...');
+
+      // Then create the profile
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .insert([
+          {
+            id: authData.user.id,
+            full_name: fullName,
+            email: email,
+            username: username,
+            phone: phone,
+            address: address,
+          },
+        ])
+        .select()
+        .single();
+
+      console.log('Profile creation response:', { profileData, profileError });
+
+      if (profileError) {
+        console.error('Profile creation error:', profileError);
+        // If profile creation fails, we should clean up the auth user
+        await supabase.auth.admin.deleteUser(authData.user.id);
+        throw new Error(`Profile creation failed: ${profileError.message}`);
+      }
+
+      if (!profileData) {
+        console.error('No profile data returned after creation');
+        // If profile creation fails, we should clean up the auth user
+        await supabase.auth.admin.deleteUser(authData.user.id);
+        throw new Error('Profile creation failed - no data returned');
+      }
+
+      console.log('Registration completed successfully');
+      toast.success("Account created successfully! Please check your email for verification.");
+      router.push("/");
     } catch (error: unknown) {
-      toast.error(error instanceof Error ? error.message : 'Failed to create account');
+      console.error('Registration error:', error);
+      if (error instanceof Error) {
+        toast.error(`Registration failed: ${error.message}`);
+      } else {
+        toast.error('Failed to create account. Please try again.');
+      }
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="w-full max-w-md mx-auto space-y-6">
+    <div className="w-full max-w-md mx-auto space-y-6 mt-20">
       <div className="space-y-2 text-center">
         <h1 className="text-3xl font-bold">Create an Account</h1>
         <p className="text-gray-500">Enter your information to create an account</p>

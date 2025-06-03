@@ -21,15 +21,30 @@ export function useAuth(): UseAuthReturn {
     // Get initial session
     const getInitialSession = async () => {
       try {
+        // First check localStorage for existing session
+        const storedSession = localStorage.getItem('supabase.auth.token');
+        if (storedSession) {
+          const session = JSON.parse(storedSession);
+          if (mounted) {
+            setUser(session?.user ?? null);
+          }
+        }
+
+        // Then verify with Supabase
         const { data: { session }, error } = await supabase.auth.getSession();
         
         if (error) {
           console.error('Error getting session:', error);
+          localStorage.removeItem('supabase.auth.token');
         } else if (mounted) {
           setUser(session?.user ?? null);
+          if (session) {
+            localStorage.setItem('supabase.auth.token', JSON.stringify(session));
+          }
         }
       } catch (error) {
         console.error('Auth initialization error:', error);
+        localStorage.removeItem('supabase.auth.token');
       } finally {
         if (mounted) {
           setIsLoading(false);
@@ -45,6 +60,11 @@ export function useAuth(): UseAuthReturn {
     } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (mounted) {
         setUser(session?.user ?? null);
+        if (session) {
+          localStorage.setItem('supabase.auth.token', JSON.stringify(session));
+        } else {
+          localStorage.removeItem('supabase.auth.token');
+        }
         setIsLoading(false);
       }
     });

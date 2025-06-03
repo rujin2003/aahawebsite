@@ -12,11 +12,11 @@ export type Product = {
   title: string
   description: string
   price: number
-  size: string
   color: string
   features: string[]
   category_id: string
   images: string[]
+  size_stock: Record<string, number>
 }
 
 export type Category = {

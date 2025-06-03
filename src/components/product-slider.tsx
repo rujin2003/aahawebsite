@@ -175,7 +175,8 @@ export function ProductCard({ product }: { product: Product }) {
                 alt={product.title || "Product image"}
                 width={400}
                 height={400}
-                className="object-cover w-full h-full transition-transform group-hover:scale-105 duration-300"
+                //TODO: make this a square image
+                className="object-cover  w-full h-full transition-transform group-hover:scale-105 duration-300"
                 onError={(e) => {
                   const target = e.target as HTMLImageElement;
                   target.src = fallbackImage;

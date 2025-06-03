@@ -173,9 +173,9 @@ export default function ContactPage() {
                         <div>
                           <h3 className="font-medium">Address</h3>
                           <p className="text-foreground/70 mt-1">
-                            123 Felt Street<br />
-                            Craft District<br />
-                            San Francisco, CA 94103
+                           Tokha Saraswati<br />
+                            Kathmandu,44600<br />
+                            Nepal
                           </p>
                         </div>
                       </div>
@@ -187,8 +187,8 @@ export default function ContactPage() {
                         <div>
                           <h3 className="font-medium">Email</h3>
                           <p className="text-foreground/70 mt-1">
-                            hello@feltcrafts.com<br />
-                            support@feltcrafts.com
+                            aahaflet@gmail.com<br />
+                            support@aahafeltcraft.com
                           </p>
                         </div>
                       </div>
@@ -200,7 +200,7 @@ export default function ContactPage() {
                         <div>
                           <h3 className="font-medium">Phone</h3>
                           <p className="text-foreground/70 mt-1">
-                            +1 (555) 123-4567<br />
+                            +977-9809204784<br />
                             Mon-Fri, 9am-6pm PST
                           </p>
                         </div>

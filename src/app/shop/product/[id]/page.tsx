@@ -79,6 +79,12 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
     fetchProduct();
   }, [resolvedParams.id]);
 
+  const availableSizes = product ? Object.entries(product.size_stock)
+    .filter(([_, stock]) => stock > 0)
+    .map(([size]) => size) : [];
+
+  const allSizes = product ? Object.keys(product.size_stock) : [];
+
   if (loading) {
     return (
       <div className="flex min-h-screen flex-col pt-20">
@@ -176,12 +182,23 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
                     Size
                   </label>
                   <div className="flex flex-wrap gap-2">
-                    <Button
-                      variant="default"
-                      className="rounded-full"
-                    >
-                      {product.size}
-                    </Button>
+                    {allSizes.map((size) => {
+                      const isAvailable = product.size_stock[size] > 0;
+                      return (
+                        <Button
+                          key={size}
+                          variant={selectedSize === size ? "default" : "outline"}
+                          className={cn(
+                            "rounded-full",
+                            !isAvailable && "opacity-40 cursor-not-allowed"
+                          )}
+                          onClick={() => isAvailable && setSelectedSize(size)}
+                          disabled={!isAvailable}
+                        >
+                          {size}
+                        </Button>
+                      );
+                    })}
                   </div>
                 </div>
 
@@ -207,9 +224,10 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
                       price: product.price,
                       image: product.images[0]
                     }}
-                    productSize={product.size}
+                    productSize={selectedSize}
                     color={product.color}
                     className="rounded-full flex-1 md:flex-none"
+                    disabled={!selectedSize || availableSizes.length === 0}
                   />
                   <Button size="lg" variant="outline" className="rounded-full">
                     <Heart className="w-5 h-5" />

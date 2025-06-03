@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { Button, ButtonProps } from '@/components/ui/button';
 import { ShoppingCart } from 'lucide-react';
 import { useCart } from './cart-provider';
+import { toast } from 'sonner';
 
 interface AddToCartButtonProps extends Omit<ButtonProps, 'onClick'> {
   product: {
@@ -17,6 +18,7 @@ interface AddToCartButtonProps extends Omit<ButtonProps, 'onClick'> {
   quantity?: number;
   buttonVariant?: "icon" | "full";
   onAddedToCart?: () => void;
+  disabled?: boolean;
 }
 
 export default function AddToCartButton({
@@ -26,6 +28,7 @@ export default function AddToCartButton({
   quantity = 1,
   buttonVariant = "full",
   onAddedToCart,
+  disabled,
   ...props
 }: AddToCartButtonProps) {
   const [isAdding, setIsAdding] = useState(false);
@@ -34,6 +37,11 @@ export default function AddToCartButton({
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+
+    if (!productSize) {
+      toast.error("Please select a size");
+      return;
+    }
 
     setIsAdding(true);
 
@@ -51,6 +59,7 @@ export default function AddToCartButton({
         quantity
       );
 
+      toast.success(`Added ${product.name} to cart`);
       setIsAdding(false);
       if (onAddedToCart) onAddedToCart();
     }, 500);
@@ -61,7 +70,7 @@ export default function AddToCartButton({
       <Button
         size="icon"
         onClick={handleAddToCart}
-        disabled={isAdding}
+        disabled={isAdding || disabled}
         {...props}
       >
         {isAdding ? (
@@ -77,7 +86,7 @@ export default function AddToCartButton({
   return (
     <Button
       onClick={handleAddToCart}
-      disabled={isAdding}
+      disabled={isAdding || disabled}
       {...props}
     >
       {isAdding ? (
@@ -85,6 +94,8 @@ export default function AddToCartButton({
           <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
           Adding...
         </span>
+      ) : disabled ? (
+        "Select Size"
       ) : (
         <>
           <ShoppingCart className="mr-2 h-4 w-4" />

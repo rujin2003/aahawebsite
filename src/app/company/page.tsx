@@ -181,7 +181,7 @@ export default function CompanyPage() {
             <div className="max-w-2xl mx-auto text-center">
               <h1 className="text-4xl font-medium mb-6 animate-fade-up">Crafting Sustainable Beauty & Preserving Traditions</h1>
               <p className="text-foreground/70 text-lg mb-8 animate-fade-up animate-delay-100">
-                Since 2015, Felt Artistry has been creating premium handcrafted felt products that combine traditional techniques with contemporary designs. Our mission is to preserve heritage craftsmanship while offering sustainable, high-quality pieces for the modern home.
+                Since 2001, Aaha Felt has been creating premium handcrafted felt products that combine traditional techniques with contemporary designs. Our mission is to preserve heritage craftsmanship while offering sustainable, high-quality pieces for the modern home, soul.
               </p>
             </div>
           </div>
@@ -194,10 +194,10 @@ export default function CompanyPage() {
               <div className="animate-fade-right">
                 <h2 className="text-3xl font-medium mb-6">Our Story</h2>
                 <p className="text-foreground/70 mb-6">
-                  Felt Artistry began as a small studio in Emma Johnson's basement, driven by her passion for needle felting and sustainable craft. What started as a hobby quickly evolved into a mission to preserve traditional felting techniques while creating contemporary pieces that resonate with modern aesthetics.
+                Aaha Felt began in 2001 with a small investment and a big dream—to bring Nepalese felt craftsmanship to the world. As one of the first companies in Nepal to export felt products, we pioneered a path that many would later follow. What started with a few handmade items has now grown into a trusted global brand, with customers across Europe, America, Australia, and Asia.
                 </p>
                 <p className="text-foreground/70 mb-6">
-                  In 2015, we established our first proper studio with just three artisans. Today, we've grown to a team of 15 master crafters, each bringing unique skills and perspectives to our collections. Throughout our growth, we've remained committed to our founding principles: exceptional craftsmanship, sustainable materials, and supporting artisan communities.
+                From modest beginnings, we've expanded into a full-scale factory employing over 120 skilled staff. More than a workplace, Aaha Felt is a community—providing opportunity, stability, and independence to many women and families. While our reach has grown, our values remain rooted in quality craftsmanship, community empowerment, and a deep respect for the art of felting.
                 </p>
                 <p className="text-foreground/70">
                   Every piece in our collection tells a story – of heritage techniques passed down through generations, of sustainable materials thoughtfully sourced, and of the skilled hands that transform simple wool into objects of beauty and meaning.
