@@ -17,6 +17,7 @@ export default function ShopPage() {
   const [categories, setCategories] = useState<Category[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedCategory, setSelectedCategory] = useState('all')
+  const [groupedProducts, setGroupedProducts] = useState<{ [key: string]: Product[] }>({})
 
   useEffect(() => {
     const fetchData = async () => {
@@ -27,9 +28,20 @@ export default function ShopPage() {
         
         if (productsResponse.ok && Array.isArray(productsData)) {
           setProducts(productsData)
+          // Group products by group_id
+          const grouped = productsData.reduce((acc: { [key: string]: Product[] }, product) => {
+            const groupId = product.group_id || product.id
+            if (!acc[groupId]) {
+              acc[groupId] = []
+            }
+            acc[groupId].push(product)
+            return acc
+          }, {})
+          setGroupedProducts(grouped)
         } else {
           console.error('Products API error:', productsData)
           setProducts([])
+          setGroupedProducts({})
         }
 
         // Fetch categories
@@ -52,9 +64,13 @@ export default function ShopPage() {
     fetchData()
   }, [])
 
-  const filteredProducts = selectedCategory === 'all'
-    ? products
-    : products.filter(product => product.category_id === selectedCategory)
+  const filteredGroupedProducts = selectedCategory === 'all'
+    ? groupedProducts
+    : Object.fromEntries(
+        Object.entries(groupedProducts).filter(([_, products]) => 
+          products[0].category_id === selectedCategory
+        )
+      )
 
   if (loading) {
     return (
@@ -111,8 +127,12 @@ export default function ShopPage() {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-              {filteredProducts.map((product) => (
-                <ProductCard key={product.id} product={product} />
+              {Object.entries(filteredGroupedProducts).map(([groupId, products]) => (
+                <ProductCard 
+                  key={groupId} 
+                  product={products[0]} 
+                  colorVariants={products}
+                />
               ))}
             </div>
           </Tabs>
@@ -124,16 +144,18 @@ export default function ShopPage() {
   );
 }
 
-function ProductCard({ product }: { product: Product }) {
+function ProductCard({ product, colorVariants }: { product: Product, colorVariants: Product[] }) {
+  const [selectedVariant, setSelectedVariant] = useState(product)
+
   return (
     <div className="group relative">
-      <Link href={`/shop/product/${product.id}`} className="block">
+      <Link href={`/shop/product/${selectedVariant.id}`} className="block">
         <Card className="overflow-hidden border border-gray-200 rounded-2xl transition-all duration-300 group-hover:shadow-[0_4px_12px_rgba(0,0,0,0.08)] group-hover:-translate-y-1 bg-white">
           <div className="relative p-4">
             <div className="aspect-square overflow-hidden bg-muted/50 flex items-center justify-center rounded-xl">
               <Image
-                src={product.images[0]}
-                alt={product.title}
+                src={selectedVariant.images[0]}
+                alt={selectedVariant.title}
                 width={200}
                 height={200}
                 className="object-cover w-full h-full transition-transform group-hover:scale-105 duration-300 rounded-xl"
@@ -146,11 +168,33 @@ function ProductCard({ product }: { product: Product }) {
             </div>
           </div>
           <CardContent className="p-4">
-            <h3 className="font-medium text-base truncate">{product.title}</h3>
-            <p className="text-lg font-semibold mt-1">${product.price.toFixed(2)}</p>
+            <h3 className="font-medium text-base truncate">{selectedVariant.title}</h3>
+            <p className="text-lg font-semibold mt-1">${selectedVariant.price.toFixed(2)}</p>
+            
+            {/* Color Variants */}
+            {colorVariants.length > 1 && (
+              <div className="mt-3 flex gap-2">
+                {colorVariants.map((variant) => (
+                  <button
+                    key={variant.id}
+                    onClick={(e) => {
+                      e.preventDefault()
+                      setSelectedVariant(variant)
+                    }}
+                    className={`w-6 h-6 rounded-full border-2 transition-all ${
+                      selectedVariant.id === variant.id
+                        ? 'border-primary scale-110'
+                        : 'border-transparent hover:border-gray-300'
+                    }`}
+                    style={{ backgroundColor: variant.color }}
+                    title={variant.color}
+                  />
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
       </Link>
     </div>
-  );
+  )
 }

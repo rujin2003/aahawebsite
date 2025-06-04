@@ -11,6 +11,7 @@ type CartItem = {
   quantity: number;
   size: string;
   color?: string;
+  stock: number;
 };
 
 type CartContextType = {
@@ -78,15 +79,26 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       );
 
       if (existingItem) {
+        // Check if adding more would exceed stock
+        const newQuantity = existingItem.quantity + quantity;
+        if (newQuantity > existingItem.stock) {
+          toast.error(`Cannot add more items. Only ${existingItem.stock} available in stock.`);
+          return prevItems;
+        }
         // Item already exists, update quantity
         return prevItems.map(item =>
           (item.id === newItem.id &&
            item.size === newItem.size &&
            item.color === newItem.color)
-            ? { ...item, quantity: item.quantity + quantity }
+            ? { ...item, quantity: newQuantity }
             : item
         );
       } else {
+        // Check if initial quantity exceeds stock
+        if (quantity > newItem.stock) {
+          toast.error(`Cannot add more items. Only ${newItem.stock} available in stock.`);
+          return prevItems;
+        }
         // Add new item
         return [...prevItems, { ...newItem, quantity }];
       }
@@ -115,11 +127,20 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    setItems(prevItems =>
-      prevItems.map(item =>
+    setItems(prevItems => {
+      const item = prevItems.find(item => item.id === id);
+      if (!item) return prevItems;
+
+      // Check if new quantity exceeds stock
+      if (quantity > item.stock) {
+        toast.error(`Cannot add more items. Only ${item.stock} available in stock.`);
+        return prevItems;
+      }
+
+      return prevItems.map(item =>
         item.id === id ? { ...item, quantity } : item
-      )
-    );
+      );
+    });
   };
 
   // Clear entire cart

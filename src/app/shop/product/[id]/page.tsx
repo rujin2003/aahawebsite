@@ -13,7 +13,7 @@ import { ProductSlider } from "@/components/product-slider";
 import AddToCartButton from '@/components/add-to-cart-button';
 import Link from "next/link";
 import Image from "next/image";
-import { Heart, ArrowLeft, Check } from "lucide-react";
+import { Heart, ArrowLeft, Check, Plus, Minus } from "lucide-react";
 import { cn } from '@/lib/utils';
 import { supabase } from '@/lib/supabase';
 import { Product } from '@/lib/supabase';
@@ -27,7 +27,9 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
   const [activeImage, setActiveImage] = useState(0);
   const [selectedSize, setSelectedSize] = useState<string | undefined>();
   const [selectedColor, setSelectedColor] = useState<string | undefined>();
+  const [quantity, setQuantity] = useState(1);
   const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
+  const [colorVariants, setColorVariants] = useState<Product[]>([]);
   const fallbackImage = "/placeholder.png";
 
   useEffect(() => {
@@ -49,6 +51,16 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
         setProduct(data);
         setSelectedSize(data.size);
         setSelectedColor(data.color);
+
+        // Fetch color variants
+        const { data: variants, error: variantsError } = await supabase
+          .from('products')
+          .select('*')
+          .eq('group_id', data.group_id || data.id);
+
+        if (!variantsError && variants) {
+          setColorVariants(variants);
+        }
 
         // Fetch related products from the same category
         if (data.category_id) {
@@ -79,11 +91,38 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
     fetchProduct();
   }, [resolvedParams.id]);
 
+  const handleColorChange = (variant: Product) => {
+    setProduct(variant);
+    setSelectedColor(variant.color);
+    setActiveImage(0);
+  };
+
   const availableSizes = product ? Object.entries(product.size_stock)
     .filter(([_, stock]) => stock > 0)
     .map(([size]) => size) : [];
 
   const allSizes = product ? Object.keys(product.size_stock) : [];
+
+  const handleQuantityChange = (newQuantity: number) => {
+    if (!selectedSize || !product) return;
+    
+    const maxStock = product.size_stock[selectedSize] || 0;
+    if (newQuantity > 0 && newQuantity <= maxStock) {
+      setQuantity(newQuantity);
+    } else if (newQuantity > maxStock) {
+      toast.error(`Only ${maxStock} items available in stock`);
+    }
+  };
+
+  const incrementQuantity = () => {
+    handleQuantityChange(quantity + 1);
+  };
+
+  const decrementQuantity = () => {
+    if (quantity > 1) {
+      handleQuantityChange(quantity - 1);
+    }
+  };
 
   if (loading) {
     return (
@@ -202,17 +241,56 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
                   </div>
                 </div>
 
+                {colorVariants.length > 1 && (
+                  <div>
+                    <label className="block text-sm font-medium mb-2">
+                      Color
+                    </label>
+                    <div className="flex flex-wrap gap-2">
+                      {colorVariants.map((variant) => (
+                        <Button
+                          key={variant.id}
+                          variant={selectedColor === variant.color ? "default" : "outline"}
+                          className="rounded-full"
+                          onClick={() => handleColorChange(variant)}
+                        >
+                          {variant.color}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 <div>
                   <label className="block text-sm font-medium mb-2">
-                    Color
+                    Quantity
                   </label>
-                  <div className="flex flex-wrap gap-2">
-                    <Button
-                      variant="default"
-                      className="rounded-full"
-                    >
-                      {product.color}
-                    </Button>
+                  <div className="flex items-center gap-4">
+                    <div className="flex items-center border rounded-full">
+                      <button
+                        onClick={decrementQuantity}
+                        disabled={quantity <= 1}
+                        className="p-2 hover:bg-muted rounded-l-full disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <Minus className="w-4 h-4" />
+                      </button>
+                      <input
+                        type="number"
+                        min="1"
+                        max={selectedSize ? product.size_stock[selectedSize] : 1}
+                        value={quantity}
+                        onChange={(e) => handleQuantityChange(parseInt(e.target.value) || 1)}
+                        className="w-16 text-center border-x py-2 focus:outline-none"
+                      />
+                      <button
+                        onClick={incrementQuantity}
+                        disabled={!selectedSize || quantity >= (product.size_stock[selectedSize] || 0)}
+                        className="p-2 hover:bg-muted rounded-r-full disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <Plus className="w-4 h-4" />
+                      </button>
+                    </div>
+                    
                   </div>
                 </div>
 
@@ -222,10 +300,12 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
                       id: product.id,
                       name: product.title,
                       price: product.price,
-                      image: product.images[0]
+                      image: product.images[0],
+                      stock: product.size_stock[selectedSize || ''] || 0
                     }}
                     productSize={selectedSize}
                     color={product.color}
+                    quantity={quantity}
                     className="rounded-full flex-1 md:flex-none"
                     disabled={!selectedSize || availableSizes.length === 0}
                   />

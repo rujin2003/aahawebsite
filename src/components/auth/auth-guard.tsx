@@ -30,10 +30,28 @@ export function AuthGuard({
         
         if (error) {
           console.error('Error checking session:', error);
+          console.log("Error:", error);
           setIsAuthenticated(false);
         } else {
           // Check if user is authenticated (has a valid session)
           const authenticated = !!(session?.user);
+          const userId = session?.user?.id;
+          console.log("Current user ID:", userId);
+          
+          // Fetch admin data if user is authenticated
+          if (authenticated) {
+            const { data, error: adminError } = await supabase
+              .from('admin')
+              .select('*')
+              .eq('user_id', userId)
+              .single();
+            
+            console.log("Admin table data:", data);
+            if (adminError) {
+              console.log("Error:", adminError);
+            }
+          }
+          
           setIsAuthenticated(authenticated);
           
           // If component is still mounted, handle redirects
@@ -68,6 +86,16 @@ export function AuthGuard({
       if (mounted) {
         const authenticated = !!(session?.user);
         setIsAuthenticated(authenticated);
+
+        // Add console logs for auth state changes
+        console.log('Auth state changed:', event);
+        if (session?.user) {
+          console.log('User logged in:', {
+            id: session.user.id,
+            email: session.user.email,
+            lastSignIn: session.user.last_sign_in_at
+          });
+        }
 
         // Handle auth state changes
         if (event === 'SIGNED_IN' && !requireAuth) {

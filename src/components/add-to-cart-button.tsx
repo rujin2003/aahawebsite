@@ -12,6 +12,7 @@ interface AddToCartButtonProps extends Omit<ButtonProps, 'onClick'> {
     name: string;
     price: number;
     image: string;
+    stock: number;
   };
   productSize?: string;
   color?: string;
@@ -54,7 +55,8 @@ export default function AddToCartButton({
           price: product.price,
           image: product.image,
           size: productSize,
-          color
+          color,
+          stock: product.stock
         },
         quantity
       );
