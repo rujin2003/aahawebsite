@@ -37,7 +37,7 @@ export default function LoginPage() {
       <SiteHeader />
       <main className="flex-1 py-12">
         <div className="container max-w-md">
-          <Card className="p-6">
+          <Card className="p-6 mt-20">
             <h1 className="text-2xl font-semibold mb-6 text-center">Sign In</h1>
             <form onSubmit={onSubmit} className="space-y-4">
               <div className="space-y-2">

@@ -20,6 +20,7 @@ import { Product } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { use } from 'react';
 
+
 export default function ProductPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
   const [product, setProduct] = useState<Product | null>(null);
