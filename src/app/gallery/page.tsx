@@ -5,7 +5,7 @@ import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { X } from "lucide-react";
+import { X, ArrowLeft, ArrowRight } from "lucide-react";
 import Image from "next/image";
 import { Gallery } from '@/lib/supabase'
 import { Loading } from "@/components/ui/loading"
@@ -127,6 +127,33 @@ export default function GalleryPage() {
                     fill
                     className="object-contain"
                   />
+                  {/* Navigation Arrows */}
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="absolute left-4 top-1/2 -translate-y-1/2 z-10 bg-white/80 hover:bg-white rounded-full"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      const currentIndex = gallery.findIndex(img => img.id === selectedImage);
+                      const prevIndex = (currentIndex - 1 + gallery.length) % gallery.length;
+                      setSelectedImage(gallery[prevIndex].id);
+                    }}
+                  >
+                    <ArrowLeft className="w-6 h-6" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="absolute right-4 top-1/2 -translate-y-1/2 z-10 bg-white/80 hover:bg-white rounded-full"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      const currentIndex = gallery.findIndex(img => img.id === selectedImage);
+                      const nextIndex = (currentIndex + 1) % gallery.length;
+                      setSelectedImage(gallery[nextIndex].id);
+                    }}
+                  >
+                    <ArrowRight className="w-6 h-6" />
+                  </Button>
                 </div>
                 <div className="p-6">
                   <h3 className="text-xl font-medium mb-1">

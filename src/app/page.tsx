@@ -453,15 +453,17 @@ export default function Home() {
                   <Link 
                     href={`/shop/${category.id}`} 
                     key={category.id}
-                    className="group relative aspect-[1/1.2] rounded-lg overflow-hidden animate-fade-up w-full"
+                    className="group relative aspect-[1/1.2] rounded-lg overflow-hidden animate-fade-up w-full bg-white"
                     style={{ animationDelay: `${index * 100}ms` }}
                   >
-                    <Image
-                      src={category.image}
-                      alt={category.name}
-                      fill
-                      className="object-cover transition-transform duration-500 group-hover:scale-110"
-                    />
+                    <div className="absolute inset-0 bg-white flex items-center justify-center p-4">
+                      <Image
+                        src={category.image}
+                        alt={category.name}
+                        fill
+                        className="object-contain transition-transform duration-500 group-hover:scale-110"
+                      />
+                    </div>
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/0 to-black/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                       <div className="absolute bottom-0 left-0 right-0 p-2 sm:p-4">
                         <h3 className="text-sm sm:text-base font-medium text-white mb-1 transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
