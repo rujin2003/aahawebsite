@@ -189,7 +189,7 @@ export default function Home() {
           priority
         />
       </div>
-      {/* Right: Heading, Description, Options */}
+
       <div className="flex flex-col items-center md:items-start text-center md:text-left">
         <h2 className="text-4xl md:text-6xl font-medium mb-6 tracking-tight text-[#8B7355] animate-on-scroll fade-up">
           Create Your Felt Piece Online
