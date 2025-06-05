@@ -26,38 +26,92 @@ export function ProductSlider({ title, products: initialProducts, categoryId }: 
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        let query = supabase
-          .from('products')
-          .select('*')
-          .limit(7);
+        // First get all categories
+        const { data: categories, error: categoriesError } = await supabase
+          .from('categories')
+          .select('id');
 
-        // If categoryId is provided, filter by category
-        if (categoryId) {
-          query = query.eq('category_id', categoryId);
-        }
-
-        const { data, error } = await query;
-
-        if (error) {
-          console.error('Error fetching products:', error);
+        if (categoriesError) {
+          console.error('Error fetching categories:', categoriesError);
           return;
         }
 
-        if (!data || data.length === 0) {
-          console.log('No products found');
-          return;
+        // Get one random product from each category
+        const productsPromises = categories.map(async (category) => {
+          const { data, error } = await supabase
+            .from('products')
+            .select('*')
+            .eq('category_id', category.id)
+            .order('created_at', { ascending: false });
+
+          if (error) {
+            console.error(`Error fetching products for category ${category.id}:`, error);
+            return null;
+          }
+
+          // Group products by group_id to avoid showing same product with different colors
+          const groupedProducts = data.reduce((acc: { [key: string]: Product[] }, product) => {
+            const groupId = product.group_id || product.id;
+            if (!acc[groupId]) {
+              acc[groupId] = [];
+            }
+            acc[groupId].push(product);
+            return acc;
+          }, {});
+
+          // Take one product from each group (preferring the first color variant)
+          const uniqueProducts = Object.values(groupedProducts).map(group => group[0]);
+          
+          // Return a random product from the unique products
+          return uniqueProducts[Math.floor(Math.random() * uniqueProducts.length)];
+        });
+
+        const productsResults = await Promise.all(productsPromises);
+        const validProducts = productsResults.filter(Boolean);
+
+        // If we have less than 7 products, fetch more random products to fill the gap
+        if (validProducts.length < 7) {
+          const { data: allProducts, error: additionalError } = await supabase
+            .from('products')
+            .select('*')
+            .order('created_at', { ascending: false });
+
+          if (!additionalError && allProducts) {
+            // Group remaining products by group_id
+            const groupedProducts = allProducts.reduce((acc: { [key: string]: Product[] }, product) => {
+              const groupId = product.group_id || product.id;
+              if (!acc[groupId]) {
+                acc[groupId] = [];
+              }
+              acc[groupId].push(product);
+              return acc;
+            }, {});
+
+            // Get unique products (one from each group)
+            const uniqueProducts = Object.values(groupedProducts).map(group => group[0]);
+            
+            // Filter out products we already have
+            const existingIds = new Set(validProducts.map(p => p.id));
+            const additionalUniqueProducts = uniqueProducts
+              .filter(p => !existingIds.has(p.id))
+              .slice(0, 7 - validProducts.length);
+
+            validProducts.push(...additionalUniqueProducts);
+          }
         }
 
         // Ensure each product has at least one image
-        const productsWithImages = data.map(product => ({
+        const productsWithImages = validProducts.map(product => ({
           ...product,
           images: product.images && Array.isArray(product.images) && product.images.length > 0 
             ? product.images 
             : ['/placeholder.png']
         }));
 
-        console.log('Fetched products:', productsWithImages);
-        setProducts(productsWithImages);
+        // Shuffle the products array to randomize the order
+        const shuffledProducts = productsWithImages.sort(() => Math.random() - 0.5);
+
+        setProducts(shuffledProducts);
       } catch (error) {
         console.error('Error in fetchProducts:', error);
       } finally {
