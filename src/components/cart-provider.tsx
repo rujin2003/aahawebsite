@@ -82,7 +82,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         // Check if adding more would exceed stock
         const newQuantity = existingItem.quantity + quantity;
         if (newQuantity > existingItem.stock) {
-          toast.error(`Cannot add more items. Only ${existingItem.stock} available in stock.`);
+          toast.error(`Cannot add more items. Only ${existingItem.stock} available in stock for size ${existingItem.size}`);
           return prevItems;
         }
         // Item already exists, update quantity
@@ -96,7 +96,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       } else {
         // Check if initial quantity exceeds stock
         if (quantity > newItem.stock) {
-          toast.error(`Cannot add more items. Only ${newItem.stock} available in stock.`);
+          toast.error(`Cannot add more items. Only ${newItem.stock} available in stock for size ${newItem.size}`);
           return prevItems;
         }
         // Add new item
@@ -112,7 +112,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     setItems(prevItems => {
       const itemToRemove = prevItems.find(item => item.id === id);
       if (itemToRemove) {
-        toast.info(`Removed ${itemToRemove.name} from cart`);
+        toast.info(`Removed ${itemToRemove.name} (Size: ${itemToRemove.size}) from cart`);
       }
       return prevItems.filter(item => item.id !== id);
     });
@@ -133,7 +133,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
       // Check if new quantity exceeds stock
       if (quantity > item.stock) {
-        toast.error(`Cannot add more items. Only ${item.stock} available in stock.`);
+        toast.error(`Cannot add more items. Only ${item.stock} available in stock for size ${item.size}`);
         return prevItems;
       }
 

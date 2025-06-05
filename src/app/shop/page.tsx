@@ -152,13 +152,13 @@ function ProductCard({ product, colorVariants }: { product: Product, colorVarian
       <Link href={`/shop/product/${selectedVariant.id}`} className="block">
         <Card className="overflow-hidden border border-gray-200 rounded-2xl transition-all duration-300 group-hover:shadow-[0_4px_12px_rgba(0,0,0,0.08)] group-hover:-translate-y-1 bg-white">
           <div className="relative p-4">
-            <div className="aspect-square overflow-hidden bg-muted/50 flex items-center justify-center rounded-xl">
+            <div className="aspect-square overflow-hidden bg-white flex items-center justify-center rounded-xl">
               <Image
                 src={selectedVariant.images[0]}
                 alt={selectedVariant.title}
                 width={200}
                 height={200}
-                className="object-cover w-full h-full transition-transform group-hover:scale-105 duration-300 rounded-xl"
+                className="object-contain w-full h-full transition-transform group-hover:scale-105 duration-300 rounded-xl"
               />
             </div>
             <div className="absolute bottom-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
@@ -173,7 +173,7 @@ function ProductCard({ product, colorVariants }: { product: Product, colorVarian
             
             {/* Color Variants */}
             {colorVariants.length > 1 && (
-              <div className="mt-3 flex gap-2">
+              <div className="mt-3 flex gap-1.5">
                 {colorVariants.map((variant) => (
                   <button
                     key={variant.id}
@@ -181,7 +181,7 @@ function ProductCard({ product, colorVariants }: { product: Product, colorVarian
                       e.preventDefault()
                       setSelectedVariant(variant)
                     }}
-                    className={`w-6 h-6 rounded-full border-2 transition-all ${
+                    className={`w-4 h-4 rounded-full border-2 transition-all ${
                       selectedVariant.id === variant.id
                         ? 'border-primary scale-110'
                         : 'border-transparent hover:border-gray-300'

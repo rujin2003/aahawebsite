@@ -16,6 +16,7 @@ import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import { Loading } from "@/components/ui/loading"
 
 export default function AccountPage() {
   const [user, setUser] = useState<User | null>(null);
@@ -245,7 +246,7 @@ export default function AccountPage() {
           <div className="container">
             <div className="flex items-center justify-center h-96">
               <div className="text-center">
-                <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto"></div>
+                <Loading className="w-12 h-12" />
                 <p className="text-muted-foreground mt-4">Loading account information...</p>
               </div>
             </div>

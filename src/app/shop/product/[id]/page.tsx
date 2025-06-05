@@ -19,6 +19,7 @@ import { supabase } from '@/lib/supabase';
 import { Product } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { use } from 'react';
+import { Loading } from "@/components/ui/loading"
 
 
 export default function ProductPage({ params }: { params: Promise<{ id: string }> }) {
@@ -133,7 +134,7 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
           <div className="container">
             <div className="flex items-center justify-center h-96">
               <div className="text-center">
-                <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto"></div>
+                <Loading className="w-12 h-12" />
                 <p className="text-muted-foreground mt-4">Loading product details...</p>
               </div>
             </div>

@@ -169,14 +169,13 @@ export function ProductCard({ product }: { product: Product }) {
       <Link href={`/shop/product/${product.id}`} className="block">
         <Card className="overflow-hidden border border-gray-200 rounded-2xl transition-all duration-300 group-hover:shadow-[0_4px_12px_rgba(0,0,0,0.08)] group-hover:-translate-y-1 bg-white">
           <div className="relative">
-            <div className="aspect-square overflow-hidden bg-muted/50 flex items-center justify-center">
+            <div className="aspect-square overflow-hidden bg-white flex items-center justify-center">
               <Image
                 src={imageUrl}
                 alt={product.title || "Product image"}
                 width={400}
                 height={400}
-                //TODO: make this a square image
-                className="object-cover  w-full h-full transition-transform group-hover:scale-105 duration-300"
+                className="object-contain w-full h-full transition-transform group-hover:scale-105 duration-300 bg-white"
                 onError={(e) => {
                   const target = e.target as HTMLImageElement;
                   target.src = fallbackImage;
