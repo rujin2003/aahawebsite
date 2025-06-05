@@ -31,9 +31,12 @@ export function SignInForm() {
         // Set the session in localStorage
         localStorage.setItem('supabase.auth.token', JSON.stringify(data.session));
         
+        // Wait for the session to be properly set
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
         toast.success("Signed in successfully!");
-        router.push("/");
         router.refresh(); // Refresh the page to update the auth state
+        router.push("/");
       }
     } catch (error: unknown) {
       console.error('Sign in error:', error);

@@ -25,51 +25,45 @@ export function AuthGuard({
 
     const checkAuth = async () => {
       try {
-        // Get the current session and user
+        // First check localStorage for existing session
+        const storedSession = localStorage.getItem('supabase.auth.token');
+        if (storedSession) {
+          const session = JSON.parse(storedSession);
+          if (mounted) {
+            setIsAuthenticated(!!session?.user);
+          }
+        }
+
+        // Then verify with Supabase
         const { data: { session }, error } = await supabase.auth.getSession();
         
         if (error) {
           console.error('Error checking session:', error);
-          console.log("Error:", error);
+          localStorage.removeItem('supabase.auth.token');
           setIsAuthenticated(false);
-        } else {
-          // Check if user is authenticated (has a valid session)
+        } else if (mounted) {
           const authenticated = !!(session?.user);
-          const userId = session?.user?.id;
-          console.log("Current user ID:", userId);
-          
-          // Fetch admin data if user is authenticated
-          if (authenticated) {
-            const { data, error: adminError } = await supabase
-              .from('admin')
-              .select('*')
-              .eq('user_id', userId)
-              .single();
-            
-            console.log("Admin table data:", data);
-            if (adminError) {
-              console.log("Error:", adminError);
-            }
-          }
-          
           setIsAuthenticated(authenticated);
           
-          // If component is still mounted, handle redirects
-          if (mounted) {
-            if (requireAuth && !authenticated) {
-              // Protected route: redirect to signin if not authenticated
-              router.push("/signin");
-              return;
-            } else if (!requireAuth && authenticated) {
-              // Public route (signin/signup): redirect to home if already authenticated
-              router.push(redirectTo);
-              return;
-            }
+          if (session) {
+            localStorage.setItem('supabase.auth.token', JSON.stringify(session));
+          } else {
+            localStorage.removeItem('supabase.auth.token');
+          }
+
+          // Handle redirects based on auth state
+          if (requireAuth && !authenticated) {
+            router.push("/signin");
+            return;
+          } else if (!requireAuth && authenticated) {
+            router.push(redirectTo);
+            return;
           }
         }
       } catch (error) {
         console.error('Auth check error:', error);
         setIsAuthenticated(false);
+        localStorage.removeItem('supabase.auth.token');
       } finally {
         if (mounted) {
           setIsLoading(false);
@@ -87,22 +81,16 @@ export function AuthGuard({
         const authenticated = !!(session?.user);
         setIsAuthenticated(authenticated);
 
-        // Add console logs for auth state changes
-        console.log('Auth state changed:', event);
-        if (session?.user) {
-          console.log('User logged in:', {
-            id: session.user.id,
-            email: session.user.email,
-            lastSignIn: session.user.last_sign_in_at
-          });
+        if (session) {
+          localStorage.setItem('supabase.auth.token', JSON.stringify(session));
+        } else {
+          localStorage.removeItem('supabase.auth.token');
         }
 
         // Handle auth state changes
         if (event === 'SIGNED_IN' && !requireAuth) {
-          // User signed in on a public route (signin/signup), redirect them
           router.push(redirectTo);
         } else if (event === 'SIGNED_OUT' && requireAuth) {
-          // User signed out on a protected route, redirect to signin
           router.push("/signin");
         }
       }
