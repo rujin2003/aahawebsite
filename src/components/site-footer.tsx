@@ -71,7 +71,8 @@ export function SiteFooter() {
                 <h4 className="text-sm font-medium uppercase tracking-wider">Technology</h4>
                 <ul className="space-y-2">
                   <li>
-                    <Link href="/felting-process" className="text-sm text-white/60 hover:text-white transition-colors">
+                    
+                    <Link href="#" className="text-sm text-white/60 hover:text-white transition-colors">
                       Felting Process
                     </Link>
                   </li>

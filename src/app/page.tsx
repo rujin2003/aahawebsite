@@ -199,7 +199,7 @@ export default function Home() {
         </p>
         
         <div className="grid grid-cols-2 gap-6 w-full max-w-md">
-          <div className="bg-[rgb(240,236,226)] rounded-xl p-6 flex flex-col items-center shadow-sm border border-black animate-on-scroll fade-up" style={{ transitionDelay: '200ms' }}>
+          <div className="h-[160px] bg-[rgb(240,236,226)] rounded-xl p-6 flex flex-col items-center shadow-sm border border-black animate-on-scroll fade-up" style={{ transitionDelay: '200ms' }}>
             <Image
               src="/product2.jpg"
               alt="Felt Wall Hanging"
