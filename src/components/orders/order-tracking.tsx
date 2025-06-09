@@ -98,6 +98,7 @@ export function OrderTracking({ order }: OrderTrackingProps) {
                 <p className="font-medium">{item.product_name}</p>
                 <p className="text-sm text-muted-foreground">
                   Quantity: {item.quantity}
+                  {item.size && ` | Size: ${item.size}`}
                 </p>
               </div>
               <p className="font-medium">

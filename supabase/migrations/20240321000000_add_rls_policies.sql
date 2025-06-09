@@ -68,7 +68,8 @@ BEGIN
     quantity,
     price,
     product_name,
-    product_image
+    product_image,
+    size
   )
   SELECT
     NEW.id,
@@ -76,7 +77,8 @@ BEGIN
     (item->>'quantity')::integer,
     (item->>'price')::numeric,
     item->>'product_name',
-    item->>'product_image'
+    item->>'product_image',
+    item->>'size'
   FROM jsonb_array_elements(NEW.items) AS item;
   
   RETURN NEW;

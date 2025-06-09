@@ -101,6 +101,7 @@ export type OrderItem = {
   price: number
   product_name: string
   product_image?: string
+  size?: string
 }
 
 export type Return = {

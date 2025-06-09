@@ -14,11 +14,19 @@ import Link from "next/link";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import { Label } from "@/components/ui/label";
 
 export default function CartPage() {
   const { items, removeItem, updateQuantity, totalPrice, clearCart } = useCart();
   const [loading, setLoading] = useState(false);
   const [orderCompleted, setOrderCompleted] = useState(false);
+  const [shippingAddress, setShippingAddress] = useState({
+    street: '',
+    city: '',
+    state: '',
+    country: '',
+    zipCode: ''
+  });
   const router = useRouter();
 
   const handleQuantityChange = (id: string, delta: number, currentQty: number) => {
@@ -29,6 +37,12 @@ export default function CartPage() {
   const handleCheckout = async () => {
     if (items.length === 0) {
       toast.error("Your cart is empty");
+      return;
+    }
+
+    // Validate shipping address
+    if (!shippingAddress.street || !shippingAddress.city || !shippingAddress.state || !shippingAddress.country || !shippingAddress.zipCode) {
+      toast.error("Please fill in all shipping address fields");
       return;
     }
 
@@ -50,19 +64,17 @@ export default function CartPage() {
         .select('id, title, price, images')
         .in('id', productIds);
 
-
       if (productsError) throw productsError;
 
-      // Log the data for debugging
-      console.log('Cart Items:', JSON.stringify(items, null, 2));
-      console.log('Products from DB:', JSON.stringify(products, null, 2));
+      // Format shipping address
+      const formattedAddress = `${shippingAddress.street}, ${shippingAddress.city}, ${shippingAddress.state}, ${shippingAddress.country}, ${shippingAddress.zipCode}`;
 
       // Prepare order payload
       const orderPayload = {
         user_id: user.id,
         status: 'to_be_verified',
         total_amount: totalPrice,
-        shipping_address: user.user_metadata.address || '',
+        shipping_address: formattedAddress,
         items: items.map(item => {
           const product = products.find(p => p.id === item.id);
           if (!product) {
@@ -73,17 +85,21 @@ export default function CartPage() {
             quantity: item.quantity,
             price: item.price,
             product_name: item.name,
-            product_image: item.image
+            product_image: item.image,
+            size: item.size
           };
         })
       };
-      console.log('Order Payload:', JSON.stringify(productIds));
+
+      // Log the data for debugging
+      console.log('Cart Items:', JSON.stringify(items, null, 2));
+      console.log('Products from DB:', JSON.stringify(products, null, 2));
 
       // Add detailed logging before placing the order
       console.log('=== Order Details ===');
       console.log('User ID:', user.id);
       console.log('Total Amount:', totalPrice);
-      console.log('Shipping Address:', user.user_metadata.address || 'Not provided');
+      console.log('Shipping Address:', formattedAddress);
       console.log('Order Items:', JSON.stringify(orderPayload.items, null, 2));
       console.log('Full Order Payload:', JSON.stringify(orderPayload, null, 2));
       console.log('===================');
@@ -258,45 +274,109 @@ export default function CartPage() {
                     <h2 className="font-medium">Order Summary</h2>
                   </div>
 
-                  <div className="p-6 space-y-4">
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Subtotal</span>
-                      <span>${totalPrice.toFixed(2)}</span>
-                    </div>
-
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Shipping</span>
-                      <span>Free</span>
+                  <div className="p-6 space-y-6">
+                    <div className="space-y-4">
+                      <h3 className="font-medium">Shipping Address</h3>
+                      <div className="space-y-3">
+                        <div>
+                          <Label htmlFor="street">Street Address</Label>
+                          <Input
+                            id="street"
+                            value={shippingAddress.street}
+                            onChange={(e) => setShippingAddress({ ...shippingAddress, street: e.target.value })}
+                            placeholder="123 Main St"
+                            required
+                          />
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <Label htmlFor="city">City</Label>
+                            <Input
+                              id="city"
+                              value={shippingAddress.city}
+                              onChange={(e) => setShippingAddress({ ...shippingAddress, city: e.target.value })}
+                              placeholder="City"
+                              required
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor="state">State/Province</Label>
+                            <Input
+                              id="state"
+                              value={shippingAddress.state}
+                              onChange={(e) => setShippingAddress({ ...shippingAddress, state: e.target.value })}
+                              placeholder="State"
+                              required
+                            />
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <Label htmlFor="country">Country</Label>
+                            <Input
+                              id="country"
+                              value={shippingAddress.country}
+                              onChange={(e) => setShippingAddress({ ...shippingAddress, country: e.target.value })}
+                              placeholder="Country"
+                              required
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor="zipCode">ZIP/Postal Code</Label>
+                            <Input
+                              id="zipCode"
+                              value={shippingAddress.zipCode}
+                              onChange={(e) => setShippingAddress({ ...shippingAddress, zipCode: e.target.value })}
+                              placeholder="ZIP Code"
+                              required
+                            />
+                          </div>
+                        </div>
+                      </div>
                     </div>
 
                     <Separator />
 
-                    <div className="flex justify-between font-medium">
-                      <span>Total</span>
-                      <span>${totalPrice.toFixed(2)}</span>
-                    </div>
+                    <div className="space-y-4">
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Subtotal</span>
+                        <span>${totalPrice.toFixed(2)}</span>
+                      </div>
 
-                    <Button
-                      className="w-full rounded-full mt-4"
-                      onClick={handleCheckout}
-                      disabled={loading}
-                    >
-                      {loading ? (
-                        <span className="flex items-center">
-                          <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"></div>
-                          Processing...
-                        </span>
-                      ) : (
-                        <span className="flex items-center">
-                          <CreditCard className="w-4 h-4 mr-2" />
-                          Checkout
-                        </span>
-                      )}
-                    </Button>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Shipping</span>
+                        <span>Free</span>
+                      </div>
 
-                    <div className="text-xs text-center text-muted-foreground mt-4">
-                      <p>Secure checkout powered by Stripe</p>
-                      <p className="mt-2">100-day money-back guarantee • Free shipping on all orders</p>
+                      <Separator />
+
+                      <div className="flex justify-between font-medium">
+                        <span>Total</span>
+                        <span>${totalPrice.toFixed(2)}</span>
+                      </div>
+
+                      <Button
+                        className="w-full rounded-full mt-4"
+                        onClick={handleCheckout}
+                        disabled={loading}
+                      >
+                        {loading ? (
+                          <span className="flex items-center">
+                            <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"></div>
+                            Processing...
+                          </span>
+                        ) : (
+                          <span className="flex items-center">
+                            <CreditCard className="w-4 h-4 mr-2" />
+                            Checkout
+                          </span>
+                        )}
+                      </Button>
+
+                      <div className="text-xs text-center text-muted-foreground mt-4">
+                        <p>Secure checkout powered by Stripe</p>
+                        <p className="mt-2">100-day money-back guarantee • Free shipping on all orders</p>
+                      </div>
                     </div>
                   </div>
                 </div>

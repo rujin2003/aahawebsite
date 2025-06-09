@@ -20,6 +20,7 @@ import { Loading } from "@/components/ui/loading"
 
 export default function AccountPage() {
   const [user, setUser] = useState<User | null>(null);
+  const [profile, setProfile] = useState<any>(null);
   const [orders, setOrders] = useState<Order[]>([]);
   const [returns, setReturns] = useState<Return[]>([]);
   const [emailNotifications, setEmailNotifications] = useState(false);
@@ -38,6 +39,7 @@ export default function AccountPage() {
       }
 
       setUser(user as User);
+      fetchProfile(user.id);
       fetchOrders(user.id);
       fetchReturns(user.id);
       fetchSettings(user.id);
@@ -45,6 +47,22 @@ export default function AccountPage() {
 
     checkUser();
   }, [router]);
+
+  const fetchProfile = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+
+      if (error) throw error;
+      setProfile(data);
+    } catch (error: unknown) {
+      console.error('Error fetching profile:', error);
+      toast.error("Failed to fetch profile information");
+    }
+  };
 
   const fetchOrders = async (userId: string) => {
     try {
@@ -235,6 +253,29 @@ export default function AccountPage() {
     } catch (error: unknown) {
       console.error('Error cancelling order:', error);
       toast.error(error instanceof Error ? error.message : 'Failed to cancel order');
+    }
+  };
+
+  const handleProfileUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user) return;
+
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          full_name: profile.full_name,
+          phone: profile.phone,
+          address: profile.address,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', user.id);
+
+      if (error) throw error;
+      toast.success("Profile updated successfully");
+    } catch (error: unknown) {
+      console.error('Error updating profile:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to update profile');
     }
   };
 
@@ -461,13 +502,21 @@ export default function AccountPage() {
               {/* Profile Tab */}
               <TabsContent value="profile" className="space-y-6">
                 <Card className="p-6">
-                  <form className="space-y-4">
+                  <form onSubmit={handleProfileUpdate} className="space-y-4">
                     <div className="space-y-2">
                       <Label htmlFor="email">Email</Label>
                       <Input
                         id="email"
                         type="email"
-                        value={user?.email || ''}
+                        value={profile?.email || ''}
+                        disabled
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="username">Username</Label>
+                      <Input
+                        id="username"
+                        value={profile?.username || ''}
                         disabled
                       />
                     </div>
@@ -475,24 +524,24 @@ export default function AccountPage() {
                       <Label htmlFor="fullName">Full Name</Label>
                       <Input
                         id="fullName"
-                        value={user?.full_name || ''}
-                        onChange={(e) => setUser({ ...user!, full_name: e.target.value })}
+                        value={profile?.full_name || ''}
+                        onChange={(e) => setProfile({ ...profile, full_name: e.target.value })}
                       />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="phone">Phone</Label>
                       <Input
                         id="phone"
-                        value={user?.phone || ''}
-                        onChange={(e) => setUser({ ...user!, phone: e.target.value })}
+                        value={profile?.phone || ''}
+                        onChange={(e) => setProfile({ ...profile, phone: e.target.value })}
                       />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="address">Address</Label>
                       <Input
                         id="address"
-                        value={user?.address || ''}
-                        onChange={(e) => setUser({ ...user!, address: e.target.value })}
+                        value={profile?.address || ''}
+                        onChange={(e) => setProfile({ ...profile, address: e.target.value })}
                       />
                     </div>
                     <Button type="submit">Save Changes</Button>
