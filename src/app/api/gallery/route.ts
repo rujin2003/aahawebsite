@@ -1,3 +1,4 @@
+
 import { NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
 
@@ -31,3 +32,4 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Error adding gallery image' }, { status: 500 })
   }
 } 
+export const runtime = 'edge';

@@ -7,3 +7,4 @@ export default async function OrderPage(props: { params: paramsType }) {
   
   return <OrderTrackingClient orderId={id} />;
 }
+export const runtime = 'edge';

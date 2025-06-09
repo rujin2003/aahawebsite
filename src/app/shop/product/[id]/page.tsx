@@ -350,3 +350,4 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
     </div>
   );
 }
+export const runtime = 'edge';

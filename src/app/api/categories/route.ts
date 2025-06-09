@@ -35,3 +35,4 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Error creating category' }, { status: 500 })
   }
 } 
+export const runtime = 'edge';
