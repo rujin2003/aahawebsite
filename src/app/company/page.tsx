@@ -204,15 +204,14 @@ export default function CompanyPage() {
                 </p>
               </div>
 
-              <div className="rounded-3xl overflow-hidden h-[500px] relative animate-fade-left">
+              <div className="rounded-3xl overflow-hidden h-[500px] w-[500px] relative animate-fade-left ml-auto pl-5">
                 <div className="absolute inset-12 z-0 bg-blue-500/10 rounded-2xl blur-[60px]"></div>
-                <div className="h-full w-full rounded-3xl overflow-hidden relative z-10 bg-muted/50 flex items-center justify-center">
+                <div className="h-full w-full rounded-3xl overflow-hidden relative z-10 bg-muted/50">
                   <Image
-                    src="/product1.svg"
-                    alt="Artisans working"
-                    width={400}
-                    height={400}
-                    className="object-contain"
+                    src="/leader.webp"
+                    alt="our leader"
+                    fill
+                    className="object-cover"
                   />
                 </div>
               </div>
