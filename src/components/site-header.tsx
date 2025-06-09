@@ -46,6 +46,10 @@ export function SiteHeader() {
 
     checkUser();
 
+    
+  }, []);
+
+  useEffect(() => {
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
       
@@ -84,8 +88,7 @@ export function SiteHeader() {
     return () => {
       window.removeEventListener("scroll", throttledHandleScroll);
     };
-  }, [lastScrollY]);
-
+  }, [lastScrollY]); 
   return (
     <header 
       className={cn(
