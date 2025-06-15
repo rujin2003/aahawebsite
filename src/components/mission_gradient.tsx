@@ -7,7 +7,7 @@ const MissionSection = () => {
       <div className="absolute inset-0 bg-white/30 backdrop-blur-sm z-10" />
       <div className="container text-center max-w-3xl relative z-20">
         <h2 className="text-2xl md:text-3xl mb-6 animate-on-scroll fade-up font-medium text-slate-800">
-          In 2025, mass-produced items will be unremarkable. Quality, handcrafted felt products with natural materials and heritage techniques will be treasured.
+        Aaha Felt – Handmade with soul, crafted with care to bring warmth, beauty, and meaning into every space
         </h2>
         <div className="flex flex-wrap justify-center gap-3 mt-8 animate-on-scroll fade-up">
           {["quality craftsmanship", "sustainable materials", "heritage techniques", "unique designs"].map((text) => (
