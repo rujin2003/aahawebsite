@@ -21,6 +21,7 @@ import { toast } from "sonner";
 
 import Categories from "./category";
 import MissionSection from "@/components/mission_gradient";
+import FeltCarousel from "@/components/flet_carosuel";
 // import KiniHeroBanner from "@/components/kini_hero";
 
 export default function Home() {
@@ -176,54 +177,7 @@ export default function Home() {
 
 <MissionSection></MissionSection>
 
-<section className="mt-8 py-20 bg-[rgb(240,236,226)] rounded-3xl mx-4 sm:mx-8 lg:mx-12 mb-16 overflow-hidden">
-  <div className="px-4 sm:px-6 md:px-8 lg:px-12">
-    <div className="container grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
-      {/* Left: Large Product Image */}
-      <div className="relative w-full h-[340px] md:h-[480px] rounded-2xl overflow-hidden shadow-lg animate-on-scroll fade-right">
-        <Image
-          src="/hello.jpg"
-          alt="Handcrafted Felt Product"
-          fill
-          className="object-cover rounded-2xl"
-          priority
-        />
-      </div>
-
-      <div className="flex flex-col items-center md:items-start text-center md:text-left">
-        <h2 className="text-4xl md:text-6xl font-medium mb-6 tracking-tight text-[#8B7355] animate-on-scroll fade-up">
-          Create Your Felt Piece Online
-        </h2>
-        <p className="text-lg md:text-xl font-saans text-muted-foreground mb-10 max-w-xl text-black animate-on-scroll fade-up" style={{ transitionDelay: '100ms' }}>
-          If you have your heart set on a certain color or style, our artisans can help you customize your own unique, bespoke felt creations. The magic at your very fingertips.
-        </p>
-        
-        <div className="grid grid-cols-2 gap-6 w-full max-w-md">
-          <div className="h-[160px] bg-[rgb(240,236,226)] rounded-xl p-6 flex flex-col items-center shadow-sm border border-black animate-on-scroll fade-up" style={{ transitionDelay: '200ms' }}>
-            <Image
-              src="/product2.jpg"
-              alt="Felt Wall Hanging"
-              width={120}
-              height={180}
-              className="object-contain mb-3 rounded"
-            />
-            <span className="text-sm font-saans text-black font-medium">Choose Wall Art</span>
-          </div>
-          <div className="bg-[rgb(240,236,226)] rounded-xl p-6 flex flex-col items-center shadow-sm border border-black animate-on-scroll fade-up" style={{ transitionDelay: '300ms' }}>
-            <Image
-              src="/accessories.webp"
-              alt="Felt Accessories"
-              width={120}
-              height={120}
-              className="object-contain mb-3 rounded-full"
-            />
-            <span className="text-sm font-saans text-black font-medium">Choose Accessories</span>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
+<FeltCarousel />
 
 
         {/* Popular Products Section */}
