@@ -53,39 +53,41 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
           .select('*')
           .eq('id', resolvedParams.id)
           .single();
-
+    
         if (error) throw error;
-        
+    
         // Ensure images array exists and has at least one image
         if (!data.images || !Array.isArray(data.images) || data.images.length === 0) {
           data.images = [fallbackImage];
         }
-        
+    
         setProduct(data);
         setSelectedSize(data.size);
         setSelectedColor(data.color);
-
-        // Fetch color variants
+    
+        // Fetch color variants using correct array filter syntax
         const { data: variants, error: variantsError } = await supabase
           .from('products')
           .select('*')
-          .eq('group_id', data.group_id || data.id);
-
+          .eq('group_id', data.group_id || data.id)
+          .filter('country_codes', 'cs', `{${countryCode}}`)
+          .limit(4);
+    
         if (!variantsError && variants) {
           setColorVariants(variants);
         }
-
+    
         // Fetch related products from the same category
         if (data.category_id) {
           const { data: related, error: relatedError } = await supabase
             .from('products')
             .select('*')
             .eq('category_id', data.category_id)
+            .filter('country_codes', 'cs', `{${countryCode}}`)
             .neq('id', data.id)
             .limit(4);
-
-          if (!relatedError) {
-            // Ensure each related product has at least one image
+    
+          if (!relatedError && related) {
             const relatedWithImages = related.map(p => ({
               ...p,
               images: p.images && Array.isArray(p.images) && p.images.length > 0 ? p.images : [fallbackImage]
@@ -100,6 +102,7 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
         setLoading(false);
       }
     };
+    
 
     fetchProduct();
   }, [resolvedParams.id]);

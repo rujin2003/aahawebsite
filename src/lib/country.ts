@@ -48,9 +48,9 @@ export async function getProductsQuery(supabase: any, countryCode: string) {
     .order('created_at', { ascending: false })
 
   if (countryCode) {
-    query.eq('country_code', countryCode)
+    query.eq('country_codes', countryCode)
   } else {
-    query.is('country_code', null)
+    query.is('country_codes', null)
   }
 
   return query
