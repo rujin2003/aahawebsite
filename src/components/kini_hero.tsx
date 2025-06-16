@@ -2,45 +2,48 @@
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { useUserCountry } from '@/lib/useCountry';
 
 export default function KiniHeroBanner() {
+  const { isSupportedCountry } = useUserCountry();
+  
   return (
-    <div className="flex justify-center items-center p-4 animate-on-scroll fade-up">
-      <div className="relative w-full max-w-7xl rounded-3xl overflow-hidden shadow-lg h-[550px]">
-        <div className="absolute inset-0 bg-gradient-to-br from-[#E04E32] via-white to-[#E5A0A4] rounded-3xl"></div>
-
-        {/* Title at the top, aligned left */}
-        <div className="absolute top-8 left-8 px-8 text-left">
-          <h2 className="text-3xl md:text-5xl font-saans font-medium text-[#FFFFFF]">
-            Meet Kini,
-          </h2>
-          <p className="text-lg md:text-2xl font-saans text-[#FAE8E0] mt-2">
-            The first wearable using non-invasive <br />
-            light technology to support and improve <br />female longevity.
+    <div className="relative w-full h-[600px] overflow-hidden">
+      <div className="absolute inset-0">
+        <Image
+          src="/images/kini-hero.jpg"
+          alt="Kini Hero"
+          fill
+          className="object-cover"
+          priority
+        />
+      </div>
+      <div className="absolute inset-0 bg-black/30" />
+      <div className="relative h-full flex items-center justify-center">
+        <div className="text-center text-white space-y-4">
+          <h1 className="text-4xl md:text-6xl font-saans font-medium">
+            Discover Kini
+          </h1>
+          <p className="text-lg md:text-xl font-saans max-w-2xl mx-auto">
+            Experience the perfect blend of comfort and style with our premium collection
           </p>
         </div>
-
-        {/* Image in the middle */}
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 mt-8">
-          <img
-            src="/image1.png"
-            alt="Kini Wearable"
-            className="w-80 md:w-[28rem] object-contain"
-          />
-        </div>
-
-        {/* Buy Now button fixed at the bottom */}
         <div className="absolute bottom-8 left-0 right-0 flex justify-center">
           <div className="flex items-center gap-3 bg-[#614741] bg-opacity-80 text-white px-20 py-2 rounded-full shadow-md">
             <span className="opacity-90 text-sm font-saans">Get to know Kini now!</span>
-            <span className="font-saans font-medium text-base">€149</span>
+            {isSupportedCountry ? (
+              <span className="font-saans font-medium text-base">€149</span>
+            ) : (
+              <span className="font-saans text-sm opacity-90">Contact us for pricing</span>
+            )}
             <Button 
               variant="secondary" 
               className="bg-white text-black px-3 py-1.5 rounded-full font-saans font-medium shadow-sm hover:bg-white/90"
               asChild
+              disabled={!isSupportedCountry}
             >
               <Link href="/shop">
-                Buy now
+                {isSupportedCountry ? 'Buy now' : 'Shopping not available'}
               </Link>
             </Button>
           </div>

@@ -8,41 +8,43 @@ import { Card, CardContent } from "@/components/ui/card";
 import { ArrowLeft, ArrowRight, ShoppingCart } from "lucide-react";
 import { Product } from '@/lib/supabase'
 import { supabase } from '@/lib/supabase';
+import { useCart } from '@/contexts/CartContext';
+import { useUserCountry } from '@/lib/useCountry';
+import { getCategoriesQuery, getProductsQuery } from '@/lib/country';
+import { toast } from 'sonner';
 
 interface ProductSliderProps {
   title?: string;
   products?: Product[];
   categoryId?: string;
+  countryCode?: string;
 }
 
-export function ProductSlider({ title, products: initialProducts, categoryId }: ProductSliderProps) {
+export function ProductSlider({ title, products: initialProducts, categoryId, countryCode }: ProductSliderProps) {
   const [products, setProducts] = useState<Product[]>(initialProducts || []);
   const [activeIndex, setActiveIndex] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
   const sliderRef = useRef<HTMLDivElement>(null);
   const [visibleProducts, setVisibleProducts] = useState(3);
   const [loading, setLoading] = useState(!initialProducts);
+  const { addItem, isCartEnabled } = useCart();
+  const { isSupportedCountry } = useUserCountry();
 
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        // First get all categories
-        const { data: categories, error: categoriesError } = await supabase
-          .from('categories')
-          .select('id');
+        // First get all categories using getCategoriesQuery
+        const { data: categories, error: categoriesError } = await getCategoriesQuery(supabase, countryCode || '');
 
         if (categoriesError) {
           console.error('Error fetching categories:', categoriesError);
           return;
         }
 
-        // Get one random product from each category
+        // Get one random product from each category using getProductsQuery
         const productsPromises = categories.map(async (category) => {
-          const { data, error } = await supabase
-            .from('products')
-            .select('*')
-            .eq('category_id', category.id)
-            .order('created_at', { ascending: false });
+          const { data, error } = await getProductsQuery(supabase, countryCode || '')
+            .eq('category_id', category.id);
 
           if (error) {
             console.error(`Error fetching products for category ${category.id}:`, error);
@@ -122,7 +124,7 @@ export function ProductSlider({ title, products: initialProducts, categoryId }: 
     if (!initialProducts) {
       fetchProducts();
     }
-  }, [initialProducts, categoryId]);
+  }, [initialProducts, countryCode]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -156,6 +158,14 @@ export function ProductSlider({ title, products: initialProducts, categoryId }: 
       setActiveIndex(activeIndex + 1);
       setTimeout(() => setIsAnimating(false), 500);
     }
+  };
+
+  const handleAddToCart = (product: Product) => {
+    if (!isCartEnabled) {
+      toast.error('Shopping is not available in your country');
+      return;
+    }
+    addItem(product, 1);
   };
 
   if (loading) {
@@ -215,40 +225,63 @@ export function ProductSlider({ title, products: initialProducts, categoryId }: 
 }
 
 export function ProductCard({ product }: { product: Product }) {
+  const { addItem, isCartEnabled } = useCart();
+  const { isSupportedCountry } = useUserCountry();
   const fallbackImage = "/placeholder.png";
-  const imageUrl = product.images && product.images.length > 0 ? product.images[0] : fallbackImage;
+  const imageUrl = product.images?.[0] || fallbackImage;
+
+  const handleAddToCart = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!isCartEnabled) {
+      toast.error('Shopping is not available in your country');
+      return;
+    }
+    addItem(product, 1);
+  };
 
   return (
-    <div className="group relative">
-      <Link href={`/shop/product/${product.id}`} className="block">
-        <Card className="overflow-hidden border border-gray-200 rounded-2xl transition-all duration-300 group-hover:shadow-[0_4px_12px_rgba(0,0,0,0.08)] group-hover:-translate-y-1 bg-white">
-          <div className="relative">
-            <div className="aspect-square overflow-hidden bg-white flex items-center justify-center">
-              <Image
-                src={imageUrl}
-                alt={product.title || "Product image"}
-                width={400}
-                height={400}
-                className="object-contain w-full h-full transition-transform group-hover:scale-105 duration-300 bg-white"
-                onError={(e) => {
-                  const target = e.target as HTMLImageElement;
-                  target.src = fallbackImage;
-                }}
-              />
-            </div>
-            {/* Add to Cart Button inside the Card */}
-            <div className="absolute bottom-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-              <button className="w-10 h-10 flex items-center justify-center rounded-full bg-primary text-white hover:bg-primary/90">
+    <Card className="group relative overflow-hidden">
+      <Link href={`/shop/product/${product.id}`}>
+        <div className="relative">
+          <div className="aspect-square overflow-hidden bg-white flex items-center justify-center">
+            <Image
+              src={imageUrl}
+              alt={product.title || "Product image"}
+              width={400}
+              height={400}
+              className="object-contain w-full h-full transition-transform group-hover:scale-105 duration-300 bg-white"
+              onError={(e) => {
+                const target = e.target as HTMLImageElement;
+                target.src = fallbackImage;
+              }}
+            />
+          </div>
+          <div className="absolute bottom-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+            {isSupportedCountry ? (
+              <Button
+                onClick={handleAddToCart}
+                className="w-10 h-10 flex items-center justify-center rounded-full bg-primary text-white hover:bg-primary/90"
+              >
                 <ShoppingCart className="w-5 h-5" />
-              </button>
-            </div>
+              </Button>
+            ) : (
+              <Button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toast.error('Shopping is not available in your country');
+                }}
+                className="w-10 h-10 flex items-center justify-center rounded-full bg-primary text-white hover:bg-primary/90"
+              >
+                <ShoppingCart className="w-5 h-5" />
+              </Button>
+            )}
           </div>
-          <div className="p-4">
-            <h3 className="font-medium text-base truncate">{product.title || "Untitled Product"}</h3>
-            <p className="text-lg font-semibold mt-1">${(product.price || 0).toFixed(2)}</p>
-          </div>
-        </Card>
+        </div>
+        <div className="p-4">
+          <h3 className="font-medium text-base truncate">{product.title || "Untitled Product"}</h3>
+        </div>
       </Link>
-    </div>
+    </Card>
   );
 }

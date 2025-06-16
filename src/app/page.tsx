@@ -18,6 +18,8 @@ import { Loading } from "@/components/ui/loading"
 import { supabase } from '@/lib/supabase';
 import { Product } from '@/lib/supabase';
 import { toast } from "sonner";
+import { useUserCountry } from '@/lib/useCountry';
+import { getCategoriesQuery, isAvailableInCountry } from '@/lib/country';
 
 import Categories from "./category";
 import MissionSection from "@/components/mission_gradient";
@@ -35,38 +37,40 @@ export default function Home() {
   const emailRef = useRef<HTMLInputElement>(null)
   const subjectRef = useRef<HTMLInputElement>(null)
   const messageRef = useRef<HTMLTextAreaElement>(null)
+  const { countryCode, isLoading: countryLoading, isSupportedCountry } = useUserCountry()
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         // Fetch categories
-        const response = await fetch('/api/categories')
-        const categoriesData = await response.json()
-        
-        if (response.ok && Array.isArray(categoriesData)) {
-          setCategories(categoriesData.slice(0, 5))
+        const categoriesResponse = await getCategoriesQuery(supabase, countryCode || '')
+        if (categoriesResponse.error) {
+          console.error('Categories API error:', categoriesResponse.error)
+          setCategories([])
+        } else if (Array.isArray(categoriesResponse.data)) {
+          setCategories(categoriesResponse.data)
         } else {
-          console.error('Categories API error:', categoriesData)
+          console.warn('Categories response format unexpected:', categoriesResponse)
           setCategories([])
         }
-
+        
+      
         // Fetch products
-        const { data: productsData, error } = await supabase
-          .from('products')
-          .select('*')
-          .limit(7)
+        const productsResponse = await fetch(`/api/products?countryCode=${countryCode || ''}`)
+        const productsData = await productsResponse.json()
 
-        if (error) throw error
-
-        // Ensure each product has at least one image
-        const productsWithImages = productsData.map(product => ({
-          ...product,
-          images: product.images && Array.isArray(product.images) && product.images.length > 0 
-            ? product.images 
-            : ['/placeholder.png']
-        }))
-
-        setProducts(productsWithImages)
+        if (productsResponse.ok && Array.isArray(productsData)) {
+          const processedProducts = productsData.map(product => ({
+            ...product,
+            images: product.images && Array.isArray(product.images) && product.images.length > 0 
+              ? product.images 
+              : ['/placeholder.png']
+          })).slice(0, 7) // Limit products on the client side after fetching
+          setProducts(processedProducts)
+        } else {
+          console.error('Products API error:', productsData)
+          setProducts([])
+        }
       } catch (error) {
         console.error('Error fetching data:', error)
       } finally {
@@ -74,8 +78,10 @@ export default function Home() {
       }
     }
 
-    fetchData()
-  }, [])
+    if (!countryLoading) {
+      fetchData()
+    }
+  }, [countryCode, countryLoading])
 
   async function handleContactSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -114,6 +120,22 @@ export default function Home() {
     } finally {
       setContactLoading(false)
     }
+  }
+
+  // Update the product display to hide prices for unsupported countries
+  const renderProductPrice = (product: Product) => {
+    if (!isSupportedCountry) {
+      return (
+        <p className="text-sm text-muted-foreground">
+          Contact us for pricing
+        </p>
+      )
+    }
+    return (
+      <p className="text-lg font-medium">
+        ${product.price.toFixed(2)}
+      </p>
+    )
   }
 
   if (loading) {

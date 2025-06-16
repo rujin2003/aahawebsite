@@ -15,9 +15,11 @@ import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { Label } from "@/components/ui/label";
+import { useUserCountry } from '@/lib/useCountry';
 
 export default function CartPage() {
   const { items, removeItem, updateQuantity, totalPrice, clearCart } = useCart();
+  const { isSupportedCountry, countryCode } = useUserCountry();
   const [loading, setLoading] = useState(false);
   const [orderCompleted, setOrderCompleted] = useState(false);
   const [shippingAddress, setShippingAddress] = useState({
@@ -75,6 +77,7 @@ export default function CartPage() {
         status: 'to_be_verified',
         total_amount: totalPrice,
         shipping_address: formattedAddress,
+        country_code: countryCode,
         items: items.map(item => {
           const product = products.find(p => p.id === item.id);
           if (!product) {
@@ -177,13 +180,10 @@ export default function CartPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col pt-20">
+    <div className="min-h-screen bg-background">
       <SiteHeader />
-
-      <main className="flex-1 py-12">
-        <div className="container max-w-6xl">
-          <h1 className="text-3xl font-medium mb-8">Your Cart</h1>
-
+      <main className="container py-8">
+        <div className="max-w-7xl mx-auto">
           {items.length === 0 ? (
             <div className="bg-muted rounded-3xl p-12 text-center">
               <h2 className="text-2xl font-medium mb-4">Your cart is empty</h2>
@@ -199,82 +199,79 @@ export default function CartPage() {
           ) : (
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               <div className="lg:col-span-2">
-                <div className="bg-card rounded-3xl shadow-sm overflow-hidden">
-                  <div className="p-6 border-b border-border">
-                    <h2 className="font-medium">Cart Items ({items.reduce((sum, item) => sum + item.quantity, 0)})</h2>
-                  </div>
-
-                  <div className="divide-y divide-border">
-                    {items.map((item) => (
-                      <div
-                        key={`${item.id}-${item.size || ""}-${item.color || ""}`}
-                        className="p-6 flex flex-col sm:flex-row items-start gap-4 group animate-fade-up"
-                      >
-                        <div className="w-24 h-24 bg-muted/50 rounded-xl overflow-hidden flex items-center justify-center p-3">
-                          <Image
-                            src={item.image}
-                            alt={item.name}
-                            width={80}
-                            height={80}
-                            className="object-contain"
-                          />
-                        </div>
-
-                        <div className="flex-1">
-                          <div className="flex justify-between">
-                            <h3 className="font-medium">{item.name}</h3>
-                            <p className="font-medium">${(item.price * item.quantity).toFixed(2)}</p>
+                <div className="bg-white rounded-lg shadow-sm border border-border">
+                  <div className="p-6">
+                    <h1 className="text-2xl font-medium mb-6">Shopping Cart</h1>
+                    <div className="space-y-6">
+                      {items.map((item) => (
+                        <div key={item.id} className="flex gap-4">
+                          <div className="w-24 h-24 bg-muted/50 rounded-xl overflow-hidden flex items-center justify-center p-3">
+                            <Image
+                              src={item.image}
+                              alt={item.name}
+                              width={80}
+                              height={80}
+                              className="object-contain"
+                            />
                           </div>
 
-                          {(item.size || item.color) && (
-                            <p className="text-sm text-muted-foreground mt-1">
-                              {item.size && `Size: ${item.size}`}
-                              {item.size && item.color && " | "}
-                              {item.color && `Color: ${item.color}`}
-                            </p>
-                          )}
-
-                          <div className="flex items-center justify-between mt-3">
-                            <div className="flex items-center border border-border rounded-full">
-                              <button
-                                onClick={() => handleQuantityChange(item.id, -1, item.quantity)}
-                                className="h-8 w-8 flex items-center justify-center rounded-full hover:bg-muted transition-colors"
-                                aria-label="Decrease quantity"
-                              >
-                                <Minus className="w-3 h-3" />
-                              </button>
-                              <span className="w-8 text-center">{item.quantity}</span>
-                              <button
-                                onClick={() => handleQuantityChange(item.id, 1, item.quantity)}
-                                className="h-8 w-8 flex items-center justify-center rounded-full hover:bg-muted transition-colors"
-                                aria-label="Increase quantity"
-                              >
-                                <Plus className="w-3 h-3" />
-                              </button>
+                          <div className="flex-1">
+                            <div className="flex justify-between">
+                              <h3 className="font-medium">{item.name}</h3>
+                              {isSupportedCountry ? (
+                                <p className="font-medium">${(item.price * item.quantity).toFixed(2)}</p>
+                              ) : (
+                                <p className="text-sm text-muted-foreground">Contact us for pricing</p>
+                              )}
                             </div>
 
-                            <button
-                              onClick={() => removeItem(item.id)}
-                              className="text-destructive hover:text-destructive/70 transition-colors"
-                              aria-label="Remove item"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
+                            {(item.size || item.color) && (
+                              <p className="text-sm text-muted-foreground mt-1">
+                                {item.size && `Size: ${item.size}`}
+                                {item.size && item.color && " | "}
+                                {item.color && `Color: ${item.color}`}
+                              </p>
+                            )}
+
+                            <div className="flex items-center justify-between mt-3">
+                              <div className="flex items-center border border-border rounded-full">
+                                <button
+                                  onClick={() => handleQuantityChange(item.id, -1, item.quantity)}
+                                  className="h-8 w-8 flex items-center justify-center rounded-full hover:bg-muted transition-colors"
+                                  aria-label="Decrease quantity"
+                                >
+                                  <Minus className="w-3 h-3" />
+                                </button>
+                                <span className="w-8 text-center">{item.quantity}</span>
+                                <button
+                                  onClick={() => handleQuantityChange(item.id, 1, item.quantity)}
+                                  className="h-8 w-8 flex items-center justify-center rounded-full hover:bg-muted transition-colors"
+                                  aria-label="Increase quantity"
+                                >
+                                  <Plus className="w-3 h-3" />
+                                </button>
+                              </div>
+
+                              <button
+                                onClick={() => removeItem(item.id)}
+                                className="text-destructive hover:text-destructive/70 transition-colors"
+                                aria-label="Remove item"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
                 </div>
               </div>
 
               <div className="lg:col-span-1">
-                <div className="bg-card rounded-3xl shadow-sm overflow-hidden sticky top-24">
-                  <div className="p-6 border-b border-border">
-                    <h2 className="font-medium">Order Summary</h2>
-                  </div>
-
-                  <div className="p-6 space-y-6">
+                <div className="bg-white rounded-lg shadow-sm border border-border p-6">
+                  <h2 className="text-lg font-medium mb-4">Order Summary</h2>
+                  <div className="space-y-4">
                     <div className="space-y-4">
                       <h3 className="font-medium">Shipping Address</h3>
                       <div className="space-y-3">
@@ -337,47 +334,48 @@ export default function CartPage() {
 
                     <Separator />
 
-                    <div className="space-y-4">
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Subtotal</span>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Subtotal</span>
+                      {isSupportedCountry ? (
                         <span>${totalPrice.toFixed(2)}</span>
-                      </div>
-
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Shipping</span>
-                        <span>Free</span>
-                      </div>
-
-                      <Separator />
-
-                      <div className="flex justify-between font-medium">
-                        <span>Total</span>
-                        <span>${totalPrice.toFixed(2)}</span>
-                      </div>
-
-                      <Button
-                        className="w-full rounded-full mt-4"
-                        onClick={handleCheckout}
-                        disabled={loading}
-                      >
-                        {loading ? (
-                          <span className="flex items-center">
-                            <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"></div>
-                            Processing...
-                          </span>
-                        ) : (
-                          <span className="flex items-center">
-                            <CreditCard className="w-4 h-4 mr-2" />
-                            Checkout
-                          </span>
-                        )}
-                      </Button>
-
-                      <div className="text-xs text-center text-muted-foreground mt-4">
-                        <p>Secure checkout powered by Stripe</p>
-                        <p className="mt-2">100-day money-back guarantee • Free shipping on all orders</p>
-                      </div>
+                      ) : (
+                        <span className="text-sm text-muted-foreground">Contact us for pricing</span>
+                      )}
                     </div>
+
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Shipping</span>
+                      <span>Free</span>
+                    </div>
+
+                    <Separator />
+
+                    <div className="flex justify-between font-medium">
+                      <span>Total</span>
+                      {isSupportedCountry ? (
+                        <span>${totalPrice.toFixed(2)}</span>
+                      ) : (
+                        <span className="text-sm text-muted-foreground">Contact us for pricing</span>
+                      )}
+                    </div>
+
+                    <Button
+                      className="w-full rounded-full mt-4"
+                      onClick={handleCheckout}
+                      disabled={loading || !isSupportedCountry}
+                    >
+                      {loading ? (
+                        <span className="flex items-center">
+                          <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"></div>
+                          Processing...
+                        </span>
+                      ) : (
+                        <span className="flex items-center">
+                          <CreditCard className="w-4 h-4 mr-2" />
+                          {isSupportedCountry ? 'Checkout' : 'Shopping not available'}
+                        </span>
+                      )}
+                    </Button>
                   </div>
                 </div>
               </div>
@@ -385,7 +383,6 @@ export default function CartPage() {
           )}
         </div>
       </main>
-
       <SiteFooter />
     </div>
   );

@@ -6,11 +6,14 @@ import { SiteFooter } from "@/components/site-footer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Product, Category } from '@/lib/supabase'
+import { Product, Category, supabase } from '@/lib/supabase'
 import Link from "next/link";
 import Image from "next/image";
 import { ShoppingCart } from 'lucide-react'
 import { Loading } from "@/components/ui/loading"
+
+import { getCategoriesQuery, getProductsQuery } from '@/lib/country';
+import { useUserCountry } from '@/lib/useCountry';
 
 export default function ShopPage() {
   const [products, setProducts] = useState<Product[]>([])
@@ -18,16 +21,21 @@ export default function ShopPage() {
   const [loading, setLoading] = useState(true)
   const [selectedCategory, setSelectedCategory] = useState('all')
   const [groupedProducts, setGroupedProducts] = useState<{ [key: string]: Product[] }>({})
+  const { countryCode } = useUserCountry()
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Fetch products
-        const productsResponse = await fetch('/api/products')
-        const productsData = await productsResponse.json()
-        
-        if (productsResponse.ok && Array.isArray(productsData)) {
+        // Fetch products using getProductsQuery
+        const { data: productsData, error: productsError } = await getProductsQuery(supabase, countryCode || '')
+  
+        if (productsError) {
+          console.error('Products API error:', productsError)
+          setProducts([])
+          setGroupedProducts({})
+        } else if (Array.isArray(productsData)) {
           setProducts(productsData)
+  
           // Group products by group_id
           const grouped = productsData.reduce((acc: { [key: string]: Product[] }, product) => {
             const groupId = product.group_id || product.id
@@ -39,19 +47,21 @@ export default function ShopPage() {
           }, {})
           setGroupedProducts(grouped)
         } else {
-          console.error('Products API error:', productsData)
+          console.error('Products data format error:', productsData)
           setProducts([])
           setGroupedProducts({})
         }
-
-        // Fetch categories
-        const categoriesResponse = await fetch('/api/categories')
-        const categoriesData = await categoriesResponse.json()
-        
-        if (categoriesResponse.ok && Array.isArray(categoriesData)) {
-          setCategories(categoriesData)
+  
+        // Fetch categories from Supabase
+        const categoriesResponse = await getCategoriesQuery(supabase, countryCode || '')
+  
+        if (categoriesResponse.error) {
+          console.error('Categories API error:', categoriesResponse.error)
+          setCategories([])
+        } else if (Array.isArray(categoriesResponse.data)) {
+          setCategories(categoriesResponse.data)
         } else {
-          console.error('Categories API error:', categoriesData)
+          console.warn('Categories response format unexpected:', categoriesResponse)
           setCategories([])
         }
       } catch (error) {
@@ -60,10 +70,10 @@ export default function ShopPage() {
         setLoading(false)
       }
     }
-
+  
     fetchData()
-  }, [])
-
+  }, [countryCode])
+  
   const filteredGroupedProducts = selectedCategory === 'all'
     ? groupedProducts
     : Object.fromEntries(
@@ -146,6 +156,7 @@ export default function ShopPage() {
 
 function ProductCard({ product, colorVariants }: { product: Product, colorVariants: Product[] }) {
   const [selectedVariant, setSelectedVariant] = useState(product)
+  const { isSupportedCountry } = useUserCountry();
 
   return (
     <div className="group relative">
@@ -169,7 +180,6 @@ function ProductCard({ product, colorVariants }: { product: Product, colorVarian
           </div>
           <CardContent className="p-4">
             <h3 className="font-medium text-base truncate">{selectedVariant.title}</h3>
-            <p className="text-lg font-semibold mt-1">${selectedVariant.price.toFixed(2)}</p>
             
             {/* Color Variants */}
             {colorVariants.length > 1 && (

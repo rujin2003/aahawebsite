@@ -20,12 +20,16 @@ import { Product } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { use } from 'react';
 import { Loading } from "@/components/ui/loading"
+import { useUserCountry } from '@/lib/useCountry';
+import { useRouter } from 'next/navigation';
 
 
 export default function ProductPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
+  const { isSupportedCountry, countryCode } = useUserCountry();
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isOrdering, setIsOrdering] = useState(false);
   const [activeImage, setActiveImage] = useState(0);
   const [selectedSize, setSelectedSize] = useState<string | undefined>();
   const [selectedColor, setSelectedColor] = useState<string | undefined>();
@@ -33,6 +37,13 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
   const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
   const [colorVariants, setColorVariants] = useState<Product[]>([]);
   const fallbackImage = "/placeholder.png";
+  const router = useRouter();
+
+  // Utility function to validate UUID
+  const isValidUUID = (uuid: string) => {
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    return uuidRegex.test(uuid);
+  };
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -126,6 +137,66 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
     }
   };
 
+  const handleOrder = async () => {
+    setIsOrdering(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        toast.error("Please sign in to place an order");
+        router.push("/signin");
+        return;
+      }
+
+      // Validate product ID
+      if (!isValidUUID(product!.id)) {
+        toast.error("Invalid product ID format");
+        return;
+      }
+
+      // Prepare order payload
+      const orderPayload = {
+        user_id: user.id,
+        status: 'pending',
+        total_amount: product!.price * quantity,
+        shipping_address: user.user_metadata.address || '',
+        country_code: countryCode,
+        items: [
+          {
+            product_id: product!.id,
+            quantity: quantity,
+            price: product!.price,
+            product_name: product!.title,
+            product_image: product!.images[0],
+          }
+        ]
+      };
+      console.log('Order Payload:', JSON.stringify(orderPayload, null, 2));
+
+      // Create order
+      const { data: order, error: orderError } = await supabase
+        .from('orders')
+        .insert([
+          orderPayload
+        ])
+        .select()
+        .single();
+
+      if (orderError) {
+        console.error('Order placement error:', orderError, 'Payload:', orderPayload);
+        throw orderError;
+      }
+
+      // Redirect to checkout page with order ID
+      router.push(`/checkout?orderId=${order.id}`);
+    } catch (error: unknown) {
+      console.error('Order placement exception:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to place order');
+    } finally {
+      setIsOrdering(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex min-h-screen flex-col pt-20">
@@ -212,7 +283,11 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
             <div className="space-y-8 animate-fade-left">
               <div>
                 <h1 className="text-3xl font-medium mb-2">{product.title}</h1>
-                <p className="text-3xl font-medium text-primary">${product.price.toFixed(2)}</p>
+                {isSupportedCountry ? (
+                  <p className="text-3xl font-medium text-primary">${product.price.toFixed(2)}</p>
+                ) : (
+                  <p className="text-lg text-muted-foreground">Contact us for pricing</p>
+                )}
               </div>
 
               <p className="text-muted-foreground">{product.description}</p>
