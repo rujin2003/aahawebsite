@@ -12,10 +12,11 @@ export async function GET(request: NextRequest) {
       .order('created_at', { ascending: false })
 
     if (countryCode) {
-      query = query.or(`country_codes.cs.{${countryCode}},country_codes.is.null`)
+      // Correct way to filter array column with text
+      query = query.filter('country_codes', 'cs', `{${countryCode}}`)
     } else {
-      // If no countryCode is provided, fetch products with null country_codes (available everywhere)
-      query = query.filter('country_codes', 'is', null)
+      // Fallback: global products with null country_codes
+      query = query.is('country_codes', null)
     }
 
     const { data: productsDataFromSupabase, error } = await query
@@ -25,15 +26,16 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Error fetching products', details: error.message }, { status: 500 })
     }
 
-    // Defensive check for unexpected object type from Supabase
-    if (productsDataFromSupabase && typeof productsDataFromSupabase === 'object' && !Array.isArray(productsDataFromSupabase)) {
-      console.warn('Supabase returned an object for products select query, expected array or null. Data:', productsDataFromSupabase);
-      // If it's an empty object {}, treat as no data.
+    if (
+      productsDataFromSupabase &&
+      typeof productsDataFromSupabase === 'object' &&
+      !Array.isArray(productsDataFromSupabase)
+    ) {
+      console.warn('Supabase returned an object, expected array. Data:', productsDataFromSupabase)
       if (Object.keys(productsDataFromSupabase).length === 0) {
-        return NextResponse.json([]);
+        return NextResponse.json([])
       }
-      // Otherwise, it's an unexpected format
-      return NextResponse.json({ error: 'Unexpected data format from database for products' }, { status: 500 });
+      return NextResponse.json({ error: 'Unexpected data format from database for products' }, { status: 500 })
     }
 
     return NextResponse.json(productsDataFromSupabase || [])
@@ -42,7 +44,6 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
-
 export async function POST(request: Request) {
   try {
     const body = await request.json()

@@ -9,9 +9,8 @@ export async function getUserCountry(): Promise<string> {
   try {
     const response = await fetch('https://api.country.is/');
     const data = await response.json();
-    return data.country;
+    return "IN";
   } catch (error) {
-    console.error('Error fetching country:', error);
     return 'US'; 
   }
 }
@@ -39,25 +38,22 @@ export function getCategoriesQuery(supabase: any, userCountryCode: string) {
 }
 
 // Function to get the appropriate query for products based on user's country
-export function getProductsQuery(supabase: any, userCountryCode: string) {
-  console.log('Building products query for country:', userCountryCode);
+export async function getProductsQuery(supabase: any, countryCode: string) {
+ 
   
-  const isSupportedCountry = SUPPORTED_COUNTRIES.includes(userCountryCode as SupportedCountry);
-  
-  let query = supabase
+  const query = supabase
     .from('products')
     .select('*')
-    .order('created_at', { ascending: false });
+    .eq('is_active', true)
+    .order('created_at', { ascending: false })
 
-  if (isSupportedCountry) {
-    console.log('User is from supported country, filtering products by country_codes');
-    query = query.contains('country_codes', [userCountryCode]);
+  if (countryCode) {
+    query.eq('country_code', countryCode)
   } else {
-    console.log('User is from non-supported country, fetching products with null country_codes');
-    // query = query.is('country_codes', null);
+    query.is('country_code', null)
   }
 
-  return query;
+  return query
 }
 
 // Function to check if a product/category is available in user's country
