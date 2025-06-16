@@ -9,13 +9,24 @@ export function useUserCountry() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    getUserCountry().then(code => {
-      setCountryCode(code);
-      setIsLoading(false);
-    });
+    const fetchCountry = async () => {
+      try {
+        const code = await getUserCountry();
+        console.log('Fetched country code:', code);
+        setCountryCode(code);
+      } catch (error) {
+        console.error('Error fetching country:', error);
+        setCountryCode('US');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchCountry();
   }, []);
 
   const isSupportedCountry = SUPPORTED_COUNTRIES.includes(countryCode as SupportedCountry);
+  console.log('Country check:', { countryCode, isSupportedCountry, supportedCountries: SUPPORTED_COUNTRIES });
 
   return {
     countryCode,

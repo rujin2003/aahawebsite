@@ -5,6 +5,7 @@ import { Button, ButtonProps } from '@/components/ui/button';
 import { ShoppingCart } from 'lucide-react';
 import { useCart } from './cart-provider';
 import { toast } from 'sonner';
+import { useUserCountry } from '@/lib/useCountry';
 
 interface AddToCartButtonProps extends Omit<ButtonProps, 'onClick'> {
   product: {
@@ -34,10 +35,16 @@ export default function AddToCartButton({
 }: AddToCartButtonProps) {
   const [isAdding, setIsAdding] = useState(false);
   const { addItem } = useCart();
+  const { isSupportedCountry } = useUserCountry();
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+
+    if (!isSupportedCountry) {
+      toast.error("Shopping is not available in your country");
+      return;
+    }
 
     if (!productSize) {
       toast.error("Please select a size");
@@ -72,7 +79,7 @@ export default function AddToCartButton({
       <Button
         size="icon"
         onClick={handleAddToCart}
-        disabled={isAdding || disabled}
+        disabled={isAdding || disabled || !isSupportedCountry}
         {...props}
       >
         {isAdding ? (
@@ -88,7 +95,7 @@ export default function AddToCartButton({
   return (
     <Button
       onClick={handleAddToCart}
-      disabled={isAdding || disabled}
+      disabled={isAdding || disabled || !isSupportedCountry}
       {...props}
     >
       {isAdding ? (
@@ -96,6 +103,8 @@ export default function AddToCartButton({
           <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
           Adding...
         </span>
+      ) : !isSupportedCountry ? (
+        "Shopping not available"
       ) : disabled ? (
         "Select Size"
       ) : (

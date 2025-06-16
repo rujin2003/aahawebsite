@@ -18,10 +18,12 @@ import { Label } from "@/components/ui/label";
 import { useUserCountry } from '@/lib/useCountry';
 
 export default function CartPage() {
-  const { items, removeItem, updateQuantity, totalPrice, clearCart } = useCart();
+  const { items, removeItem, updateQuantity, totalPrice, clearCart, promoCode, promoDiscount, applyPromoCode, removePromoCode } = useCart();
   const { isSupportedCountry, countryCode } = useUserCountry();
   const [loading, setLoading] = useState(false);
   const [orderCompleted, setOrderCompleted] = useState(false);
+  const [promoCodeInput, setPromoCodeInput] = useState('');
+  const [applyingPromo, setApplyingPromo] = useState(false);
   const [shippingAddress, setShippingAddress] = useState({
     street: '',
     city: '',
@@ -78,6 +80,8 @@ export default function CartPage() {
         total_amount: totalPrice,
         shipping_address: formattedAddress,
         country_code: countryCode,
+        promo_code: promoCode,
+        discount_amount: promoDiscount,
         items: items.map(item => {
           const product = products.find(p => p.id === item.id);
           if (!product) {
@@ -103,6 +107,8 @@ export default function CartPage() {
       console.log('User ID:', user.id);
       console.log('Total Amount:', totalPrice);
       console.log('Shipping Address:', formattedAddress);
+      console.log('Promo Code:', promoCode);
+      console.log('Discount Amount:', promoDiscount);
       console.log('Order Items:', JSON.stringify(orderPayload.items, null, 2));
       console.log('Full Order Payload:', JSON.stringify(orderPayload, null, 2));
       console.log('===================');
@@ -131,6 +137,23 @@ export default function CartPage() {
       console.error('Order placement exception:', error);
       toast.error(error instanceof Error ? error.message : 'Failed to place order');
       setLoading(false);
+    }
+  };
+
+  const handleApplyPromoCode = async () => {
+    if (!promoCodeInput.trim()) {
+      toast.error('Please enter a promo code');
+      return;
+    }
+
+    setApplyingPromo(true);
+    try {
+      const success = await applyPromoCode(promoCodeInput.trim());
+      if (success) {
+        setPromoCodeInput('');
+      }
+    } finally {
+      setApplyingPromo(false);
     }
   };
 
@@ -183,7 +206,7 @@ export default function CartPage() {
     <div className="min-h-screen bg-background">
       <SiteHeader />
       <main className="container py-8">
-        <div className="max-w-7xl mx-auto">
+        <div className="max-w-7xl mx-auto pt-32">
           {items.length === 0 ? (
             <div className="bg-muted rounded-3xl p-12 text-center">
               <h2 className="text-2xl font-medium mb-4">Your cart is empty</h2>
@@ -273,6 +296,45 @@ export default function CartPage() {
                   <h2 className="text-lg font-medium mb-4">Order Summary</h2>
                   <div className="space-y-4">
                     <div className="space-y-4">
+                      <h3 className="font-medium">Promo Code</h3>
+                      <div className="flex gap-2">
+                        <Input
+                          value={promoCodeInput}
+                          onChange={(e) => setPromoCodeInput(e.target.value)}
+                          placeholder="Enter promo code"
+                          disabled={!!promoCode || applyingPromo}
+                        />
+                        {promoCode ? (
+                          <Button
+                            variant="outline"
+                            onClick={removePromoCode}
+                            disabled={applyingPromo}
+                          >
+                            Remove
+                          </Button>
+                        ) : (
+                          <Button
+                            onClick={handleApplyPromoCode}
+                            disabled={applyingPromo}
+                          >
+                            {applyingPromo ? (
+                              <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                            ) : (
+                              'Apply'
+                            )}
+                          </Button>
+                        )}
+                      </div>
+                      {promoCode && (
+                        <p className="text-sm text-green-600">
+                          Promo code applied: {promoCode} (-${promoDiscount.toFixed(2)})
+                        </p>
+                      )}
+                    </div>
+
+                    <Separator />
+
+                    <div className="space-y-4">
                       <h3 className="font-medium">Shipping Address</h3>
                       <div className="space-y-3">
                         <div>
@@ -337,11 +399,18 @@ export default function CartPage() {
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Subtotal</span>
                       {isSupportedCountry ? (
-                        <span>${totalPrice.toFixed(2)}</span>
+                        <span>${(totalPrice + promoDiscount).toFixed(2)}</span>
                       ) : (
                         <span className="text-sm text-muted-foreground">Contact us for pricing</span>
                       )}
                     </div>
+
+                    {promoDiscount > 0 && (
+                      <div className="flex justify-between text-green-600">
+                        <span>Discount</span>
+                        <span>-${promoDiscount.toFixed(2)}</span>
+                      </div>
+                    )}
 
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Shipping</span>

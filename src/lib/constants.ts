@@ -1,0 +1,1 @@
+export const SUPPORTED_COUNTRIES = ['IN', 'NZ', 'CAN'] as const; 

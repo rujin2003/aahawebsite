@@ -11,6 +11,7 @@ export async function getUserCountry(): Promise<string> {
     const data = await response.json();
     return "IN";
   } catch (error) {
+    console.error('Error fetching country:', error);
     return 'US'; 
   }
 }
@@ -39,22 +40,25 @@ export function getCategoriesQuery(supabase: any, userCountryCode: string) {
 
 // Function to get the appropriate query for products based on user's country
 export async function getProductsQuery(supabase: any, countryCode: string) {
- 
-  
-  const query = supabase
+  const isSupported = SUPPORTED_COUNTRIES.includes(countryCode as SupportedCountry);
+
+
+  let query = supabase
     .from('products')
     .select('*')
-    .eq('is_active', true)
-    .order('created_at', { ascending: false })
+    .order('created_at', { ascending: false });
 
-  if (countryCode) {
-    query.eq('country_codes', countryCode)
+  if (isSupported) {
+    // Country is supported: show products matching that country
+    query = query.filter('country_codes', 'cs', `{${countryCode}}`);
   } else {
-    query.is('country_codes', null)
+    // Not supported: show global products
+    query = query.is('country_codes', null);
   }
 
-  return query
+  return query;
 }
+
 
 // Function to check if a product/category is available in user's country
 export function isAvailableInCountry(itemCountryCodes: string[] | null, userCountryCode: string): boolean {

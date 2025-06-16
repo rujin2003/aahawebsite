@@ -57,7 +57,7 @@ export default function CartDropdown() {
       {isOpen && (
         <div
           ref={dropdownRef}
-          className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border border-border z-50"
+          className="absolute right-0 mt-4 w-80 bg-white rounded-lg shadow-lg border border-border z-50 transform translate-y-4 transition-transform duration-200"
         >
           {items.length === 0 ? (
             <div className="p-4 text-center text-muted-foreground">

@@ -183,20 +183,8 @@ export function ProductSlider({ title, products: initialProducts, categoryId, co
 }
 
 export function ProductCard({ product }: { product: Product }) {
-  const { addItem, isCartEnabled } = useCart();
-  const { isSupportedCountry } = useUserCountry();
   const fallbackImage = "/placeholder.png";
   const imageUrl = product.images?.[0] || fallbackImage;
-
-  const handleAddToCart = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (!isCartEnabled) {
-      toast.error('Shopping is not available in your country');
-      return;
-    }
-    addItem(product, 1);
-  };
 
   return (
     <Card className="group relative overflow-hidden">
@@ -214,26 +202,6 @@ export function ProductCard({ product }: { product: Product }) {
                 target.src = fallbackImage;
               }}
             />
-          </div>
-          <div className="absolute bottom-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-            {isSupportedCountry ? (
-              <Button
-                onClick={handleAddToCart}
-                className="w-10 h-10 flex items-center justify-center rounded-full bg-primary text-white hover:bg-primary/90"
-              >
-                <ShoppingCart className="w-5 h-5" />
-              </Button>
-            ) : (
-              <Button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  toast.error('Shopping is not available in your country');
-                }}
-                className="w-10 h-10 flex items-center justify-center rounded-full bg-primary text-white hover:bg-primary/90"
-              >
-                <ShoppingCart className="w-5 h-5" />
-              </Button>
-            )}
           </div>
         </div>
         <div className="p-4">

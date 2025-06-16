@@ -1,21 +1,24 @@
 import { NextResponse, NextRequest } from 'next/server'
 import { supabase } from '@/lib/supabase'
+import { SUPPORTED_COUNTRIES } from '@/lib/constants'
+
+type SupportedCountry = (typeof SUPPORTED_COUNTRIES)[number];
 
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams
     const countryCode = searchParams.get('countryCode')
+    const isSupported = SUPPORTED_COUNTRIES.includes(countryCode as SupportedCountry)
 
     let query = supabase
       .from('products')
       .select('*')
       .order('created_at', { ascending: false })
 
-    if (countryCode) {
-      // Correct way to filter array column with text
+    if (isSupported) {
+      // Proper filtering using PostgreSQL array literal
       query = query.filter('country_codes', 'cs', `{${countryCode}}`)
     } else {
-      // Fallback: global products with null country_codes
       query = query.is('country_codes', null)
     }
 
@@ -31,7 +34,6 @@ export async function GET(request: NextRequest) {
       typeof productsDataFromSupabase === 'object' &&
       !Array.isArray(productsDataFromSupabase)
     ) {
-      console.warn('Supabase returned an object, expected array. Data:', productsDataFromSupabase)
       if (Object.keys(productsDataFromSupabase).length === 0) {
         return NextResponse.json([])
       }
@@ -44,6 +46,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
+
 export async function POST(request: Request) {
   try {
     const body = await request.json()
@@ -56,7 +59,9 @@ export async function POST(request: Request) {
 
     return NextResponse.json(data[0])
   } catch (error) {
+    console.error('Product insert error:', error)
     return NextResponse.json({ error: 'Error creating product' }, { status: 500 })
   }
-} 
-export const runtime = 'edge';
+}
+
+export const runtime = 'edge'
