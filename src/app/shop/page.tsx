@@ -28,14 +28,14 @@ export default function ShopPage() {
       try {
         // Fetch products using getProductsQuery
         const { data: productsData, error: productsError } = await getProductsQuery(supabase, countryCode || '')
-  
+
         if (productsError) {
           console.error('Products API error:', productsError)
           setProducts([])
           setGroupedProducts({})
         } else if (Array.isArray(productsData)) {
           setProducts(productsData)
-  
+
           // Group products by group_id
           const grouped = productsData.reduce((acc: { [key: string]: Product[] }, product) => {
             const groupId = product.group_id || product.id
@@ -51,10 +51,10 @@ export default function ShopPage() {
           setProducts([])
           setGroupedProducts({})
         }
-  
+
         // Fetch categories from Supabase
         const categoriesResponse = await getCategoriesQuery(supabase, countryCode || '')
-  
+
         if (categoriesResponse.error) {
           console.error('Categories API error:', categoriesResponse.error)
           setCategories([])
@@ -70,17 +70,17 @@ export default function ShopPage() {
         setLoading(false)
       }
     }
-  
+
     fetchData()
   }, [countryCode])
-  
+
   const filteredGroupedProducts = selectedCategory === 'all'
     ? groupedProducts
     : Object.fromEntries(
-        Object.entries(groupedProducts).filter(([_, products]) => 
-          products[0].category_id === selectedCategory
-        )
+      Object.entries(groupedProducts).filter(([_, products]) =>
+        products[0].category_id === selectedCategory
       )
+    )
 
   if (loading) {
     return (
@@ -120,27 +120,33 @@ export default function ShopPage() {
             </div>
           </div>
 
-          <Tabs defaultValue="all" value={selectedCategory} onValueChange={setSelectedCategory} className="mb-12">
-            <div className="flex justify-center mb-8">
-              <TabsList className="bg-muted/50 p-1 rounded-full">
-                <TabsTrigger value="all" className="rounded-full">All Products</TabsTrigger>
+          <Tabs
+            defaultValue="all"
+            value={selectedCategory}
+            onValueChange={setSelectedCategory}
+            className="mb-12 px-4"
+          >
+            <div className="flex justify-start mb-6 overflow-x-auto scroll-pl-4 scrollbar-hide">
+              <TabsList className="bg-muted/50 p-1 rounded-full flex gap-2 min-w-max pl-4">
+                <TabsTrigger value="all" className="rounded-full whitespace-nowrap">
+                  All Products
+                </TabsTrigger>
                 {categories.map((category) => (
-                  <TabsTrigger 
-                    key={category.id} 
-                    value={category.id} 
-                    className="rounded-full"
+                  <TabsTrigger
+                    key={category.id}
+                    value={category.id}
+                    className="rounded-full whitespace-nowrap"
                   >
                     {category.name}
                   </TabsTrigger>
                 ))}
               </TabsList>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            </div>s
+            <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
               {Object.entries(filteredGroupedProducts).map(([groupId, products]) => (
-                <ProductCard 
-                  key={groupId} 
-                  product={products[0]} 
+                <ProductCard
+                  key={groupId}
+                  product={products[0]}
                   colorVariants={products}
                 />
               ))}
@@ -148,7 +154,6 @@ export default function ShopPage() {
           </Tabs>
         </div>
       </main>
-
       <SiteFooter />
     </div>
   );
@@ -180,7 +185,7 @@ function ProductCard({ product, colorVariants }: { product: Product, colorVarian
           </div>
           <CardContent className="p-4">
             <h3 className="font-medium text-base truncate">{selectedVariant.title}</h3>
-            
+
             {/* Color Variants */}
             {colorVariants.length > 1 && (
               <div className="mt-3 flex gap-1.5">
@@ -191,11 +196,10 @@ function ProductCard({ product, colorVariants }: { product: Product, colorVarian
                       e.preventDefault()
                       setSelectedVariant(variant)
                     }}
-                    className={`w-4 h-4 rounded-full border-2 transition-all ${
-                      selectedVariant.id === variant.id
-                        ? 'border-primary scale-110'
-                        : 'border-transparent hover:border-gray-300'
-                    }`}
+                    className={`w-4 h-4 rounded-full border-2 transition-all ${selectedVariant.id === variant.id
+                      ? 'border-primary scale-110'
+                      : 'border-transparent hover:border-gray-300'
+                      }`}
                     style={{ backgroundColor: variant.color }}
                     title={variant.color}
                   />
