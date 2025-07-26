@@ -63,6 +63,7 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
         }
     
         setProduct(data);
+        setQuantity(data.minimum_quantity)
         setSelectedSize(data.size);
         setSelectedColor(data.color);
     
@@ -350,14 +351,14 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
                     <div className="flex items-center border rounded-full">
                       <button
                         onClick={decrementQuantity}
-                        disabled={quantity <= 1}
+                        disabled={quantity <= product.minimum_quantity}
                         className="p-2 hover:bg-muted rounded-l-full disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         <Minus className="w-4 h-4" />
                       </button>
                       <input
                         type="number"
-                        min="1"
+                        min={product.minimum_quantity || 1}
                         max={selectedSize ? product.size_stock[selectedSize] : 1}
                         value={quantity}
                         onChange={(e) => handleQuantityChange(parseInt(e.target.value) || 1)}
