@@ -9,7 +9,7 @@ import { ArrowLeft, ArrowRight, ShoppingCart } from "lucide-react";
 import { Product } from '@/lib/supabase'
 import { supabase } from '@/lib/supabase';
 import { useCart } from '@/contexts/CartContext';
-import { useUserCountry } from '@/lib/useCountry';
+import { useCountryStore } from "@/lib/countryStore";
 import { getCategoriesQuery, getProductsQuery } from '@/lib/country';
 import { toast } from 'sonner';
 
@@ -28,7 +28,7 @@ export function ProductSlider({ title, products: initialProducts, categoryId, co
   const [visibleProducts, setVisibleProducts] = useState(3);
   const [loading, setLoading] = useState(!initialProducts);
   const { addItem, isCartEnabled } = useCart();
-  const { isSupportedCountry } = useUserCountry();
+  const isSupportedCountry = useCountryStore(s=>s.isSupportedCountry)
 
   useEffect(() => {
     const fetchProducts = async () => {

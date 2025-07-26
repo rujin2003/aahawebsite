@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect } from 'react';
-import { useUserCountry } from '@/lib/useCountry';
+import { useCountryStore } from '@/lib/countryStore';
 import { Product } from '@/lib/supabase';
 import { toast } from 'sonner';
 
@@ -34,7 +34,7 @@ const CartContext = createContext<CartContextType>({
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
-  const { isSupportedCountry } = useUserCountry();
+  const isSupportedCountry = useCountryStore(s=>s.isSupportedCountry)
 
   // Load cart from localStorage on mount
   useEffect(() => {

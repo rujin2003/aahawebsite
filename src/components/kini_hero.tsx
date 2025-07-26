@@ -2,10 +2,10 @@
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { useUserCountry } from '@/lib/useCountry';
+import { useCountryStore } from "@/lib/countryStore";
 
 export default function KiniHeroBanner() {
-  const { isSupportedCountry } = useUserCountry();
+  const isSupportedCountry = useCountryStore(s=>s.isSupportedCountry)
   
   return (
     <div className="relative w-full h-[600px] overflow-hidden">

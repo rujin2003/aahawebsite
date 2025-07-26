@@ -5,7 +5,7 @@ import { Button, ButtonProps } from '@/components/ui/button';
 import { ShoppingCart } from 'lucide-react';
 import { useCart } from './cart-provider';
 import { toast } from 'sonner';
-import { useUserCountry } from '@/lib/useCountry';
+import { useCountryStore } from '@/lib/countryStore';
 
 interface AddToCartButtonProps extends Omit<ButtonProps, 'onClick'> {
   product: {
@@ -35,7 +35,7 @@ export default function AddToCartButton({
 }: AddToCartButtonProps) {
   const [isAdding, setIsAdding] = useState(false);
   const { addItem } = useCart();
-  const { isSupportedCountry } = useUserCountry();
+  const isSupportedCountry = useCountryStore(s => s.isSupportedCountry);
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();

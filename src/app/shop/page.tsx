@@ -13,7 +13,7 @@ import { ShoppingCart } from 'lucide-react'
 import { Loading } from "@/components/ui/loading"
 
 import { getCategoriesQuery, getProductsQuery } from '@/lib/country';
-import { useUserCountry } from '@/lib/useCountry';
+import { useCountryStore } from '@/lib/countryStore';
 
 export default function ShopPage() {
   const [products, setProducts] = useState<Product[]>([])
@@ -21,10 +21,16 @@ export default function ShopPage() {
   const [loading, setLoading] = useState(true)
   const [selectedCategory, setSelectedCategory] = useState('all')
   const [groupedProducts, setGroupedProducts] = useState<{ [key: string]: Product[] }>({})
-  const { countryCode } = useUserCountry()
+  const countryCode = useCountryStore(s => s.countryCode);
+  const getCountry = useCountryStore(s => s.getCountry);
+
+  useEffect(() => {
+    getCountry();
+  }, [getCountry]);
 
   useEffect(() => {
     const fetchData = async () => {
+      if (!countryCode) return;
       try {
         // Fetch products using getProductsQuery
         const { data: productsData, error: productsError } = await getProductsQuery(supabase, countryCode || '')
@@ -73,7 +79,6 @@ export default function ShopPage() {
 
     fetchData()
   }, [countryCode])
-
   const filteredGroupedProducts = selectedCategory === 'all'
     ? groupedProducts
     : Object.fromEntries(
@@ -127,7 +132,7 @@ export default function ShopPage() {
             className="mb-12 px-4"
           >
             <div className="flex justify-start mb-6 overflow-x-auto scroll-pl-4 scrollbar-hide">
-              <TabsList className="bg-muted/50 p-1 rounded-full flex gap-2 min-w-max pl-4">
+              <TabsList className="bg-muted/50 p-1 rounded-full flex gap-2 min-w-max">
                 <TabsTrigger value="all" className="rounded-full whitespace-nowrap">
                   All Products
                 </TabsTrigger>
@@ -161,7 +166,7 @@ export default function ShopPage() {
 
 function ProductCard({ product, colorVariants }: { product: Product, colorVariants: Product[] }) {
   const [selectedVariant, setSelectedVariant] = useState(product)
-  const { isSupportedCountry } = useUserCountry();
+  const isSupportedCountry = useCountryStore(s => s.isSupportedCountry);
 
   return (
     <div className="group relative">

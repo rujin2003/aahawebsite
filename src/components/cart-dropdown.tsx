@@ -7,11 +7,11 @@ import { ShoppingCart, X, Plus, Minus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useCart } from "./cart-provider";
 import { cn } from "@/lib/utils";
-import { useUserCountry } from '@/lib/useCountry';
+import { useCountryStore } from "@/lib/countryStore";
 
 export default function CartDropdown() {
   const { items, removeItem, updateQuantity, totalPrice } = useCart();
-  const { isSupportedCountry } = useUserCountry();
+  const isSupportedCountry = useCountryStore(s=>s.isSupportedCountry)
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLDivElement>(null);

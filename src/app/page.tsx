@@ -18,8 +18,8 @@ import { Loading } from "@/components/ui/loading"
 import { supabase } from '@/lib/supabase';
 import { Product } from '@/lib/supabase';
 import { toast } from "sonner";
-import { useUserCountry } from '@/lib/useCountry';
 import { getCategoriesQuery, isAvailableInCountry } from '@/lib/country';
+import { useCountryStore } from "@/lib/countryStore";
 
 import Categories from "./category";
 import MissionSection from "@/components/mission_gradient";
@@ -37,10 +37,14 @@ export default function Home() {
   const emailRef = useRef<HTMLInputElement>(null)
   const subjectRef = useRef<HTMLInputElement>(null)
   const messageRef = useRef<HTMLTextAreaElement>(null)
-  const { countryCode, isLoading: countryLoading, isSupportedCountry } = useUserCountry()
+  const countryCode = useCountryStore(s=>s.countryCode)
+  const isSupportedCountry = useCountryStore(s => s.isSupportedCountry)
+  const countryLoading = useCountryStore(s=>s.isLoading)
+
 
   useEffect(() => {
     const fetchData = async () => {
+      if(!countryCode) return;
       try {
         // Fetch categories
         const categoriesResponse = await getCategoriesQuery(supabase, countryCode || '')

@@ -20,13 +20,14 @@ import { Product } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { use } from 'react';
 import { Loading } from "@/components/ui/loading"
-import { useUserCountry } from '@/lib/useCountry';
+import { useCountryStore } from '@/lib/countryStore';
 import { useRouter } from 'next/navigation';
 
 
 export default function ProductPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
-  const { isSupportedCountry, countryCode } = useUserCountry();
+  const isSupportedCountry = useCountryStore(s => s.isSupportedCountry);
+  const countryCode = useCountryStore(s => s.countryCode);
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const [isOrdering, setIsOrdering] = useState(false);

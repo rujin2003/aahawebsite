@@ -7,21 +7,22 @@ export type SupportedCountry = typeof SUPPORTED_COUNTRIES[number];
 // Function to get user's country code
 export async function getUserCountry(): Promise<string> {
   try {
-    const response = await fetch('https://api.country.is/');
-    const data = await response.json();
-    return "IN";
+    const res = await fetch('https://ipwho.is/');
+    const data = await res.json();
+    console.log(`Country Fetched: ${data.country_code}`);
+    return data.country_code || 'IN';
   } catch (error) {
     console.error('Error fetching country:', error);
-    return 'US'; 
+    return 'US';
   }
 }
 
 // Function to get the appropriate query for categories based on user's country
 export function getCategoriesQuery(supabase: any, userCountryCode: string) {
   console.log('Building query for country:', userCountryCode);
-  
+
   const isSupportedCountry = SUPPORTED_COUNTRIES.includes(userCountryCode as SupportedCountry);
-  
+
   let query = supabase
     .from('categories')
     .select('*')
