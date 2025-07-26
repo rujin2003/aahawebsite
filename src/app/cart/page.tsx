@@ -15,11 +15,12 @@ import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { Label } from "@/components/ui/label";
-import { useUserCountry } from '@/lib/useCountry';
+import { useCountryStore } from "@/lib/countryStore";
 
 export default function CartPage() {
   const { items, removeItem, updateQuantity, totalPrice, clearCart, promoCode, promoDiscount, applyPromoCode, removePromoCode } = useCart();
-  const { isSupportedCountry, countryCode } = useUserCountry();
+  const countryCode = useCountryStore(s=>s.countryCode)
+  const isSupportedCountry = useCountryStore(s=>s.isSupportedCountry)
   const [loading, setLoading] = useState(false);
   const [orderCompleted, setOrderCompleted] = useState(false);
   const [promoCodeInput, setPromoCodeInput] = useState('');

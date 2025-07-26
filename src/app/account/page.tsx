@@ -17,7 +17,7 @@ import { useRouter } from "next/navigation";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { Loading } from "@/components/ui/loading"
-import { useUserCountry } from '@/lib/useCountry';
+import { useCountryStore } from "@/lib/countryStore";
 
 export default function AccountPage() {
   const [user, setUser] = useState<User | null>(null);
@@ -30,7 +30,7 @@ export default function AccountPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isDeleting, setIsDeleting] = useState(false);
   const router = useRouter();
-  const { isSupportedCountry } = useUserCountry();
+  const isSupportedCountry = useCountryStore(s=>s.isSupportedCountry)
 
   useEffect(() => {
     const checkUser = async () => {
