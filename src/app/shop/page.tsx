@@ -79,6 +79,7 @@ export default function ShopPage() {
 
     fetchData()
   }, [countryCode])
+
   const filteredGroupedProducts = selectedCategory === 'all'
     ? groupedProducts
     : Object.fromEntries(
@@ -146,7 +147,7 @@ export default function ShopPage() {
                   </TabsTrigger>
                 ))}
               </TabsList>
-            </div>s
+            </div>
             <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
               {Object.entries(filteredGroupedProducts).map(([groupId, products]) => (
                 <ProductCard
@@ -170,47 +171,54 @@ function ProductCard({ product, colorVariants }: { product: Product, colorVarian
 
   return (
     <div className="group relative">
-      <Link href={`/shop/product/${selectedVariant.id}`} className="block">
-        <Card className="overflow-hidden border border-gray-200 rounded-2xl transition-all duration-300 group-hover:shadow-[0_4px_12px_rgba(0,0,0,0.08)] group-hover:-translate-y-1 bg-white">
+      <Link href={`/shop/product/${selectedVariant.id}`} className="block h-full">
+        <Card className="h-full flex flex-col justify-between overflow-hidden border border-gray-200 rounded-2xl transition-all duration-300 group-hover:shadow-[0_4px_12px_rgba(0,0,0,0.08)] group-hover:-translate-y-1 bg-white">
           <div className="relative p-4">
             <div className="aspect-square overflow-hidden bg-white flex items-center justify-center rounded-xl">
               <Image
-                src={selectedVariant.images[0]}
+                src={selectedVariant.images?.[0] || '/placeholder.png'}
                 alt={selectedVariant.title}
                 width={200}
                 height={200}
                 className="object-contain w-full h-full transition-transform group-hover:scale-105 duration-300 rounded-xl"
               />
             </div>
+
+            {/* Floating cart icon */}
             <div className="absolute bottom-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
               <button className="w-10 h-10 flex items-center justify-center rounded-full bg-primary text-white hover:bg-primary/90">
                 <ShoppingCart className="w-5 h-5" />
               </button>
             </div>
           </div>
-          <CardContent className="p-4">
-            <h3 className="font-medium text-base truncate">{selectedVariant.title}</h3>
+
+          <CardContent className="p-4 pt-0 flex flex-col gap-2">
+            <h3 className="font-medium text-base leading-tight line-clamp-2">
+              {selectedVariant.title}
+            </h3>
 
             {/* Color Variants */}
-            {colorVariants.length > 1 && (
-              <div className="mt-3 flex gap-1.5">
-                {colorVariants.map((variant) => (
-                  <button
-                    key={variant.id}
-                    onClick={(e) => {
-                      e.preventDefault()
-                      setSelectedVariant(variant)
-                    }}
-                    className={`w-4 h-4 rounded-full border-2 transition-all ${selectedVariant.id === variant.id
-                      ? 'border-primary scale-110'
-                      : 'border-transparent hover:border-gray-300'
-                      }`}
-                    style={{ backgroundColor: variant.color }}
-                    title={variant.color}
-                  />
-                ))}
-              </div>
-            )}
+            <div className="min-h-[1.5rem] mt-auto w-full">
+              {colorVariants.length > 1 && (
+                <div className="flex gap-1.5 items-center justify-start">
+                  {colorVariants.map((variant) => (
+                    <button
+                      key={variant.id}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setSelectedVariant(variant);
+                      }}
+                      className={`w-4 h-4 rounded-full border-2 transition-all ${selectedVariant.id === variant.id
+                        ? 'border-primary scale-110'
+                        : 'border-transparent hover:border-gray-300'
+                        }`}
+                      style={{ backgroundColor: variant.color }}
+                      title={variant.color}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
           </CardContent>
         </Card>
       </Link>
