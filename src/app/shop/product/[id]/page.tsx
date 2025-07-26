@@ -358,11 +358,11 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
                       </button>
                       <input
                         type="number"
-                        min={product.minimum_quantity || 1}
+                        min={1}
                         max={selectedSize ? product.size_stock[selectedSize] : 1}
-                        value={quantity}
+                        value={quantity ?? 1}
                         onChange={(e) => handleQuantityChange(parseInt(e.target.value) || 1)}
-                        className="w-16 text-center border-x py-2 focus:outline-none"
+                        className="no-spinner w-16 text-center border-x py-2 focus:outline-none"
                       />
                       <button
                         onClick={incrementQuantity}
