@@ -358,7 +358,7 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
                       </button>
                       <input
                         type="number"
-                        min={1}
+                        min={product.minimum_quantity || 1}
                         max={selectedSize ? product.size_stock[selectedSize] : 1}
                         value={quantity ?? 1}
                         onChange={(e) => handleQuantityChange(parseInt(e.target.value) || 1)}
