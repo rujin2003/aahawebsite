@@ -35,7 +35,9 @@ export default function CartPage() {
   const router = useRouter();
 
   const handleQuantityChange = (id: string, delta: number, currentQty: number) => {
-    const newQty = Math.max(1, currentQty + delta);
+    const item = items.find(i => i.id === id);
+    const minQty = item?.minQuantity || 1;
+    const newQty = Math.max(minQty, currentQty + delta);
     updateQuantity(id, newQty);
   };
 
@@ -263,6 +265,7 @@ export default function CartPage() {
                                   onClick={() => handleQuantityChange(item.id, -1, item.quantity)}
                                   className="h-8 w-8 flex items-center justify-center rounded-full hover:bg-muted transition-colors"
                                   aria-label="Decrease quantity"
+                                  disabled={item.quantity <= (item.minQuantity || 1)}
                                 >
                                   <Minus className="w-3 h-3" />
                                 </button>

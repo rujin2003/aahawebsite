@@ -383,7 +383,8 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
                       name: product.title,
                       price: product.price,
                       image: product.images[0],
-                      stock: product.size_stock[selectedSize || ''] || 0
+                      stock: product.size_stock[selectedSize || ''] || 0,
+                      minQuantity: product.minimum_quantity
                     }}
                     productSize={selectedSize}
                     color={product.color}

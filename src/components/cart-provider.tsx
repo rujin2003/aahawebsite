@@ -13,6 +13,7 @@ type CartItem = {
   size: string;
   color?: string;
   stock: number;
+  minQuantity?: number;
 };
 
 type CartContextType = {
@@ -31,16 +32,16 @@ type CartContextType = {
 
 const defaultCartContext: CartContextType = {
   items: [],
-  addItem: () => {},
-  removeItem: () => {},
-  updateQuantity: () => {},
-  clearCart: () => {},
+  addItem: () => { },
+  removeItem: () => { },
+  updateQuantity: () => { },
+  clearCart: () => { },
   itemCount: 0,
   totalPrice: 0,
   promoCode: null,
   promoDiscount: 0,
   applyPromoCode: async () => false,
-  removePromoCode: () => {}
+  removePromoCode: () => { }
 };
 
 const CartContext = createContext<CartContextType>(defaultCartContext);
@@ -57,7 +58,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     const storedCart = localStorage.getItem('cart');
     const storedPromoCode = localStorage.getItem('promoCode');
     const storedPromoDiscount = localStorage.getItem('promoDiscount');
-    
+
     if (storedCart) {
       try {
         setItems(JSON.parse(storedCart));
@@ -66,11 +67,11 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         localStorage.removeItem('cart');
       }
     }
-    
+
     if (storedPromoCode) {
       setPromoCode(storedPromoCode);
     }
-    
+
     if (storedPromoDiscount) {
       setPromoDiscount(parseFloat(storedPromoDiscount));
     }
@@ -114,7 +115,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         return false;
       }
 
-      const discount = data.discount_type === 'percentage' 
+      const discount = data.discount_type === 'percentage'
         ? (subtotal * data.discount) / 100
         : data.discount;
 
@@ -158,8 +159,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         // Item already exists, update quantity
         return prevItems.map(item =>
           (item.id === newItem.id &&
-           item.size === newItem.size &&
-           item.color === newItem.color)
+            item.size === newItem.size &&
+            item.color === newItem.color)
             ? { ...item, quantity: newQuantity }
             : item
         );
@@ -167,6 +168,11 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         // Check if initial quantity exceeds stock
         if (quantity > newItem.stock) {
           toast.error(`Cannot add more items. Only ${newItem.stock} available in stock for size ${newItem.size}`);
+          return prevItems;
+        }
+
+        if (quantity < (newItem.minQuantity || 1)) {
+          toast.error(`Minimum quantity for this item is ${newItem.minQuantity || 1}`);
           return prevItems;
         }
         // Add new item
@@ -204,6 +210,11 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       // Check if new quantity exceeds stock
       if (quantity > item.stock) {
         toast.error(`Cannot add more items. Only ${item.stock} available in stock for size ${item.size}`);
+        return prevItems;
+      }
+
+      if (quantity < (item.minQuantity || 1)) {
+        toast.error(`Minimum quantity for this item is ${item.minQuantity || 1}`);
         return prevItems;
       }
 

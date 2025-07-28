@@ -35,7 +35,9 @@ export default function CartDropdown() {
   }, []);
 
   const handleQuantityChange = (id: string, delta: number, currentQty: number) => {
-    const newQty = Math.max(1, currentQty + delta);
+    const item = items.find(i => i.id === id);
+    const minQty = item?.minQuantity || 1;
+    const newQty = Math.max(minQty, currentQty + delta);
     updateQuantity(id, newQty);
   };
 
