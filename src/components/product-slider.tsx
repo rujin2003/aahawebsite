@@ -194,6 +194,7 @@ export function ProductCard({ product }: { product: Product }) {
             <Image
               src={imageUrl}
               alt={product.title || "Product image"}
+              draggable={false}
               width={400}
               height={400}
               className="object-contain w-full h-full transition-transform group-hover:scale-105 duration-300 bg-white"

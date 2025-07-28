@@ -179,6 +179,7 @@ function ProductCard({ product, colorVariants }: { product: Product, colorVarian
                 src={selectedVariant.images?.[0] || '/placeholder.png'}
                 alt={selectedVariant.title}
                 width={200}
+                draggable={false}
                 height={200}
                 className="object-contain w-full h-full transition-transform group-hover:scale-105 duration-300 rounded-xl"
               />
