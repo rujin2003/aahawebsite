@@ -101,7 +101,7 @@ export function SignUpForm() {
   };
 
   return (
-    <div className="w-full mt-20 max-w-md mx-auto space-y-6 mt-20">
+    <div className="w-full mt-20 max-w-md mx-auto space-y-6">
       <div className="space-y-2 text-center">
         <h1 className="text-3xl font-bold">Create an Account</h1>
         <p className="text-gray-500">Enter your information to create an account</p>
