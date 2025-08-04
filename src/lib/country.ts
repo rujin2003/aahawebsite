@@ -13,7 +13,7 @@ export async function getUserCountry(): Promise<string> {
     return data.country_code || 'IN';
   } catch (error) {
     console.error('Error fetching country:', error);
-    return 'US';
+    return 'IN';
   }
 }
 
