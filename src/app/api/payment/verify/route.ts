@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import crypto from 'crypto';
 
 export async function POST(request: NextRequest) {
   try {
@@ -17,10 +16,23 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create the signature digest
-    const shasum = crypto.createHmac('sha256', process.env.RAZORPAY_SECRET!);
-    shasum.update(`${orderCreationId}|${razorpayPaymentId}`);
-    const digest = shasum.digest('hex');
+    // Create the signature digest using Web Crypto API
+    const encoder = new TextEncoder();
+    const keyData = encoder.encode(process.env.RAZORPAY_SECRET!);
+    const messageData = encoder.encode(`${orderCreationId}|${razorpayPaymentId}`);
+    
+    const key = await crypto.subtle.importKey(
+      'raw',
+      keyData,
+      { name: 'HMAC', hash: 'SHA-256' },
+      false,
+      ['sign']
+    );
+    
+    const signature = await crypto.subtle.sign('HMAC', key, messageData);
+    const digest = Array.from(new Uint8Array(signature))
+      .map(b => b.toString(16).padStart(2, '0'))
+      .join('');
 
     // Compare our digest with the actual signature
     if (digest !== razorpaySignature) {
@@ -44,5 +56,6 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-} 
+}
+
 export const runtime = 'edge';
