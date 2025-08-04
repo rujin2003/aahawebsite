@@ -44,7 +44,6 @@ export function getCategoriesQuery(supabase: any, userCountryCode: string) {
 export async function getProductsQuery(supabase: any, countryCode: string) {
   const isSupported = SUPPORTED_COUNTRIES.includes(countryCode as SupportedCountry);
 
-
   let query = supabase
     .from('products')
     .select('*')
@@ -54,8 +53,9 @@ export async function getProductsQuery(supabase: any, countryCode: string) {
     // Country is supported: show products matching that country
     query = query.filter('country_codes', 'cs', `{${countryCode}}`);
   } else {
-    // Not supported: show global products
-    query = query.is('country_codes', null);
+    // Not supported: show ALL products (not just null country_codes)
+    // This allows users from unsupported regions to see all products
+    // but they won't be able to order them
   }
 
   return query;

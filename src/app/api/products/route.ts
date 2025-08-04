@@ -19,7 +19,9 @@ export async function GET(request: NextRequest) {
       // Proper filtering using PostgreSQL array literal
       query = query.filter('country_codes', 'cs', `{${countryCode}}`)
     } else {
-      query = query.is('country_codes', null)
+      // Not supported: show ALL products (not just null country_codes)
+      // This allows users from unsupported regions to see all products
+      // but they won't be able to order them
     }
 
     const { data: productsDataFromSupabase, error } = await query

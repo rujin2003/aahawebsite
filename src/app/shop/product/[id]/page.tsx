@@ -72,25 +72,38 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
           .from('products')
           .select('*')
           .eq('group_id', data.group_id || data.id)
-          .filter('country_codes', 'cs', `{${countryCode}}`)
           .limit(4);
-    
+
         if (!variantsError && variants) {
-          setColorVariants(variants);
+          // Filter variants based on user's region
+          const filteredVariants = isSupportedCountry 
+            ? variants.filter(variant => 
+                !variant.country_codes || 
+                variant.country_codes.includes(countryCode)
+              )
+            : variants; // Show all variants for unsupported regions
+          setColorVariants(filteredVariants);
         }
-    
+
         // Fetch related products from the same category
         if (data.category_id) {
           const { data: related, error: relatedError } = await supabase
             .from('products')
             .select('*')
             .eq('category_id', data.category_id)
-            .filter('country_codes', 'cs', `{${countryCode}}`)
             .neq('id', data.id)
             .limit(4);
-    
+
           if (!relatedError && related) {
-            const relatedWithImages = related.map(p => ({
+            // Filter related products based on user's region
+            const filteredRelated = isSupportedCountry 
+              ? related.filter(rel => 
+                  !rel.country_codes || 
+                  rel.country_codes.includes(countryCode)
+                )
+              : related; // Show all related products for unsupported regions
+            
+            const relatedWithImages = filteredRelated.map(p => ({
               ...p,
               images: p.images && Array.isArray(p.images) && p.images.length > 0 ? p.images : [fallbackImage]
             }));
