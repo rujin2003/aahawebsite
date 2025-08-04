@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Product, Category, supabase } from '@/lib/supabase'
 import Link from "next/link";
 import Image from "next/image";
-import { ShoppingCart } from 'lucide-react'
+import { Heart } from 'lucide-react'
 import { Loading } from "@/components/ui/loading"
 
 import { getCategoriesQuery, getProductsQuery } from '@/lib/country';
@@ -95,9 +95,12 @@ export default function ShopPage() {
         <main className="flex-1 py-12">
           <div className="container">
             <div className="flex items-center justify-center h-96">
-              <div className="text-center">
-                <Loading className="w-12 h-12" />
-                <p className="text-muted-foreground mt-4">Loading products...</p>
+              <div className="text-center space-y-4">
+                <Loading className="w-12 h-12 mx-auto" />
+                <div className="space-y-2">
+                  <p className="text-lg font-medium">Loading products...</p>
+                  <p className="text-sm text-muted-foreground">Please wait while we prepare our collection for you</p>
+                </div>
               </div>
             </div>
           </div>
@@ -107,22 +110,52 @@ export default function ShopPage() {
     )
   }
 
+  const totalProducts = Object.keys(filteredGroupedProducts).length;
+
   return (
     <div className="flex min-h-screen flex-col pt-20">
       <SiteHeader />
 
-      <main className="flex-1 py-12">
+      <main className="flex-1 py-8">
         <div className="container">
-          <div className="relative rounded-3xl overflow-hidden bg-gradient-to-r from-blue-500/20 to-primary/10 py-16 px-6 md:px-10 mb-16">
-            <div className="absolute inset-0 z-0">
-              <div className="absolute top-[-30%] left-[-10%] w-[50%] h-[50%] rounded-full bg-blue-500/20 blur-[80px]"></div>
-              <div className="absolute bottom-[-20%] right-[-5%] w-[40%] h-[40%] rounded-full bg-primary/20 blur-[60px]"></div>
+          {/* Hero Section */}
+          <div className="relative rounded-3xl overflow-hidden bg-gradient-to-br from-blue-50 via-white to-primary/5 py-20 px-6 md:px-10 mb-12 border border-blue-100/50">
+            <div className="absolute inset-0 z-0 opacity-40">
+              <div className="absolute top-[-20%] left-[-5%] w-[40%] h-[40%] rounded-full bg-gradient-to-r from-blue-200 to-blue-300 blur-[100px]"></div>
+              <div className="absolute bottom-[-15%] right-[-5%] w-[35%] h-[35%] rounded-full bg-gradient-to-r from-primary/20 to-primary/30 blur-[80px]"></div>
             </div>
-            <div className="relative z-10 max-w-2xl mx-auto text-center">
-              <h1 className="text-4xl font-saans font-medium mb-4 animate-fade-up">Shop Our Collection</h1>
-              <p className="text-muted-foreground animate-fade-up animate-delay-200">
-                Browse our selection of handcrafted felt products. Each piece is made with love and care by skilled artisans using traditional techniques.
+            <div className="relative z-10 max-w-3xl mx-auto text-center">
+              <h1 className="text-5xl md:text-6xl font-medium mb-6 animate-fade-up bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
+                Handcrafted with Love
+              </h1>
+              <p className="text-lg text-muted-foreground animate-fade-up animate-delay-200 max-w-2xl mx-auto leading-relaxed">
+                Discover our exclusive collection of handcrafted felt products. Each piece tells a story of traditional craftsmanship, 
+                made with passion by skilled artisans using time-honored techniques.
               </p>
+              <div className="flex items-center justify-center gap-6 mt-8 text-sm text-muted-foreground animate-fade-up animate-delay-300">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                  <span>Premium Quality</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                  <span>Eco-Friendly</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                  <span>Artisan Made</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Category Filter & Product Count */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+            <div className="flex items-center gap-4">
+              <h2 className="text-2xl font-saans font-medium">Our Collection</h2>
+              <span className="px-3 py-1 bg-muted rounded-full text-sm text-muted-foreground">
+                {totalProducts} {totalProducts === 1 ? 'product' : 'products'}
+              </span>
             </div>
           </div>
 
@@ -130,33 +163,50 @@ export default function ShopPage() {
             defaultValue="all"
             value={selectedCategory}
             onValueChange={setSelectedCategory}
-            className="mb-12 px-4"
+            className="mb-12"
           >
-            <div className="flex justify-start mb-6 overflow-x-auto scroll-pl-4 scrollbar-hide">
-              <TabsList className="bg-muted/50 p-1 rounded-full flex gap-2 min-w-max">
-                <TabsTrigger value="all" className="rounded-full whitespace-nowrap">
+            <div className="flex justify-start mb-8 overflow-x-auto scroll-pl-4 scrollbar-hide">
+              <TabsList className="bg-white border border-gray-200 p-1.5 rounded-2xl flex gap-1 min-w-max shadow-sm">
+                <TabsTrigger 
+                  value="all" 
+                  className="rounded-xl whitespace-nowrap px-6 py-2.5 data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-sm transition-all"
+                >
                   All Products
                 </TabsTrigger>
                 {categories.map((category) => (
                   <TabsTrigger
                     key={category.id}
                     value={category.id}
-                    className="rounded-full whitespace-nowrap"
+                    className="rounded-xl whitespace-nowrap px-6 py-2.5 data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-sm transition-all"
                   >
                     {category.name}
                   </TabsTrigger>
                 ))}
               </TabsList>
             </div>
-            <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-              {Object.entries(filteredGroupedProducts).map(([groupId, products]) => (
-                <ProductCard
-                  key={groupId}
-                  product={products[0]}
-                  colorVariants={products}
-                />
-              ))}
-            </div>
+
+            {/* Products Grid */}
+            {totalProducts === 0 ? (
+              <div className="text-center py-16">
+                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-muted flex items-center justify-center">
+                  <Heart className="w-8 h-8 text-muted-foreground" />
+                </div>
+                <h3 className="text-lg font-medium mb-2">No products found</h3>
+                <p className="text-muted-foreground max-w-md mx-auto">
+                  We couldn't find any products in this category. Try selecting a different category or check back later.
+                </p>
+              </div>
+            ) : (
+              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                {Object.entries(filteredGroupedProducts).map(([groupId, products]) => (
+                  <ProductCard
+                    key={groupId}
+                    product={products[0]}
+                    colorVariants={products}
+                  />
+                ))}
+              </div>
+            )}
           </Tabs>
         </div>
       </main>
@@ -167,62 +217,153 @@ export default function ShopPage() {
 
 function ProductCard({ product, colorVariants }: { product: Product, colorVariants: Product[] }) {
   const [selectedVariant, setSelectedVariant] = useState(product)
+  const [isLiked, setIsLiked] = useState(false)
   const isSupportedCountry = useCountryStore(s => s.isSupportedCountry);
+
+  // Helper function to check if a color is light
+  const isLightColor = (color: string) => {
+    const colorMap: { [key: string]: string } = {
+      'white': '#ffffff',
+      'light': '#f5f5f5',
+      'cream': '#f5f5dc',
+      'beige': '#f5f5dc',
+      'ivory': '#fffff0',
+      'snow': '#fffafa',
+      'ghostwhite': '#f8f8ff',
+      'whitesmoke': '#f5f5f5',
+      'linen': '#faf0e6',
+      'antiquewhite': '#faebd7',
+      'papayawhip': '#ffefd5',
+      'blanchedalmond': '#ffebcd',
+      'bisque': '#ffe4c4',
+      'peachpuff': '#ffdab9',
+      'navajowhite': '#ffdead',
+      'moccasin': '#ffe4b5',
+      'cornsilk': '#fff8dc',
+      'oldlace': '#fdf5e6',
+      'floralwhite': '#fffaf0',
+      'seashell': '#fff5ee',
+      'lavenderblush': '#fff0f5',
+      'mistyrose': '#ffe4e1'
+    };
+
+    const normalizedColor = color.toLowerCase().trim();
+    const hexColor = colorMap[normalizedColor] || color;
+
+    if (hexColor.startsWith('#')) {
+      const hex = hexColor.slice(1);
+      const r = parseInt(hex.substr(0, 2), 16);
+      const g = parseInt(hex.substr(2, 2), 16);
+      const b = parseInt(hex.substr(4, 2), 16);
+      const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+      return brightness > 200;
+    }
+
+    const lightColors = ['white', 'light', 'cream', 'beige', 'ivory', 'snow', 'ghostwhite', 'whitesmoke', 'linen', 'yellow', 'lightyellow', 'lightgray', 'lightgrey', 'silver'];
+    return lightColors.some(lightColor => normalizedColor.includes(lightColor));
+  };
 
   return (
     <div className="group relative">
-      <Link href={`/shop/product/${selectedVariant.id}`} className="block h-full">
-        <Card className="h-full flex flex-col justify-between overflow-hidden border border-gray-200 rounded-2xl transition-all duration-300 group-hover:shadow-[0_4px_12px_rgba(0,0,0,0.08)] group-hover:-translate-y-1 bg-white">
+      <Card className="h-full flex flex-col overflow-hidden border-0 rounded-2xl transition-all duration-500 group-hover:shadow-[0_8px_30px_rgba(0,0,0,0.12)] group-hover:-translate-y-2 bg-white ring-1 ring-gray-100 group-hover:ring-primary/20">
+        <Link href={`/shop/product/${selectedVariant.id}`} className="flex flex-col h-full">
           <div className="relative p-4">
-            <div className="aspect-square overflow-hidden bg-white flex items-center justify-center rounded-xl">
+            {/* Wishlist Button */}
+            <button
+              onClick={(e) => {
+                e.preventDefault();
+                setIsLiked(!isLiked);
+              }}
+              className="absolute top-3 right-3 z-10 w-8 h-8 flex items-center justify-center rounded-full bg-white/80 backdrop-blur-sm border border-white/20 transition-all opacity-0 group-hover:opacity-100 hover:bg-white hover:scale-110"
+            >
+              <Heart 
+                className={`w-4 h-4 transition-colors ${
+                  isLiked ? 'fill-red-500 text-red-500' : 'text-gray-400 hover:text-red-500'
+                }`} 
+              />
+            </button>
+
+            {/* Product Image */}
+            <div className="aspect-[4/3] overflow-hidden bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center rounded-xl relative">
               <Image
                 src={selectedVariant.images?.[0] || '/placeholder.png'}
                 alt={selectedVariant.title}
-                width={200}
+                width={280}
+                height={210}
                 draggable={false}
-                height={200}
-                className="object-contain w-full h-full transition-transform group-hover:scale-105 duration-300 rounded-xl"
+                className="object-contain w-full h-full transition-all duration-500 group-hover:scale-110 rounded-xl"
               />
-            </div>
-
-            {/* Floating cart icon */}
-            <div className="absolute bottom-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-              <button className="w-10 h-10 flex items-center justify-center rounded-full bg-primary text-white hover:bg-primary/90">
-                <ShoppingCart className="w-5 h-5" />
-              </button>
+              
+              {/* Subtle overlay on hover */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-xl"></div>
             </div>
           </div>
 
-          <CardContent className="p-4 pt-0 flex flex-col gap-2">
-            <h3 className="font-medium text-base leading-tight line-clamp-2">
-              {selectedVariant.title}
-            </h3>
+          <CardContent className="p-4 pt-0 flex flex-col gap-4 flex-grow">
+            <div className="space-y-1">
+              <h3 className="font-medium text-base leading-tight line-clamp-2 group-hover:text-primary transition-colors">
+                {selectedVariant.title}
+              </h3>
+            </div>
 
             {/* Color Variants */}
-            <div className="min-h-[1.5rem] mt-auto w-full">
+            <div className="mt-auto">
               {colorVariants.length > 1 && (
-                <div className="flex gap-1.5 items-center justify-start">
-                  {colorVariants.map((variant) => (
-                    <button
-                      key={variant.id}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        setSelectedVariant(variant);
-                      }}
-                      className={`w-4 h-4 rounded-full border-2 transition-all ${selectedVariant.id === variant.id
-                        ? 'border-primary scale-110'
-                        : 'border-transparent hover:border-gray-300'
-                        }`}
-                      style={{ backgroundColor: variant.color }}
-                      title={variant.color}
-                    />
-                  ))}
+                <div className="space-y-3">
+                  <p className="text-xs text-muted-foreground font-medium">Available Colors</p>
+                  <div className="flex gap-2 items-center">
+                    {colorVariants.slice(0, 6).map((variant) => {
+                      const isLight = isLightColor(variant.color);
+                      
+                      return (
+                        <button
+                          key={variant.id}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            setSelectedVariant(variant);
+                          }}
+                          className={`w-5 h-5 rounded-full transition-all relative flex-shrink-0 ${
+                            selectedVariant.id === variant.id
+                              ? 'scale-110 ring-2 ring-primary ring-offset-2'
+                              : 'hover:scale-105 hover:ring-2 hover:ring-gray-300 hover:ring-offset-1'
+                          }`}
+                          title={variant.color}
+                        >
+                          <div
+                            className={`w-full h-full rounded-full ${
+                              isLight 
+                                ? 'border-2 border-gray-200 shadow-sm' 
+                                : 'border border-white/20 shadow-sm'
+                            }`}
+                            style={{ backgroundColor: variant.color }}
+                          />
+                          {selectedVariant.id === variant.id && (
+                            <div className="absolute inset-0 rounded-full border-2 border-primary animate-pulse"></div>
+                          )}
+                        </button>
+                      );
+                    })}
+                    {colorVariants.length > 6 && (
+                      <span className="text-xs text-muted-foreground ml-1">
+                        +{colorVariants.length - 6} more
+                      </span>
+                    )}
+                  </div>
                 </div>
               )}
             </div>
+
+            {/* View Product Button */}
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="w-full mt-4 opacity-0 group-hover:opacity-100 transform translate-y-2 group-hover:translate-y-0 transition-all duration-300 border-primary/20 hover:bg-primary hover:text-white"
+            >
+              View Details
+            </Button>
           </CardContent>
-        </Card>
-      </Link>
+        </Link>
+      </Card>
     </div>
   )
 }

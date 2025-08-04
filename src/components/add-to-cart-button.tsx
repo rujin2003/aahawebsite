@@ -70,7 +70,6 @@ export default function AddToCartButton({
         quantity
       );
 
-      toast.success(`Added ${product.name} to cart`);
       setIsAdding(false);
       if (onAddedToCart) onAddedToCart();
     }, 500);

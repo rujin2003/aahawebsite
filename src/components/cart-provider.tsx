@@ -156,7 +156,12 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
           toast.error(`Cannot add more items. Only ${existingItem.stock} available in stock for size ${existingItem.size}`);
           return prevItems;
         }
-        // Item already exists, update quantity
+        
+        // Item already exists, update quantity - show toast only once
+        setTimeout(() => {
+          toast.success(`Updated ${newItem.name} quantity in cart`);
+        }, 0);
+        
         return prevItems.map(item =>
           (item.id === newItem.id &&
             item.size === newItem.size &&
@@ -171,11 +176,17 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
           return prevItems;
         }
 
-        if (quantity < (newItem.minQuantity || 1)) {
-          toast.error(`Minimum quantity for this item is ${newItem.minQuantity || 1}`);
+        const minQuantity = newItem.minQuantity || 1;
+        if (quantity < minQuantity) {
+          toast.error(`Minimum quantity for this item is ${minQuantity}`);
           return prevItems;
         }
-        // Add new item
+        
+        // Add new item - show toast only once
+        setTimeout(() => {
+          toast.success(`Added ${newItem.name} to cart`);
+        }, 0);
+        
         return [...prevItems, { ...newItem, quantity }];
       }
     });
@@ -188,7 +199,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     setItems(prevItems => {
       const itemToRemove = prevItems.find(item => item.id === id);
       if (itemToRemove) {
-        toast.info(`Removed ${itemToRemove.name} (Size: ${itemToRemove.size}) from cart`);
+        setTimeout(() => {
+          toast.info(`Removed ${itemToRemove.name} (Size: ${itemToRemove.size}) from cart`);
+        }, 0);
       }
       return prevItems.filter(item => item.id !== id);
     });
@@ -213,8 +226,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         return prevItems;
       }
 
-      if (quantity < (item.minQuantity || 1)) {
-        toast.error(`Minimum quantity for this item is ${item.minQuantity || 1}`);
+      const minQuantity = item.minQuantity || 1;
+      if (quantity < minQuantity) {
+        toast.error(`Minimum quantity for this item is ${minQuantity}`);
         return prevItems;
       }
 
@@ -229,7 +243,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     if (!mounted) return;
 
     setItems([]);
-    toast.info('Cart cleared');
+   
   };
 
   const value = {
@@ -252,8 +266,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     </CartContext.Provider>
   );
 }
+
 export function useCart() {
   const context = useContext(CartContext);
   return context;
 }
-

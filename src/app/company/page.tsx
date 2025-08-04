@@ -251,7 +251,7 @@ export default function CompanyPage() {
         <StatisticsSection />
 
         {/* Meet the Team */}
-        <section className="py-20">
+        <section id="team" className="py-20">
           <div className="container">
             <div className="text-center mb-16">
               <h2 className="text-3xl font-medium mb-4">Meet Our Team</h2>

@@ -72,20 +72,16 @@ export function SiteFooter() {
                 <ul className="space-y-2">
                   <li>
                     
-                    <Link href="#" className="text-sm text-white/60 hover:text-white transition-colors">
+                    <Link href="https://www.herdy.co.uk/did-ewe-know/what-is-felting-how-does-it-work/#" className="text-sm text-white/60 hover:text-white transition-colors">
                       Felting Process
                     </Link>
                   </li>
                   <li>
-                    <Link href="/materials" className="text-sm text-white/60 hover:text-white transition-colors">
+                    <Link href="https://sewport.com/fabrics-directory/felt-fabric" className="text-sm text-white/60 hover:text-white transition-colors">
                       Materials
                     </Link>
                   </li>
-                  <li>
-                    <Link href="/sustainability" className="text-sm text-white/60 hover:text-white transition-colors">
-                      Sustainability
-                    </Link>
-                  </li>
+                  
                 </ul>
               </div>
 
@@ -94,20 +90,12 @@ export function SiteFooter() {
                 <h4 className="text-sm font-medium uppercase tracking-wider">Company</h4>
                 <ul className="space-y-2">
                   <li>
-                    <Link href="/about" className="text-sm text-white/60 hover:text-white transition-colors">
+                    <Link href="/company" className="text-sm text-white/60 hover:text-white transition-colors">
                       About Us
                     </Link>
                   </li>
-                  <li>
-                    <Link href="/team" className="text-sm text-white/60 hover:text-white transition-colors">
-                      Our Team
-                    </Link>
-                  </li>
-                  <li>
-                    <Link href="/careers" className="text-sm text-white/60 hover:text-white transition-colors">
-                      Careers
-                    </Link>
-                  </li>
+                 
+                  
                 </ul>
               </div>
 
@@ -116,22 +104,22 @@ export function SiteFooter() {
                 <h4 className="text-sm font-medium uppercase tracking-wider">Shop</h4>
                 <ul className="space-y-2">
                   <li>
-                    <Link href="/shop/all" className="text-sm text-white/60 hover:text-white transition-colors">
+                    <Link href="/shop" className="text-sm text-white/60 hover:text-white transition-colors">
                       All Products
                     </Link>
                   </li>
                   <li>
-                    <Link href="/shop/home-decor" className="text-sm text-white/60 hover:text-white transition-colors">
+                    <Link href="/shop" className="text-sm text-white/60 hover:text-white transition-colors">
                       Home Decor
                     </Link>
                   </li>
                   <li>
-                    <Link href="/shop/accessories" className="text-sm text-white/60 hover:text-white transition-colors">
+                    <Link href="/shop" className="text-sm text-white/60 hover:text-white transition-colors">
                       Accessories
                     </Link>
                   </li>
                   <li>
-                    <Link href="/shop/gifts" className="text-sm text-white/60 hover:text-white transition-colors">
+                    <Link href="/shop" className="text-sm text-white/60 hover:text-white transition-colors">
                       Gifts
                     </Link>
                   </li>

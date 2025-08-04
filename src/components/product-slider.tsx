@@ -8,7 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { ArrowLeft, ArrowRight, ShoppingCart } from "lucide-react";
 import { Product } from '@/lib/supabase'
 import { supabase } from '@/lib/supabase';
-import { useCart } from '@/contexts/CartContext';
+import { useCart } from '@/components/cart-provider';
 import { useCountryStore } from "@/lib/countryStore";
 import { getCategoriesQuery, getProductsQuery } from '@/lib/country';
 import { toast } from 'sonner';
@@ -27,7 +27,7 @@ export function ProductSlider({ title, products: initialProducts, categoryId, co
   const sliderRef = useRef<HTMLDivElement>(null);
   const [visibleProducts, setVisibleProducts] = useState(3);
   const [loading, setLoading] = useState(!initialProducts);
-  const { addItem, isCartEnabled } = useCart();
+  const { addItem } = useCart();
   const isSupportedCountry = useCountryStore(s=>s.isSupportedCountry)
 
   useEffect(() => {
@@ -119,11 +119,24 @@ export function ProductSlider({ title, products: initialProducts, categoryId, co
   };
 
   const handleAddToCart = (product: Product) => {
-    if (!isCartEnabled) {
+    if (!isSupportedCountry) {
       toast.error('Shopping is not available in your country');
       return;
     }
-    addItem(product, 1);
+    
+    // Get the total stock from size_stock or use a default
+    const totalStock = Object.values(product.size_stock || {}).reduce((sum, stock) => sum + stock, 0) || 999;
+    
+    // Convert Product to the format expected by addItem
+    addItem({
+      id: product.id,
+      name: product.title,
+      price: product.price,
+      image: product.images[0],
+      size: 'One Size', // Default size for products without size variants
+      stock: totalStock,
+      minQuantity: product.minimum_quantity || 1
+    }, 1);
   };
 
   if (loading) {

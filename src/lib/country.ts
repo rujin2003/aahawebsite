@@ -17,6 +17,7 @@ export async function getUserCountry(): Promise<string> {
   }
 }
 
+
 // Function to get the appropriate query for categories based on user's country
 export function getCategoriesQuery(supabase: any, userCountryCode: string) {
   console.log('Building query for country:', userCountryCode);

@@ -16,6 +16,16 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { Label } from "@/components/ui/label";
 import { useCountryStore } from "@/lib/countryStore";
+import { 
+  loadRazorpayScript, 
+  createRazorpayOrder, 
+  verifyPayment, 
+  savePaymentRecord, 
+  updateOrderWithPayment,
+  createRazorpayPayment,
+  PaymentData 
+} from "@/lib/payment";
+import { RazorpayOptions, RazorpayResponse } from "@/types/razorpay";
 
 export default function CartPage() {
   const { items, removeItem, updateQuantity, totalPrice, clearCart, promoCode, promoDiscount, applyPromoCode, removePromoCode } = useCart();
@@ -41,7 +51,7 @@ export default function CartPage() {
     updateQuantity(id, newQty);
   };
 
-  const handleCheckout = async () => {
+  const handlePayment = async () => {
     if (items.length === 0) {
       toast.error("Your cart is empty");
       return;
@@ -101,44 +111,113 @@ export default function CartPage() {
         })
       };
 
-      // Log the data for debugging
-      console.log('Cart Items:', JSON.stringify(items, null, 2));
-      console.log('Products from DB:', JSON.stringify(products, null, 2));
-
-      // Add detailed logging before placing the order
-      console.log('=== Order Details ===');
-      console.log('User ID:', user.id);
-      console.log('Total Amount:', totalPrice);
-      console.log('Shipping Address:', formattedAddress);
-      console.log('Promo Code:', promoCode);
-      console.log('Discount Amount:', promoDiscount);
-      console.log('Order Items:', JSON.stringify(orderPayload.items, null, 2));
-      console.log('Full Order Payload:', JSON.stringify(orderPayload, null, 2));
-      console.log('===================');
-
-      // Create order with verification required status
+      // Create order first
       const { data: order, error: orderError } = await supabase
         .from('orders')
-        .insert([
-          orderPayload
-        ])
+        .insert([orderPayload])
         .select()
         .single();
 
       if (orderError) {
-        console.log('Order Payload:', JSON.stringify(productIds));
-        console.error('Order placement error:', orderError, 'Payload:', orderPayload);
+        console.error('Order creation error:', orderError);
         throw orderError;
       }
 
-      // Clear cart after successful order creation
-      clearCart();
-      setLoading(false);
-      setOrderCompleted(true);
-      toast.success("Order placed successfully! Your order will be verified shortly.");
+      // Load Razorpay script
+      const scriptLoaded = await loadRazorpayScript();
+      if (!scriptLoaded) {
+        toast.error("Payment gateway failed to load. Please try again.");
+        setLoading(false);
+        return;
+      }
+
+      // Create Razorpay order
+      const razorpayOrder = await createRazorpayOrder(totalPrice, 'INR');
+
+      // Get user profile for prefill
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('full_name, phone')
+        .eq('id', user.id)
+        .single();
+
+      const userName = profile?.full_name || user.user_metadata?.full_name || '';
+      const userPhone = profile?.phone || user.phone || '';
+
+      // Configure Razorpay options
+      const options: RazorpayOptions = {
+        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID!,
+        amount: razorpayOrder.amount.toString(),
+        currency: razorpayOrder.currency,
+        name: "Aaha Felt",
+        description: `Order #${order.id}`,
+        image: "/logo.png", // Add your logo path
+        order_id: razorpayOrder.id,
+        handler: async function (response: RazorpayResponse) {
+          try {
+            const paymentData: PaymentData = {
+              orderCreationId: razorpayOrder.id,
+              razorpayPaymentId: response.razorpay_payment_id,
+              razorpayOrderId: response.razorpay_order_id,
+              razorpaySignature: response.razorpay_signature,
+            };
+
+            // Verify payment
+            const verificationResult = await verifyPayment(paymentData);
+            
+            if (verificationResult.success) {
+              // Save payment record
+              const paymentRecord = await savePaymentRecord(
+                order.id,
+                paymentData,
+                totalPrice,
+                'INR'
+              );
+
+              // Update order with payment
+              await updateOrderWithPayment(order.id, paymentRecord.id);
+
+              // Clear cart and show success
+              clearCart();
+              setLoading(false);
+              setOrderCompleted(true);
+              toast.success("Payment successful! Your order has been placed.");
+            } else {
+              throw new Error('Payment verification failed');
+            }
+          } catch (error) {
+            console.error('Payment processing error:', error);
+            toast.error('Payment processing failed. Please try again.');
+            setLoading(false);
+          }
+        },
+        prefill: {
+          name: userName,
+          email: user.email,
+          contact: userPhone,
+        },
+        notes: {
+          address: formattedAddress,
+          order_id: order.id,
+        },
+        theme: {
+          color: "#0f172a", // slate-900
+        },
+        modal: {
+          ondismiss: function() {
+            setLoading(false);
+            toast.info('Payment cancelled');
+          }
+        }
+      };
+
+      // Open Razorpay payment modal
+      const paymentObject = createRazorpayPayment(options);
+      paymentObject.open();
+
     } catch (error: unknown) {
-      console.error('Order placement exception:', error);
-      toast.error(error instanceof Error ? error.message : 'Failed to place order');
+      console.error('Payment setup error:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to setup payment');
       setLoading(false);
     }
   };
@@ -434,7 +513,7 @@ export default function CartPage() {
 
                     <Button
                       className="w-full rounded-full mt-4"
-                      onClick={handleCheckout}
+                      onClick={handlePayment}
                       disabled={loading || !isSupportedCountry}
                     >
                       {loading ? (
@@ -445,7 +524,7 @@ export default function CartPage() {
                       ) : (
                         <span className="flex items-center">
                           <CreditCard className="w-4 h-4 mr-2" />
-                          {isSupportedCountry ? 'Checkout' : 'Shopping not available'}
+                          {isSupportedCountry ? 'Pay Now' : 'Shopping not available'}
                         </span>
                       )}
                     </Button>
