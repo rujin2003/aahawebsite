@@ -22,6 +22,7 @@ import { use } from 'react';
 import { Loading } from "@/components/ui/loading"
 import { useCountryStore } from '@/lib/countryStore';
 import { useRouter } from 'next/navigation';
+import { convertUSDToLocalCurrency } from '@/lib/utils';
 
 
 export default function ProductPage({ params }: { params: Promise<{ id: string }> }) {
@@ -39,6 +40,7 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
   const [colorVariants, setColorVariants] = useState<Product[]>([]);
   const fallbackImage = "/placeholder.png";
   const router = useRouter();
+  const [localPrice, setLocalPrice] = useState<{ amount: number; symbol: string; code: string } | null>(null);
 
   // Utility function to validate UUID
   const isValidUUID = (uuid: string) => {
@@ -64,7 +66,19 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
     
         setProduct(data);
         setQuantity(data.minimum_quantity)
-        setSelectedSize(data.size);
+        
+        // Get available sizes (sizes with stock > 0)
+        const availableSizes = Object.entries(data.size_stock)
+          .filter(([_, stock]) => (stock as number) > 0)
+          .map(([size]) => size);
+        
+        // Auto-select size if there's only one available size
+        if (availableSizes.length === 1) {
+          setSelectedSize(availableSizes[0]);
+        } else {
+          setSelectedSize(data.size);
+        }
+        
         setSelectedColor(data.color);
     
         // Fetch color variants using correct array filter syntax
@@ -122,6 +136,21 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
     fetchProduct();
   }, [resolvedParams.id]);
 
+  useEffect(() => {
+    if (!product || !isSupportedCountry) return;
+    let mounted = true;
+    async function fetchPrice() {
+      if (!countryCode) {
+        setLocalPrice({ amount: product.price, symbol: '$', code: 'USD' });
+        return;
+      }
+      const converted = await convertUSDToLocalCurrency(product.price, countryCode);
+      if (mounted) setLocalPrice(converted);
+    }
+    fetchPrice();
+    return () => { mounted = false; };
+  }, [product, countryCode, isSupportedCountry]);
+
   const handleColorChange = (variant: Product) => {
     setProduct(variant);
     setSelectedColor(variant.color);
@@ -129,7 +158,7 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
   };
 
   const availableSizes = product ? Object.entries(product.size_stock)
-    .filter(([_, stock]) => stock > 0)
+    .filter(([_, stock]) => (stock as number) > 0)
     .map(([size]) => size) : [];
 
   const allSizes = product ? Object.keys(product.size_stock) : [];
@@ -302,7 +331,11 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
               <div>
                 <h1 className="text-3xl font-medium mb-2">{product.title}</h1>
                 {isSupportedCountry ? (
-                  <p className="text-3xl font-medium text-primary">${product.price.toFixed(2)}</p>
+                  <p className="text-3xl font-medium text-primary">
+                    {localPrice
+                      ? `${localPrice.symbol}${localPrice.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                      : '...'}
+                  </p>
                 ) : (
                   <p className="text-lg text-muted-foreground">Contact us for pricing</p>
                 )}

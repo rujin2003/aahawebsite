@@ -14,6 +14,7 @@ import { Loading } from "@/components/ui/loading"
 
 import { getCategoriesQuery, getProductsQuery } from '@/lib/country';
 import { useCountryStore } from '@/lib/countryStore';
+import { convertUSDToLocalCurrency } from '@/lib/utils';
 
 export default function ShopPage() {
   const [products, setProducts] = useState<Product[]>([])
@@ -219,6 +220,22 @@ function ProductCard({ product, colorVariants }: { product: Product, colorVarian
   const [selectedVariant, setSelectedVariant] = useState(product)
   const [isLiked, setIsLiked] = useState(false)
   const isSupportedCountry = useCountryStore(s => s.isSupportedCountry);
+  const countryCode = useCountryStore(s => s.countryCode);
+  const [localPrice, setLocalPrice] = useState<{ amount: number; symbol: string; code: string } | null>(null);
+
+  useEffect(() => {
+    let mounted = true;
+    async function fetchPrice() {
+      if (!countryCode) {
+        setLocalPrice({ amount: selectedVariant.price, symbol: '$', code: 'USD' });
+        return;
+      }
+      const converted = await convertUSDToLocalCurrency(selectedVariant.price, countryCode);
+      if (mounted) setLocalPrice(converted);
+    }
+    fetchPrice();
+    return () => { mounted = false; };
+  }, [selectedVariant, countryCode]);
 
   // Helper function to check if a color is light
   const isLightColor = (color: string) => {
@@ -304,6 +321,12 @@ function ProductCard({ product, colorVariants }: { product: Product, colorVarian
               <h3 className="font-medium text-base leading-tight line-clamp-2 group-hover:text-primary transition-colors">
                 {selectedVariant.title}
               </h3>
+              {/* Price Display */}
+              <div className="text-lg font-semibold text-primary mt-1">
+                {localPrice
+                  ? `${localPrice.symbol}${localPrice.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                  : '...'}
+              </div>
             </div>
 
             {/* Color Variants */}

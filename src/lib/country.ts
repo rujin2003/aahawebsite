@@ -10,7 +10,8 @@ export async function getUserCountry(): Promise<string> {
     const res = await fetch('https://ipwho.is/');
     const data = await res.json();
     console.log(`Country Fetched: ${data.country_code}`);
-    return data.country_code || 'IN';
+    // return data.country_code || 'IN';
+    return 'IN';
   } catch (error) {
     console.error('Error fetching country:', error);
     return 'IN';
@@ -50,19 +51,17 @@ export async function getProductsQuery(supabase: any, countryCode: string) {
     .order('created_at', { ascending: false });
 
   if (isSupported) {
-    // Country is supported: show products matching that country
+    
     query = query.filter('country_codes', 'cs', `{${countryCode}}`);
   } else {
-    // Not supported: show ALL products (not just null country_codes)
-    // This allows users from unsupported regions to see all products
-    // but they won't be able to order them
+ 
   }
 
   return query;
 }
 
 
-// Function to check if a product/category is available in user's country
+
 export function isAvailableInCountry(itemCountryCodes: string[] | null, userCountryCode: string): boolean {
   console.log('Country Availability Check:', {
     itemCountryCodes,
