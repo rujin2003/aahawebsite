@@ -20,6 +20,7 @@ import { Product } from '@/lib/supabase';
 import { toast } from "sonner";
 import { getCategoriesQuery, isAvailableInCountry } from '@/lib/country';
 import { useCountryStore } from "@/lib/countryStore";
+import { convertUSDToLocalCurrency } from '@/lib/utils';
 
 import Categories from "./category";
 import MissionSection from "@/components/mission_gradient";
@@ -33,6 +34,7 @@ export default function Home() {
   const [contactLoading, setContactLoading] = useState(false)
   const [contactSuccess, setContactSuccess] = useState<string|null>(null)
   const [contactError, setContactError] = useState<string|null>(null)
+  const [localPrices, setLocalPrices] = useState<Record<string, { amount: number; symbol: string; code: string }>>({});
   const nameRef = useRef<HTMLInputElement>(null)
   const emailRef = useRef<HTMLInputElement>(null)
   const subjectRef = useRef<HTMLInputElement>(null)
@@ -87,6 +89,28 @@ export default function Home() {
     }
   }, [countryCode, countryLoading])
 
+  // Convert prices to local currency when products change
+  useEffect(() => {
+    if (!isSupportedCountry || !products.length) return;
+    
+    const convertPrices = async () => {
+      const newLocalPrices: Record<string, { amount: number; symbol: string; code: string }> = {};
+      
+      for (const product of products) {
+        if (!countryCode) {
+          newLocalPrices[product.id] = { amount: product.price, symbol: '$', code: 'USD' };
+          continue;
+        }
+        const converted = await convertUSDToLocalCurrency(product.price, countryCode);
+        newLocalPrices[product.id] = converted;
+      }
+      
+      setLocalPrices(newLocalPrices);
+    };
+    
+    convertPrices();
+  }, [products, countryCode, isSupportedCountry]);
+
   async function handleContactSubmit(e: React.FormEvent) {
     e.preventDefault();
     setContactLoading(true)
@@ -137,7 +161,9 @@ export default function Home() {
     }
     return (
       <p className="text-lg font-medium">
-        ${product.price.toFixed(2)}
+        {localPrices[product.id] 
+          ? `${localPrices[product.id].symbol}${localPrices[product.id].amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+          : '...'}
       </p>
     )
   }

@@ -11,6 +11,8 @@ import { Card } from "@/components/ui/card";
 import { Product, supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import Image from "next/image";
+import { useCountryStore } from '@/lib/countryStore';
+import { convertUSDToLocalCurrency } from '@/lib/utils';
 
 // UUID validation function
 const isValidUUID = (uuid: string) => {
@@ -30,6 +32,9 @@ export default async function ProductPage(props: { params: paramsType }) {
   const [selectedColor, setSelectedColor] = useState<string | null>(null);
   const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
   const fallbackImage = "/path/to/fallback/image.jpg"; // Replace with actual fallback image path
+  const [localPrice, setLocalPrice] = useState<{ amount: number; symbol: string; code: string } | null>(null);
+  const countryCode = useCountryStore(s => s.countryCode);
+  const isSupportedCountry = useCountryStore(s => s.isSupportedCountry);
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -93,6 +98,22 @@ export default async function ProductPage(props: { params: paramsType }) {
 
     fetchProduct();
   }, [id, router]);
+
+  // Convert price to local currency
+  useEffect(() => {
+    if (!product || !isSupportedCountry) return;
+    
+    const convertPrice = async () => {
+      if (!countryCode) {
+        setLocalPrice({ amount: product.price, symbol: '$', code: 'USD' });
+        return;
+      }
+      const converted = await convertUSDToLocalCurrency(product.price, countryCode);
+      setLocalPrice(converted);
+    };
+    
+    convertPrice();
+  }, [product, countryCode, isSupportedCountry]);
 
   const handleOrder = async () => {
     setIsOrdering(true);
@@ -203,7 +224,15 @@ export default async function ProductPage(props: { params: paramsType }) {
             <div className="space-y-6">
               <div>
                 <h1 className="text-3xl font-bold">{product.title}</h1>
-                <p className="text-2xl font-semibold mt-2">${product.price}</p>
+                {isSupportedCountry ? (
+                  <p className="text-2xl font-semibold mt-2">
+                    {localPrice 
+                      ? `${localPrice.symbol}${localPrice.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                      : '...'}
+                  </p>
+                ) : (
+                  <p className="text-lg text-muted-foreground mt-2">Contact us for pricing</p>
+                )}
               </div>
               <p className="text-muted-foreground">{product.description}</p>
               <div className="space-y-4">

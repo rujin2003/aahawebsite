@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,7 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { Label } from "@/components/ui/label";
 import { useCountryStore } from "@/lib/countryStore";
+import { convertUSDToLocalCurrency } from '@/lib/utils';
 import { 
   loadRazorpayScript, 
   createRazorpayOrder, 
@@ -35,6 +36,9 @@ export default function CartPage() {
   const [orderCompleted, setOrderCompleted] = useState(false);
   const [promoCodeInput, setPromoCodeInput] = useState('');
   const [applyingPromo, setApplyingPromo] = useState(false);
+  const [localPrices, setLocalPrices] = useState<Record<string, { amount: number; symbol: string; code: string }>>({});
+  const [localTotalPrice, setLocalTotalPrice] = useState<{ amount: number; symbol: string; code: string } | null>(null);
+  const [localPromoDiscount, setLocalPromoDiscount] = useState<{ amount: number; symbol: string; code: string } | null>(null);
   const [shippingAddress, setShippingAddress] = useState({
     street: '',
     city: '',
@@ -43,6 +47,39 @@ export default function CartPage() {
     zipCode: ''
   });
   const router = useRouter();
+
+  // Convert prices to local currency
+  useEffect(() => {
+    if (!isSupportedCountry || !items.length) return;
+    
+    const convertPrices = async () => {
+      const newLocalPrices: Record<string, { amount: number; symbol: string; code: string }> = {};
+      
+      for (const item of items) {
+        if (!countryCode) {
+          newLocalPrices[item.id] = { amount: item.price, symbol: '$', code: 'USD' };
+          continue;
+        }
+        const converted = await convertUSDToLocalCurrency(item.price, countryCode);
+        newLocalPrices[item.id] = converted;
+      }
+      
+      setLocalPrices(newLocalPrices);
+      
+      // Convert total price
+      if (!countryCode) {
+        setLocalTotalPrice({ amount: totalPrice, symbol: '$', code: 'USD' });
+        setLocalPromoDiscount({ amount: promoDiscount, symbol: '$', code: 'USD' });
+      } else {
+        const convertedTotal = await convertUSDToLocalCurrency(totalPrice, countryCode);
+        const convertedPromoDiscount = await convertUSDToLocalCurrency(promoDiscount, countryCode);
+        setLocalTotalPrice(convertedTotal);
+        setLocalPromoDiscount(convertedPromoDiscount);
+      }
+    };
+    
+    convertPrices();
+  }, [items, totalPrice, promoDiscount, countryCode, isSupportedCountry]);
 
   const handleQuantityChange = (id: string, delta: number, currentQty: number) => {
     const item = items.find(i => i.id === id);
@@ -324,7 +361,11 @@ export default function CartPage() {
                             <div className="flex justify-between">
                               <h3 className="font-medium">{item.name}</h3>
                               {isSupportedCountry ? (
-                                <p className="font-medium">${(item.price * item.quantity).toFixed(2)}</p>
+                                <p className="font-medium">
+                                  {localPrices[item.id] 
+                                    ? `${localPrices[item.id].symbol}${(localPrices[item.id].amount * item.quantity).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                                    : '...'}
+                                </p>
                               ) : (
                                 <p className="text-sm text-muted-foreground">Contact us for pricing</p>
                               )}
@@ -482,7 +523,11 @@ export default function CartPage() {
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Subtotal</span>
                       {isSupportedCountry ? (
-                        <span>${(totalPrice + promoDiscount).toFixed(2)}</span>
+                        <span>
+                          {localTotalPrice 
+                            ? `${localTotalPrice.symbol}${(localTotalPrice.amount + (promoDiscount > 0 ? localPromoDiscount?.amount || 0 : 0)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                            : '...'}
+                        </span>
                       ) : (
                         <span className="text-sm text-muted-foreground">Contact us for pricing</span>
                       )}
@@ -491,7 +536,11 @@ export default function CartPage() {
                     {promoDiscount > 0 && (
                       <div className="flex justify-between text-green-600">
                         <span>Discount</span>
-                        <span>-${promoDiscount.toFixed(2)}</span>
+                        <span>
+                          {isSupportedCountry && localPromoDiscount 
+                            ? `-${localPromoDiscount.symbol}${localPromoDiscount.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                            : `-$${promoDiscount.toFixed(2)}`}
+                        </span>
                       </div>
                     )}
 
@@ -505,7 +554,11 @@ export default function CartPage() {
                     <div className="flex justify-between font-medium">
                       <span>Total</span>
                       {isSupportedCountry ? (
-                        <span>${totalPrice.toFixed(2)}</span>
+                        <span>
+                          {localTotalPrice 
+                            ? `${localTotalPrice.symbol}${localTotalPrice.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                            : '...'}
+                        </span>
                       ) : (
                         <span className="text-sm text-muted-foreground">Contact us for pricing</span>
                       )}

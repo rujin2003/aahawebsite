@@ -8,13 +8,47 @@ import { Button } from "@/components/ui/button";
 import { useCart } from "./cart-provider";
 import { cn } from "@/lib/utils";
 import { useCountryStore } from "@/lib/countryStore";
+import { convertUSDToLocalCurrency } from '@/lib/utils';
 
 export default function CartDropdown() {
   const { items, removeItem, updateQuantity, totalPrice } = useCart();
   const isSupportedCountry = useCountryStore(s=>s.isSupportedCountry)
+  const countryCode = useCountryStore(s => s.countryCode);
   const [isOpen, setIsOpen] = useState(false);
+  const [localPrices, setLocalPrices] = useState<Record<string, { amount: number; symbol: string; code: string }>>({});
+  const [localTotalPrice, setLocalTotalPrice] = useState<{ amount: number; symbol: string; code: string } | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLDivElement>(null);
+
+  // Convert prices to local currency
+  useEffect(() => {
+    if (!isSupportedCountry || !items.length) return;
+    
+    const convertPrices = async () => {
+      const newLocalPrices: Record<string, { amount: number; symbol: string; code: string }> = {};
+      
+      for (const item of items) {
+        if (!countryCode) {
+          newLocalPrices[item.id] = { amount: item.price, symbol: '$', code: 'USD' };
+          continue;
+        }
+        const converted = await convertUSDToLocalCurrency(item.price, countryCode);
+        newLocalPrices[item.id] = converted;
+      }
+      
+      setLocalPrices(newLocalPrices);
+      
+      // Convert total price
+      if (!countryCode) {
+        setLocalTotalPrice({ amount: totalPrice, symbol: '$', code: 'USD' });
+      } else {
+        const convertedTotal = await convertUSDToLocalCurrency(totalPrice, countryCode);
+        setLocalTotalPrice(convertedTotal);
+      }
+    };
+    
+    convertPrices();
+  }, [items, totalPrice, countryCode, isSupportedCountry]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -94,7 +128,11 @@ export default function CartDropdown() {
                         )}
                         <div className="flex items-center justify-between mt-1">
                           {isSupportedCountry ? (
-                            <span className="text-sm font-medium">${item.price.toFixed(2)}</span>
+                            <span className="text-sm font-medium">
+                              {localPrices[item.id] 
+                                ? `${localPrices[item.id].symbol}${localPrices[item.id].amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                                : '...'}
+                            </span>
                           ) : (
                             <span className="text-xs text-muted-foreground">Contact us for pricing</span>
                           )}
@@ -140,7 +178,11 @@ export default function CartDropdown() {
                 <div className="flex justify-between mb-4">
                   <span className="font-medium">Total:</span>
                   {isSupportedCountry ? (
-                    <span className="font-medium">${totalPrice.toFixed(2)}</span>
+                    <span className="font-medium">
+                      {localTotalPrice 
+                        ? `${localTotalPrice.symbol}${localTotalPrice.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                        : '...'}
+                    </span>
                   ) : (
                     <span className="text-sm text-muted-foreground">Contact us for pricing</span>
                   )}

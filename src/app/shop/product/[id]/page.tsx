@@ -78,7 +78,7 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
         } else {
           setSelectedSize(data.size);
         }
-        
+      
         setSelectedColor(data.color);
     
         // Fetch color variants using correct array filter syntax

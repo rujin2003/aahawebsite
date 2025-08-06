@@ -1,9 +1,12 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { Order } from "@/lib/supabase";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
+import { useCountryStore } from '@/lib/countryStore';
+import { convertUSDToLocalCurrency } from '@/lib/utils';
 
 interface OrderTrackingProps {
   order: Order;
@@ -48,6 +51,41 @@ const getStatusDescription = (status: string) => {
 };
 
 export function OrderTracking({ order }: OrderTrackingProps) {
+  const countryCode = useCountryStore(s => s.countryCode);
+  const isSupportedCountry = useCountryStore(s => s.isSupportedCountry);
+  const [localPrices, setLocalPrices] = useState<Record<string, { amount: number; symbol: string; code: string }>>({});
+  const [localTotalPrice, setLocalTotalPrice] = useState<{ amount: number; symbol: string; code: string } | null>(null);
+
+  // Convert prices to local currency
+  useEffect(() => {
+    if (!isSupportedCountry || !order.items.length) return;
+    
+    const convertPrices = async () => {
+      const newLocalPrices: Record<string, { amount: number; symbol: string; code: string }> = {};
+      
+      for (const item of order.items) {
+        if (!countryCode) {
+          newLocalPrices[item.id] = { amount: item.price, symbol: '$', code: 'USD' };
+          continue;
+        }
+        const converted = await convertUSDToLocalCurrency(item.price, countryCode);
+        newLocalPrices[item.id] = converted;
+      }
+      
+      setLocalPrices(newLocalPrices);
+      
+      // Convert total price
+      if (!countryCode) {
+        setLocalTotalPrice({ amount: order.total_amount, symbol: '$', code: 'USD' });
+      } else {
+        const convertedTotal = await convertUSDToLocalCurrency(order.total_amount, countryCode);
+        setLocalTotalPrice(convertedTotal);
+      }
+    };
+    
+    convertPrices();
+  }, [order.items, order.total_amount, countryCode, isSupportedCountry]);
+
   return (
     <Card className="p-6 mt-24">
       <div className="flex justify-between items-start mb-6">
@@ -102,7 +140,13 @@ export function OrderTracking({ order }: OrderTrackingProps) {
                 </p>
               </div>
               <p className="font-medium">
-                ${(item.price * item.quantity).toFixed(2)}
+                {isSupportedCountry ? (
+                  localPrices[item.id] 
+                    ? `${localPrices[item.id].symbol}${(localPrices[item.id].amount * item.quantity).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                    : '...'
+                ) : (
+                  `$${(item.price * item.quantity).toFixed(2)}`
+                )}
               </p>
             </div>
           ))}
@@ -111,7 +155,15 @@ export function OrderTracking({ order }: OrderTrackingProps) {
         <div className="pt-4 border-t">
           <div className="flex justify-between items-center">
             <p className="font-medium">Total Amount</p>
-            <p className="font-medium">${order.total_amount.toFixed(2)}</p>
+            <p className="font-medium">
+              {isSupportedCountry ? (
+                localTotalPrice 
+                  ? `${localTotalPrice.symbol}${localTotalPrice.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                  : '...'
+              ) : (
+                `$${order.total_amount.toFixed(2)}`
+              )}
+            </p>
           </div>
         </div>
       </div>

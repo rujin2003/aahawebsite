@@ -18,6 +18,7 @@ import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { Loading } from "@/components/ui/loading"
 import { useCountryStore } from "@/lib/countryStore";
+import { convertUSDToLocalCurrency } from '@/lib/utils';
 
 export default function AccountPage() {
   const [user, setUser] = useState<User | null>(null);
@@ -31,6 +32,10 @@ export default function AccountPage() {
   const [isDeleting, setIsDeleting] = useState(false);
   const router = useRouter();
   const isSupportedCountry = useCountryStore(s=>s.isSupportedCountry)
+  const countryCode = useCountryStore(s => s.countryCode);
+  const [localPrices, setLocalPrices] = useState<Record<string, { amount: number; symbol: string; code: string }>>({});
+  const [localOrderTotals, setLocalOrderTotals] = useState<Record<string, { amount: number; symbol: string; code: string }>>({});
+
 
   useEffect(() => {
     const checkUser = async () => {
@@ -49,6 +54,41 @@ export default function AccountPage() {
 
     checkUser();
   }, [router]);
+
+  // Convert prices to local currency when orders change
+  useEffect(() => {
+    if (!isSupportedCountry || !orders.length) return;
+    
+    const convertPrices = async () => {
+      const newLocalPrices: Record<string, { amount: number; symbol: string; code: string }> = {};
+      const newLocalOrderTotals: Record<string, { amount: number; symbol: string; code: string }> = {};
+      
+      for (const order of orders) {
+        // Convert order total
+        if (!countryCode) {
+          newLocalOrderTotals[order.id] = { amount: order.total_amount, symbol: '$', code: 'USD' };
+        } else {
+          const convertedTotal = await convertUSDToLocalCurrency(order.total_amount, countryCode);
+          newLocalOrderTotals[order.id] = convertedTotal;
+        }
+        
+        // Convert item prices
+        for (const item of order.items) {
+          if (!countryCode) {
+            newLocalPrices[item.id] = { amount: item.price, symbol: '$', code: 'USD' };
+          } else {
+            const converted = await convertUSDToLocalCurrency(item.price, countryCode);
+            newLocalPrices[item.id] = converted;
+          }
+        }
+      }
+      
+      setLocalPrices(newLocalPrices);
+      setLocalOrderTotals(newLocalOrderTotals);
+    };
+    
+    convertPrices();
+  }, [orders, countryCode, isSupportedCountry]);
 
   const fetchProfile = async (userId: string) => {
     try {
@@ -372,7 +412,13 @@ export default function AccountPage() {
                                 </p>
                               </div>
                               <p className="font-medium">
-                                ${(item.price * item.quantity).toFixed(2)}
+                                {isSupportedCountry ? (
+                                  localPrices[item.id] 
+                                    ? `${localPrices[item.id].symbol}${(localPrices[item.id].amount * item.quantity).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                                    : '...'
+                                ) : (
+                                  `$${(item.price * item.quantity).toFixed(2)}`
+                                )}
                               </p>
                             </div>
                           ))}
@@ -381,7 +427,15 @@ export default function AccountPage() {
                         <div className="mt-4 pt-4 border-t">
                           <div className="flex justify-between items-center">
                             <p className="font-medium">Total</p>
-                            <p className="font-medium">${order.total_amount.toFixed(2)}</p>
+                            <p className="font-medium">
+                              {isSupportedCountry ? (
+                                localOrderTotals[order.id] 
+                                  ? `${localOrderTotals[order.id].symbol}${localOrderTotals[order.id].amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                                  : '...'
+                              ) : (
+                                `$${order.total_amount.toFixed(2)}`
+                              )}
+                            </p>
                           </div>
                           {order.tracking_number && (
                             <p className="text-sm text-muted-foreground mt-2">
