@@ -323,9 +323,13 @@ function ProductCard({ product, colorVariants }: { product: Product, colorVarian
               </h3>
               {/* Price Display */}
               <div className="text-lg font-semibold text-primary mt-1">
-                {localPrice
-                  ? `${localPrice.symbol}${localPrice.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-                  : '...'}
+                {isSupportedCountry ? (
+                  localPrice
+                    ? `${localPrice.symbol}${localPrice.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                    : '...'
+                ) : (
+                  <span className="text-destructive font-semibold">We\'ll be bringing service to your country soon</span>
+                )}
               </div>
             </div>
 

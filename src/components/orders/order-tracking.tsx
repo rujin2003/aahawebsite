@@ -145,7 +145,7 @@ export function OrderTracking({ order }: OrderTrackingProps) {
                     ? `${localPrices[item.id].symbol}${(localPrices[item.id].amount * item.quantity).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
                     : '...'
                 ) : (
-                  `$${(item.price * item.quantity).toFixed(2)}`
+                  <span className="text-destructive font-semibold">We'll be bringing service to your country soon</span>
                 )}
               </p>
             </div>
@@ -161,7 +161,7 @@ export function OrderTracking({ order }: OrderTrackingProps) {
                   ? `${localTotalPrice.symbol}${localTotalPrice.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
                   : '...'
               ) : (
-                `$${order.total_amount.toFixed(2)}`
+                <span className="text-destructive font-semibold">We'll be bringing service to your country soon</span>
               )}
             </p>
           </div>

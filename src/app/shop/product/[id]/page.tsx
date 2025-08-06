@@ -13,7 +13,7 @@ import { ProductSlider } from "@/components/product-slider";
 import AddToCartButton from '@/components/add-to-cart-button';
 import Link from "next/link";
 import Image from "next/image";
-import { Heart, ArrowLeft, Check, Plus, Minus } from "lucide-react";
+import { Heart, ArrowLeft, Check,  Plus, Minus } from "lucide-react";
 import { cn } from '@/lib/utils';
 import { supabase } from '@/lib/supabase';
 import { Product } from '@/lib/supabase';
@@ -23,12 +23,13 @@ import { Loading } from "@/components/ui/loading"
 import { useCountryStore } from '@/lib/countryStore';
 import { useRouter } from 'next/navigation';
 import { convertUSDToLocalCurrency } from '@/lib/utils';
+import { isCountrySupported } from '@/lib/validCountries';
 
 
 export default function ProductPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
-  const isSupportedCountry = useCountryStore(s => s.isSupportedCountry);
   const countryCode = useCountryStore(s => s.countryCode);
+  const isSupportedCountry = isCountrySupported(countryCode.toLocaleLowerCase());
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const [isOrdering, setIsOrdering] = useState(false);
@@ -337,7 +338,9 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
                       : '...'}
                   </p>
                 ) : (
-                  <p className="text-lg text-muted-foreground">Contact us for pricing</p>
+                  <div className="text-lg text-destructive font-semibold">
+                    We'll be bringing service to your country soon
+                  </div>
                 )}
               </div>
 
@@ -436,27 +439,34 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
                     color={product.color}
                     quantity={quantity}
                     className="rounded-full flex-1 md:flex-none"
-                    disabled={!selectedSize || availableSizes.length === 0}
+                    disabled={!selectedSize || availableSizes.length === 0 || !isSupportedCountry}
                   />
-                  <Button size="lg" variant="outline" className="rounded-full">
+                  <Button size="lg" variant="outline" className="rounded-full" disabled={!isSupportedCountry}>
                     <Heart className="w-5 h-5" />
                     <span className="sr-only">Add to Wishlist</span>
                   </Button>
                 </div>
+                {!isSupportedCountry && (
+                  <div className="text-destructive font-semibold mt-4">
+                    We'll be bringing service to your country soon
+                  </div>
+                )}
               </div>
 
               <Separator className="my-8" />
 
               <div className="space-y-4">
                 <h3 className="font-medium">Features</h3>
-                <ul className="space-y-2">
-                  {product.features.map((feature: string, i: number) => (
-                    <li key={i} className="flex items-start">
-                      <Check className="w-5 h-5 text-primary shrink-0 mr-2" />
-                      <span>{feature}</span>
-                    </li>
-                  ))}
-                </ul>
+                {isSupportedCountry ? (
+                  <ul className="space-y-2">
+                    {product.features.map((feature: string, i: number) => (
+                      <li key={i} className="flex items-start">
+                        <Check className="w-5 h-5 text-primary shrink-0 mr-2" />
+                        <span>{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
+                ) : null}
               </div>
             </div>
           </div>

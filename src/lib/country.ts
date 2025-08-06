@@ -10,8 +10,8 @@ export async function getUserCountry(): Promise<string> {
     const res = await fetch('https://ipwho.is/');
     const data = await res.json();
     console.log(`Country Fetched: ${data.country_code}`);
-    // return data.country_code || 'IN';
-    return 'IN';
+    return data.country_code || 'IN';
+    // return 'US';
   } catch (error) {
     console.error('Error fetching country:', error);
     return 'IN';

@@ -220,6 +220,14 @@ export function ProductCard({ product }: { product: Product }) {
         </div>
         <div className="p-4">
           <h3 className="font-medium text-base truncate">{product.title || "Untitled Product"}</h3>
+          {/* Price Display */}
+          {useCountryStore(s => s.isSupportedCountry) ? (
+            <div className="text-lg font-semibold text-primary mt-1">
+              {product.price ? `$${Number(product.price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '...'}
+            </div>
+          ) : (
+            <div className="text-destructive font-semibold mt-1">We\'ll be bringing service to your country soon</div>
+          )}
         </div>
       </Link>
     </Card>
