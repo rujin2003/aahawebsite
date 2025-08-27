@@ -39,7 +39,22 @@ export default function CheckoutPage() {
 
       if (error) throw error;
 
-      toast.success("Payment successful! Your order is being processed.");
+      // Send order confirmation email
+      let emailSent = false;
+      try {
+        const { sendOrderConfirmationEmail } = await import('@/lib/payment');
+        await sendOrderConfirmationEmail(orderId);
+        emailSent = true;
+      } catch (emailError) {
+        console.error('Failed to send order confirmation email:', emailError);
+        // Don't fail the payment flow if email fails
+      }
+
+      if (emailSent) {
+        toast.success("Payment successful! Your order is being processed and confirmation email sent.");
+      } else {
+        toast.success("Payment successful! Your order is being processed. (Email confirmation may be delayed)");
+      }
       router.push(`/orders/${orderId}`);
     } catch (error: unknown) {
       console.error('Payment error:', error);

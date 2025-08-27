@@ -328,7 +328,7 @@ function ProductCard({ product, colorVariants }: { product: Product, colorVarian
                     ? `${localPrice.symbol}${localPrice.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
                     : '...'
                 ) : (
-                  <span className="text-destructive font-semibold">We\'ll be bringing service to your country soon</span>
+                  <span></span>
                 )}
               </div>
             </div>

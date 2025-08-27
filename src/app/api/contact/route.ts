@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
+import { sendContactFormEmail } from '@/lib/mailing'
 
 export async function POST(request: Request) {
   try {
@@ -48,8 +49,33 @@ export async function POST(request: Request) {
       )
     }
 
+    // Send email via mailing microservice
+    let emailSent = false;
+    try {
+      const emailPayload = {
+        name,
+        email,
+        subject,
+        message,
+        source: body.source || 'website',
+        created_at: new Date().toISOString()
+      }
+
+      const emailResponse = await sendContactFormEmail(emailPayload)
+      console.log('Contact form email sent successfully:', emailResponse)
+      emailSent = true;
+    } catch (emailError) {
+      console.error('Failed to send contact form email:', emailError)
+      // Don't fail the entire request if email fails, just log the error
+      // The form submission is still saved to the database
+    }
+
     console.log('Successfully saved contact form submission:', data)
-    return NextResponse.json({ success: true, data })
+    return NextResponse.json({ 
+      success: true, 
+      data,
+      emailSent 
+    })
   } catch (error) {
     console.error('Contact form submission error:', error)
     return NextResponse.json(

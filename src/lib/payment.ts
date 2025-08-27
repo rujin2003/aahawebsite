@@ -133,6 +133,89 @@ export async function updateOrderWithPayment(orderId: string, paymentId: string)
   }
 }
 
+// Send order confirmation email
+export async function sendOrderConfirmationEmail(orderId: string) {
+  try {
+    // Get order details with items and user information
+    const { data: order, error: orderError } = await supabase
+      .from('orders')
+      .select(`
+        *,
+        items:order_items(*)
+      `)
+      .eq('id', orderId)
+      .single();
+
+    if (orderError) throw orderError;
+
+    // Get user information - handle both client and server contexts
+    let userEmail = '';
+    let userName = 'Customer';
+    let userId = '';
+
+    try {
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (!userError && user) {
+        userEmail = user.email || '';
+        userId = user.id;
+        
+        // Get user profile for additional details
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .single();
+
+        userName = profile?.full_name || user.user_metadata?.full_name || 'Customer';
+      }
+    } catch (authError) {
+      console.warn('Could not get user from auth context, using order data:', authError);
+      // Fall back to order data if auth context is not available
+      userEmail = order.customer_email || '';
+      userName = order.customer_name || 'Customer';
+      userId = order.user_id || '';
+    }
+
+    // Prepare email payload
+    const emailPayload = {
+      order_id: order.id,
+      user_id: userId,
+      customer_email: userEmail,
+      customer_name: userName,
+      status: order.status,
+      total_amount: order.total_amount,
+      shipping_address: order.shipping_address,
+      tracking_number: order.tracking_number,
+      estimated_delivery: order.estimated_delivery,
+      items: order.items.map((item: any) => ({
+        product_id: item.product_id,
+        product_name: item.product_name,
+        product_image: item.product_image || '',
+        quantity: item.quantity,
+        price: item.price,
+        size: item.size
+      })),
+      country_code: order.country_code,
+      promo_code: order.promo_code,
+      discount_amount: order.discount_amount,
+      payment_id: order.payment_id,
+      created_at: order.created_at
+    };
+
+    // Import and call the mailing service
+    const { sendOrderConfirmationEmail: sendEmail } = await import('@/lib/mailing');
+    const emailResponse = await sendEmail(emailPayload);
+    
+    console.log('Order confirmation email sent successfully:', emailResponse);
+    return emailResponse;
+  } catch (error) {
+    console.error('Error sending order confirmation email:', error);
+    // Don't throw error to avoid breaking the payment flow
+    // Just log the error and continue
+    return null;
+  }
+}
+
 // Get payment by order ID
 export async function getPaymentByOrderId(orderId: string): Promise<PaymentRecord | null> {
   try {

@@ -214,11 +214,27 @@ export default function CartPage() {
               // Update order with payment
               await updateOrderWithPayment(order.id, paymentRecord.id);
 
+              // Send order confirmation email
+              let emailSent = false;
+              try {
+                const { sendOrderConfirmationEmail } = await import('@/lib/payment');
+                await sendOrderConfirmationEmail(order.id);
+                emailSent = true;
+              } catch (emailError) {
+                console.error('Failed to send order confirmation email:', emailError);
+                // Don't fail the payment flow if email fails
+              }
+
               // Clear cart and show success
               clearCart();
               setLoading(false);
               setOrderCompleted(true);
-              toast.success("Payment successful! Your order has been placed.");
+              
+              if (emailSent) {
+                toast.success("Payment successful! Your order has been placed and confirmation email sent.");
+              } else {
+                toast.success("Payment successful! Your order has been placed. (Email confirmation may be delayed)");
+              }
             } else {
               throw new Error('Payment verification failed');
             }

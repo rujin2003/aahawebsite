@@ -29,7 +29,7 @@ import { isCountrySupported } from '@/lib/validCountries';
 export default function ProductPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
   const countryCode = useCountryStore(s => s.countryCode);
-  const isSupportedCountry = isCountrySupported(countryCode.toLocaleLowerCase());
+  const isSupportedCountry = isCountrySupported(countryCode);
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const [isOrdering, setIsOrdering] = useState(false);
@@ -446,11 +446,6 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
                     <span className="sr-only">Add to Wishlist</span>
                   </Button>
                 </div>
-                {!isSupportedCountry && (
-                  <div className="text-destructive font-semibold mt-4">
-                    We'll be bringing service to your country soon
-                  </div>
-                )}
               </div>
 
               <Separator className="my-8" />

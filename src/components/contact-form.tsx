@@ -69,13 +69,19 @@ export function ContactForm({ className, source = 'website', onSuccess }: Contac
       setEmail("");
       setMessage("");
       
-      toast.success("Message sent successfully! We'll get back to you soon.");
+      // Show success message
+      if (data.emailSent) {
+        toast.success("Message sent successfully! We'll get back to you soon.");
+      } else {
+        toast.success("Message received! We'll get back to you soon. (Note: Email notification may be delayed)");
+      }
+      
       onSuccess?.();
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Failed to send message";
       console.error("Contact form error:", error);
       setError(errorMessage);
-      toast.error(errorMessage);
+      toast.error("There was an issue sending your message. Please try again later.");
     } finally {
       setLoading(false);
     }

@@ -226,7 +226,7 @@ export function ProductCard({ product }: { product: Product }) {
               {product.price ? `$${Number(product.price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '...'}
             </div>
           ) : (
-            <div className="text-destructive font-semibold mt-1">We\'ll be bringing service to your country soon</div>
+            <div></div>
           )}
         </div>
       </Link>
