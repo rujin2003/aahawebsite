@@ -89,6 +89,20 @@ export default function ShopPage() {
       )
     )
 
+  // Sort groups by total stock (sum of size_stock across all variants) in descending order
+  const sortedGroupedEntries = Object.entries(filteredGroupedProducts).sort(([, aProducts], [, bProducts]) => {
+    const sumStock = (products: Product[]) =>
+      products.reduce((groupTotal, product) => {
+        const sizeStock = product.size_stock || {}
+        const productTotal = Object.values(sizeStock).reduce((sum, qty) => sum + (typeof qty === 'number' ? qty : 0), 0)
+        return groupTotal + productTotal
+      }, 0)
+
+    const aTotal = sumStock(aProducts)
+    const bTotal = sumStock(bProducts)
+    return bTotal - aTotal
+  })
+
   if (loading) {
     return (
       <div className="flex min-h-screen flex-col pt-20">
@@ -199,7 +213,7 @@ export default function ShopPage() {
               </div>
             ) : (
               <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                {Object.entries(filteredGroupedProducts).map(([groupId, products]) => (
+                {sortedGroupedEntries.map(([groupId, products]) => (
                   <ProductCard
                     key={groupId}
                     product={products[0]}
