@@ -187,7 +187,7 @@ export default function Home() {
   <div className="rounded-3xl overflow-hidden relative mt-12" style={{ height: "70vh" }}>
     <div className="absolute inset-0 z-0">
       <Image
-        src="/hero-bg.jpg"
+        src="/hero-bg.png"
         alt="Hero background"
         fill
         className="object-cover"
