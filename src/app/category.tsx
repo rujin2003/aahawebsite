@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { Category } from '@/lib/supabase'
 import Link from 'next/link'
+import Image from 'next/image'
 
 export default function Categories() {
   const [categories, setCategories] = useState<Category[]>([])
@@ -41,7 +42,7 @@ export default function Categories() {
         </h2>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {categories.map((category) => {
+          {categories.map((category, index) => {
             const imageSrc = category.image?.startsWith('http')
               ? category.image
               : '/placeholder.jpg'
@@ -52,19 +53,18 @@ export default function Categories() {
                 key={category.id}
                 className="block group"
               >
-                {/* CARD CONTAINER - using inline style for guaranteed background coverage */}
-                <div 
-                  className="relative w-full h-[420px] rounded-2xl overflow-hidden transition-shadow duration-300 hover:shadow-xl"
-                  style={{
-                    background: `url(${imageSrc}) center center / cover no-repeat`,
-                  }}
-                >
-                  {/* Scaled image layer for hover effect */}
-                  <div 
-                    className="absolute inset-[-10px] transition-transform duration-500 group-hover:scale-110"
-                    style={{
-                      background: `url(${imageSrc}) center center / cover no-repeat`,
-                    }}
+                {/* CARD CONTAINER - using Next.js Image for optimized loading */}
+                <div className="relative w-full h-[420px] rounded-2xl overflow-hidden transition-shadow duration-300 hover:shadow-xl">
+                  {/* Optimized Next.js Image */}
+                  <Image
+                    src={imageSrc}
+                    alt={category.name}
+                    fill
+                    className="object-cover transition-transform duration-500 group-hover:scale-110"
+                    priority={index < 4}
+                    loading={index < 4 ? "eager" : "lazy"}
+                    sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                    quality={75}
                   />
 
                   {/* OVERLAY */}

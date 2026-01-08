@@ -191,8 +191,11 @@ export default function Home() {
       fill
       className="object-cover opacity-40"
       priority
-      quality={85}
+      fetchPriority="high"
+      quality={75}
       sizes="100vw"
+      placeholder="blur"
+      blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFgABAQEAAAAAAAAAAAAAAAAAAAUH/8QAIhAAAgEDBAMBAAAAAAAAAAAAAQIDAAQRBQYSIRMxQVH/xAAVAQEBAAAAAAAAAAAAAAAAAAADBP/EABkRAAMBAQEAAAAAAAAAAAAAAAABAhEDIf/aAAwDAQACEQMRAD8Awa0jljMjMpVc4VlIPYG9EHg/tbjaO6dQu7KCa5u2lldQWd+yT+mlKtTqCy0//9k="
     />
     {/* Subtle overlay for better text readability */}
     <div className="absolute inset-0 bg-gradient-to-br from-background/60 via-background/40 to-transparent"></div>
@@ -306,7 +309,7 @@ export default function Home() {
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 max-w-2xl md:max-w-6xl mx-auto">
                 {categories.slice(0, 4).map((category, index) => (
                   <Link 
-                    href={`/shop/${category.id}`} 
+                    href={`/shop?category=${category.id}`} 
                     key={category.id}
                     className="group relative aspect-[1/1.2] rounded-lg overflow-hidden animate-fade-up w-full"
                     style={{ animationDelay: `${index * 100}ms` }}

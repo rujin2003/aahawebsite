@@ -26,6 +26,10 @@ const CategoryCard: React.FC<CategoryCardProps> = ({ category, index }) => {
           alt={category.name}
           fill
           className="object-cover rounded-lg transition-all duration-300"
+          priority={index < 4}
+          loading={index < 4 ? "eager" : "lazy"}
+          sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 25vw"
+          quality={75}
         />
       </div>
 

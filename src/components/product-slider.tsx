@@ -307,6 +307,8 @@ export function ProductCard({ product }: { product: Product }) {
             isHovered ? "scale-105" : "scale-100"
           )}
           sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+          quality={75}
+          loading="lazy"
           onError={(e) => {
             const target = e.target as HTMLImageElement;
             target.src = fallbackImage;

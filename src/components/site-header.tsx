@@ -101,9 +101,9 @@ export function SiteHeader() {
   return (
     <header 
       className={cn(
-        "fixed top-0 left-0 right-0 z-50 px-4 sm:px-6 md:px-8 lg:px-10 transition-all duration-500 ease-in-out",
+        "fixed top-0 left-0 right-0 z-50 px-3 sm:px-4 md:px-8 lg:px-10 transition-all duration-500 ease-in-out",
         isVisible ? "translate-y-0" : "-translate-y-full",
-        isScrolled ? "pt-4" : isHomePage ? "pt-8" : "pt-8"
+        isScrolled ? "pt-2 sm:pt-4" : isHomePage ? "pt-4 sm:pt-6 md:pt-8" : "pt-4 sm:pt-6 md:pt-8"
       )}
     >
       <div className="relative mx-auto max-w-7xl">
@@ -113,7 +113,7 @@ export function SiteHeader() {
           className={cn(
             "absolute inset-0 transition-all duration-500 ease-out border shadow-soft",
             isHomeHeaderExpanded 
-              ? "bg-white/95 backdrop-blur-md rounded-r-3xl rounded-l-none left-[140px] md:left-[260px] border-l-0" 
+              ? "bg-white/95 backdrop-blur-md rounded-r-3xl rounded-l-none left-[100px] sm:left-[140px] md:left-[260px] border-l-0" 
               : "bg-white/95 backdrop-blur-md rounded-full left-0 border-border/20",
             isScrolled && "bg-white/98 border-border/30 shadow-soft-lg"
           )}
@@ -121,8 +121,8 @@ export function SiteHeader() {
 
         {/* Content Layer */}
         <div className={cn(
-          "relative z-10 flex items-center justify-between px-5 md:px-8 transition-all duration-300",
-          isScrolled ? "h-[48px] md:h-[56px]" : "h-[56px] md:h-[64px]"
+          "relative z-10 flex items-center justify-between px-3 sm:px-5 md:px-8 transition-all duration-300",
+          isScrolled ? "h-[44px] sm:h-[48px] md:h-[56px]" : "h-[48px] sm:h-[56px] md:h-[64px]"
         )}>
           <div className="flex items-center">
            <Link
@@ -142,10 +142,10 @@ export function SiteHeader() {
   className={cn(
     "w-auto object-contain transition-all duration-300",
     isHomeHeaderExpanded
-      ? "h-[100px] md:h-[130px]"   // ⬅ Bigger on homepage
+      ? "h-[60px] sm:h-[80px] md:h-[130px]"   // Responsive: smaller on mobile
       : isScrolled
-        ? "h-[48px] md:h-[56px]"  // Compact on scroll
-        : "h-[64px] md:h-[72px]"  // Normal size
+        ? "h-[40px] sm:h-[48px] md:h-[56px]"  // Compact on scroll
+        : "h-[48px] sm:h-[56px] md:h-[72px]"  // Normal size
   )}
 />
 

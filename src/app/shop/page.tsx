@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { Button } from "@/components/ui/button";
@@ -24,6 +25,15 @@ export default function ShopPage() {
   const [groupedProducts, setGroupedProducts] = useState<{ [key: string]: Product[] }>({})
   const countryCode = useCountryStore(s => s.countryCode);
   const getCountry = useCountryStore(s => s.getCountry);
+  const searchParams = useSearchParams();
+
+  // Read category from URL on mount
+  useEffect(() => {
+    const categoryParam = searchParams.get('category');
+    if (categoryParam) {
+      setSelectedCategory(categoryParam);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     getCountry();
