@@ -24,7 +24,6 @@ import { convertUSDToLocalCurrency } from '@/lib/utils';
 
 import Categories from "./category";
 import MissionSection from "@/components/mission_gradient";
-import FeltCarousel from "@/components/flet_carosuel";
 // import KiniHeroBanner from "@/components/kini_hero";
 
 export default function Home() {
@@ -182,55 +181,165 @@ export default function Home() {
       <SiteHeader />
 
       <main className="flex-1 pt-0">
-      {/* Hero Section with Next.js Image */}
-<section className="relative px-4 sm:px-6 md:px-8 lg:px-12 -mt-6 mb-16">
-  <div className="rounded-3xl overflow-hidden relative mt-12" style={{ height: "70vh" }}>
-    <div className="absolute inset-0 z-0">
-      <Image
-        src="/hero-bg.png"
-        alt="Hero background"
-        fill
-        className="object-cover"
-        priority
-      />
-    </div>
-   
-    <div className="absolute inset-0 bg-gradient-to-r from-blue-500/30 to-primary/20 z-10"></div>
-    <div className="absolute top-0 right-0 w-full h-full opacity-50 z-5">
-      <div className="absolute top-[-10%] right-[-10%] w-[60%] h-[60%] rounded-full bg-blue-500/30 blur-[100px]"></div>
-      <div className="absolute bottom-[-20%] left-[5%] w-[50%] h-[50%] rounded-full bg-primary/20 blur-[80px]"></div>
-    </div>
-    <div className="container relative z-20 h-full flex items-center pt-16">
-      <div className="max-w-xl space-y-5 text-white">
-        <span className="text-sm font-medium animate-on-scroll fade-up">Natural Wool Felting: Sustainable, Handcrafted, Unique</span>
-        <h1 className="text-4xl md:text-6xl font-medium leading-tight animate-on-scroll fade-up" style={{ transitionDelay: '100ms' }}>
-          Your home, <br />artfully crafted
+      {/* Enhanced Hero Section with Premium Design */}
+<section className="relative min-h-[75vh] sm:min-h-[80vh] lg:min-h-[90vh] flex items-center overflow-hidden bg-gradient-to-br from-secondary via-background to-accent/10">
+  {/* Background Image with Parallax Effect */}
+  <div className="absolute inset-0 z-0">
+    <Image
+      src="/hero-bg.png"
+      alt="Handcrafted felt products in a beautiful home setting"
+      fill
+      className="object-cover opacity-40"
+      priority
+      quality={85}
+      sizes="100vw"
+    />
+    {/* Subtle overlay for better text readability */}
+    <div className="absolute inset-0 bg-gradient-to-br from-background/60 via-background/40 to-transparent"></div>
+  </div>
+  
+  {/* Organic shapes for visual interest */}
+  <div className="absolute top-0 right-0 w-[400px] sm:w-[600px] h-[400px] sm:h-[600px] opacity-20 blur-3xl">
+    <div className="absolute top-0 right-0 w-full h-full rounded-full bg-primary/20"></div>
+  </div>
+  <div className="absolute bottom-0 left-0 w-[350px] sm:w-[500px] h-[350px] sm:h-[500px] opacity-20 blur-3xl">
+    <div className="absolute bottom-0 left-0 w-full h-full rounded-full bg-accent/30"></div>
+  </div>
+
+  <div className="container relative z-10 py-16 sm:py-20 md:py-24">
+    <div className="grid lg:grid-cols-2 gap-8 sm:gap-12 lg:gap-16 items-center">
+      {/* Left: Content */}
+      <div className="space-y-6 sm:space-y-8 max-w-2xl mx-auto lg:mx-0">
+        {/* Badge */}
+        <div className="group inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-white/80 backdrop-blur-sm border border-primary/10 shadow-soft animate-on-scroll fade-up hover:shadow-md hover:border-primary/30 transition-all duration-300 cursor-default">
+          <div className="w-2 h-2 rounded-full bg-primary animate-pulse"></div>
+          <span className="text-xs sm:text-sm font-medium text-foreground flex items-center gap-1.5">
+            <span className="inline-block animate-fade-in-tag" style={{ animationDelay: '0ms' }}>Sustainable</span>
+            <span className="text-primary/40">•</span>
+            <span className="inline-block animate-fade-in-tag" style={{ animationDelay: '150ms' }}>Handcrafted</span>
+            <span className="text-primary/40">•</span>
+            <span className="inline-block animate-fade-in-tag" style={{ animationDelay: '300ms' }}>Unique</span>
+          </span>
+        </div>
+
+        {/* Headline */}
+        <h1 className="animate-on-scroll fade-up font-playfair leading-[1.1] text-4xl sm:text-5xl md:text-6xl lg:text-7xl" style={{ transitionDelay: '100ms' }}>
+          Transform Your Space<br />
+          <span className="text-primary">with Artisan Felt</span>
         </h1>
-        <p className="text-white/90 text-lg max-w-md animate-on-scroll fade-up" style={{ transitionDelay: '200ms' }}>
-          Discover our collection of sustainable, eco-friendly felt handicrafts made with care and traditional artisanal techniques.
+
+        {/* Subheadline */}
+        <p className="text-lg sm:text-xl md:text-2xl text-foreground/70 leading-relaxed animate-on-scroll fade-up max-w-xl" style={{ transitionDelay: '200ms' }}>
+          Discover eco-friendly home décor crafted with love by skilled artisans using traditional wool felting techniques.
         </p>
-        <div className="flex gap-4 pt-4 animate-on-scroll fade-up" style={{ transitionDelay: '300ms' }}>
-          <Button size="lg" className="rounded-full bg-white text-primary hover:bg-white/90" asChild>
+
+        {/* CTA Buttons */}
+        <div className="flex flex-col sm:flex-row flex-wrap gap-4 animate-on-scroll fade-up" style={{ transitionDelay: '300ms' }}>
+          <Button 
+            size="lg" 
+            className="rounded-full px-8 h-14 text-base shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 w-full sm:w-auto" 
+            asChild
+          >
             <Link href="/shop">
-              Shop Now
+              Explore Collection
+              <svg className="w-5 h-5 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+              </svg>
             </Link>
           </Button>
-          <Button size="lg" variant="outline" className="rounded-full border-white text-white bg-transparent hover:bg-white/20" asChild>
+          <Button 
+            size="lg" 
+            variant="outline" 
+            className="rounded-full px-8 h-14 text-base border-2 hover:bg-primary/5 transition-all duration-300 w-full sm:w-auto" 
+            asChild
+          >
             <Link href="/company">
-              Learn More
+              Our Story
             </Link>
           </Button>
         </div>
       </div>
+
+      {/* Right: Featured Product Image (Optional) */}
+      <div className="hidden lg:block relative animate-on-scroll fade-left" style={{ transitionDelay: '300ms' }}>
+        <div className="relative aspect-square rounded-3xl overflow-hidden shadow-soft-lg">
+          <Image
+            src="/hero-bg.png"
+            alt="Featured felt products"
+            fill
+            className="object-cover"
+            priority
+            sizes="(max-width: 1024px) 100vw, 50vw"
+          />
+          {/* Floating badge */}
+          <div className="absolute top-6 right-6 px-4 py-2 rounded-full bg-white shadow-lg backdrop-blur-sm">
+            <span className="text-sm font-medium">✨ New Arrivals</span>
+          </div>
+        </div>
+        {/* Decorative element */}
+        <div className="absolute -bottom-6 -right-6 w-32 h-32 rounded-full bg-primary/10 blur-2xl"></div>
+      </div>
     </div>
+  </div>
+
+  {/* Scroll indicator */}
+  <div className="absolute bottom-6 sm:bottom-8 left-1/2 -translate-x-1/2 animate-bounce">
+    <svg className="w-5 h-5 sm:w-6 sm:h-6 text-foreground/40" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+    </svg>
   </div>
 </section>
 
 
 <MissionSection></MissionSection>
 
-<FeltCarousel />
-
+        {/* Categories Section */}
+        <section className="py-12 sm:py-16 bg-muted/50">
+          <div className="container px-4 sm:px-6">
+            <div className="text-center mb-8 sm:mb-12">
+              <h2 className="text-2xl sm:text-3xl font-medium mb-4 animate-fade-up">Explore Our Collections</h2>
+              <p className="text-muted-foreground animate-fade-up animate-delay-100 text-sm sm:text-base">
+                Browse our carefully curated categories of handcrafted felt products
+              </p>
+            </div>
+            <div>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 max-w-2xl md:max-w-6xl mx-auto">
+                {categories.slice(0, 4).map((category, index) => (
+                  <Link 
+                    href={`/shop/${category.id}`} 
+                    key={category.id}
+                    className="group relative aspect-[1/1.2] rounded-lg overflow-hidden animate-fade-up w-full"
+                    style={{ animationDelay: `${index * 100}ms` }}
+                  >
+                    <div 
+                      className="absolute inset-0"
+                      style={{
+                        background: `url(${category.image}) center center / cover no-repeat`,
+                      }}
+                    />
+                    {/* Scaled layer for hover effect */}
+                    <div 
+                      className="absolute inset-[-10px] transition-transform duration-500 group-hover:scale-110"
+                      style={{
+                        background: `url(${category.image}) center center / cover no-repeat`,
+                      }}
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/0 to-black/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10">
+                      <div className="absolute bottom-0 left-0 right-0 p-2 sm:p-4">
+                        <h3 className="text-sm sm:text-base font-medium text-white mb-1 transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
+                          {category.name}
+                        </h3>
+                        <p className="text-white/80 text-xs transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300 delay-75 line-clamp-2">
+                          {category.description}
+                        </p>
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
 
         {/* Popular Products Section */}
         <section className="py-10">
@@ -254,78 +363,217 @@ export default function Home() {
           </div>
         </section>
 
+        {/* Artisan Story Section */}
+        <section className="py-10 md:py-14 lg:py-16 bg-gradient-to-b from-secondary/30 to-background overflow-hidden">
+          <div className="container">
+            <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+              {/* Image Side */}
+              <div className="relative animate-on-scroll fade-right">
+                <div className="relative aspect-[4/5] rounded-3xl overflow-hidden shadow-soft-lg">
+                  <Image
+                    src="/hero-bg.png"
+                    alt="Artisan crafting felt products"
+                    fill
+                    className="object-cover"
+                  />
+                </div>
+                {/* Decorative elements */}
+                <div className="absolute -bottom-6 -left-6 w-40 h-40 bg-primary/10 rounded-full blur-3xl"></div>
+                <div className="absolute -top-6 -right-6 w-32 h-32 bg-accent/20 rounded-full blur-2xl"></div>
+              </div>
+
+              {/* Content Side */}
+              <div className="space-y-6 animate-on-scroll fade-left">
+                <div className="group inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-primary/10 via-primary/5 to-primary/10 text-primary text-sm font-medium border border-primary/20 hover:border-primary/40 transition-all duration-300 cursor-default animate-shimmer bg-[length:200%_100%]">
+                  <span className="animate-bounce-subtle">✨</span>
+                  <span className="font-semibold tracking-wide">Our Story</span>
+                </div>
+                
+                <h2 className="font-playfair">
+                  Crafted with Love,<br />
+                  <span className="text-primary">Inspired by Tradition</span>
+                </h2>
+                
+                <div className="space-y-4 text-foreground/70 text-lg leading-relaxed">
+                  <p>
+                    Every piece at Aaha Felt tells a story of dedication, skill, and passion. Our artisans have spent years mastering the ancient art of wool felting, transforming natural fibers into beautiful, functional works of art.
+                  </p>
+                  <p>
+                    We believe in preserving traditional craftsmanship while creating products that fit modern lifestyles. Each item is made by hand, ensuring that no two pieces are exactly alike—just like the homes they'll beautify.
+                  </p>
+                </div>
+
+                <div className="grid sm:grid-cols-2 gap-6 pt-4">
+                  <div className="space-y-2">
+                    <div className="text-4xl font-bold text-primary">15+</div>
+                    <p className="text-foreground/70">Years of Experience</p>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="text-4xl font-bold text-primary">100%</div>
+                    <p className="text-foreground/70">Handcrafted</p>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="text-4xl font-bold text-primary">50+</div>
+                    <p className="text-foreground/70">Skilled Artisans</p>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="text-4xl font-bold text-primary">5000+</div>
+                    <p className="text-foreground/70">Happy Customers</p>
+                  </div>
+                </div>
+
+                <div className="pt-4">
+                  <Button size="lg" className="rounded-full" asChild>
+                    <Link href="/company">
+                      Learn More About Us
+                      <svg className="w-4 h-4 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                      </svg>
+                    </Link>
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Sustainability Highlights Section */}
+        <section className="py-10 md:py-12 lg:py-14">
+          <div className="container">
+            <div className="text-center max-w-3xl mx-auto mb-12 space-y-4 animate-on-scroll fade-up">
+              <div className="group inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-green-100/80 via-accent/40 to-green-100/80 text-foreground text-sm font-medium border border-green-200/50 hover:border-green-300 transition-all duration-300 cursor-default animate-shimmer bg-[length:200%_100%]">
+                <span className="animate-leaf-sway">🌱</span>
+                <span className="font-semibold tracking-wide text-green-800">Sustainability</span>
+              </div>
+              <h2 className="font-playfair">
+                Beautiful Products,<br />
+                <span className="text-primary">Beautiful Planet</span>
+              </h2>
+              <p className="text-lg text-foreground/70">
+                We're committed to creating products that are as kind to the earth as they are beautiful in your home.
+              </p>
+            </div>
+
+            <div className="grid md:grid-cols-3 gap-8">
+              {/* Eco-Friendly Materials */}
+              <div className="group p-8 rounded-2xl bg-white border border-border hover:border-primary/30 transition-all duration-500 hover:shadow-soft-lg animate-on-scroll fade-up">
+                <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-500">
+                  <svg className="w-8 h-8 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                  </svg>
+                </div>
+                <h3 className="text-xl font-semibold mb-3">Natural Materials</h3>
+                <p className="text-foreground/70 leading-relaxed">
+                  100% natural wool from ethically-sourced farms, dyed with eco-friendly, non-toxic colors that are safe for your family and the planet.
+                </p>
+              </div>
+
+              {/* Zero Waste */}
+              <div className="group p-8 rounded-2xl bg-white border border-border hover:border-primary/30 transition-all duration-500 hover:shadow-soft-lg animate-on-scroll fade-up" style={{ transitionDelay: '100ms' }}>
+                <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-500">
+                  <svg className="w-8 h-8 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                </div>
+                <h3 className="text-xl font-semibold mb-3">Minimal Waste</h3>
+                <p className="text-foreground/70 leading-relaxed">
+                  Our traditional felting techniques create minimal waste. Every scrap of wool is repurposed or composted, supporting a circular economy.
+                </p>
+              </div>
+
+              {/* Fair Trade */}
+              <div className="group p-8 rounded-2xl bg-white border border-border hover:border-primary/30 transition-all duration-500 hover:shadow-soft-lg animate-on-scroll fade-up" style={{ transitionDelay: '200ms' }}>
+                <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-500">
+                  <svg className="w-8 h-8 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                  </svg>
+                </div>
+                <h3 className="text-xl font-semibold mb-3">Fair Trade Practices</h3>
+                <p className="text-foreground/70 leading-relaxed">
+                  We ensure fair wages and safe working conditions for all our artisans, supporting local communities and preserving traditional crafts.
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
        {/* Featured Product */}
 
   {/* </section> */}
 
         {/* Benefits Section */}
-        <section className="py-20">
+        <section className="section-spacing-sm bg-secondary/20">
           <div className="container">
-            <h2 className="text-3xl text-center mb-16 animate-on-scroll fade-up">Feel the difference in every piece</h2>
+            <div className="text-center max-w-3xl mx-auto mb-16 animate-on-scroll fade-up">
+              <h2 className="font-playfair mb-4">Why Choose Aaha Felt?</h2>
+              <p className="text-lg text-foreground/70">
+                Experience the perfect blend of tradition, quality, and sustainability
+              </p>
+            </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="benefit-card animate-on-scroll fade-right card-hover-effect">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <div className="group p-10 rounded-3xl bg-white shadow-soft hover:shadow-soft-lg transition-all duration-500 animate-on-scroll fade-right">
                 <div className="flex flex-col h-full">
-                  <div className="mb-4">
-                    <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+                  <div className="mb-6">
+                    <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-500">
                       <svg className="w-8 h-8 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                       </svg>
                     </div>
-                    <h3 className="text-2xl mb-2">Handcrafted Excellence</h3>
+                    <h3 className="text-2xl font-playfair mb-4">Handcrafted Excellence</h3>
                   </div>
 
-                  <p className="text-muted-foreground mb-6">
+                  <p className="text-foreground/70 leading-relaxed mb-6 text-lg">
                     Each piece is meticulously crafted by skilled artisans using traditional needle felting and wet felting techniques. Our dedication to craftsmanship ensures every item has its own unique character and exceptional quality.
                   </p>
 
                   <div className="mt-auto">
-                    <ul className="space-y-2 mb-6">
-                      <li className="flex items-start text-sm">
-                        <span className="text-primary mr-2">•</span>
-                        <span>Individual artisan attention</span>
+                    <ul className="space-y-3">
+                      <li className="flex items-start">
+                        <span className="text-primary mr-3 mt-1">✓</span>
+                        <span className="text-foreground/80">Individual artisan attention to every detail</span>
                       </li>
-                      <li className="flex items-start text-sm">
-                        <span className="text-primary mr-2">•</span>
-                        <span>Traditional techniques</span>
+                      <li className="flex items-start">
+                        <span className="text-primary mr-3 mt-1">✓</span>
+                        <span className="text-foreground/80">Time-honored traditional techniques</span>
                       </li>
-                      <li className="flex items-start text-sm">
-                        <span className="text-primary mr-2">•</span>
-                        <span>Unique character in every piece</span>
+                      <li className="flex items-start">
+                        <span className="text-primary mr-3 mt-1">✓</span>
+                        <span className="text-foreground/80">Unique character in every single piece</span>
                       </li>
                     </ul>
                   </div>
                 </div>
               </div>
 
-              <div className="benefit-card animate-on-scroll fade-left card-hover-effect" style={{ transitionDelay: '100ms' }}>
+              <div className="group p-10 rounded-3xl bg-white shadow-soft hover:shadow-soft-lg transition-all duration-500 animate-on-scroll fade-left" style={{ transitionDelay: '100ms' }}>
                 <div className="flex flex-col h-full">
-                  <div className="mb-4">
-                    <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+                  <div className="mb-6">
+                    <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-500">
                       <svg className="w-8 h-8 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                       </svg>
                     </div>
-                    <h3 className="text-2xl mb-2">Sustainable Materials</h3>
+                    <h3 className="text-2xl font-playfair mb-4">Premium Natural Materials</h3>
                   </div>
 
-                  <p className="text-muted-foreground mb-6">
+                  <p className="text-foreground/70 leading-relaxed mb-6 text-lg">
                     We use only the finest 100% natural wool sourced from farms that prioritize animal welfare and sustainable practices. Our dyes are eco-friendly and non-toxic, minimizing environmental impact.
                   </p>
 
                   <div className="mt-auto">
-                    <ul className="space-y-2 mb-6">
-                      <li className="flex items-start text-sm">
-                        <span className="text-primary mr-2">•</span>
-                        <span>100% natural wool</span>
+                    <ul className="space-y-3">
+                      <li className="flex items-start">
+                        <span className="text-primary mr-3 mt-1">✓</span>
+                        <span className="text-foreground/80">100% natural, premium quality wool</span>
                       </li>
-                      <li className="flex items-start text-sm">
-                        <span className="text-primary mr-2">•</span>
-                        <span>Eco-friendly dyes</span>
+                      <li className="flex items-start">
+                        <span className="text-primary mr-3 mt-1">✓</span>
+                        <span className="text-foreground/80">Non-toxic, eco-friendly dyes</span>
                       </li>
-                      <li className="flex items-start text-sm">
-                        <span className="text-primary mr-2">•</span>
-                        <span>Ethically sourced materials</span>
+                      <li className="flex items-start">
+                        <span className="text-primary mr-3 mt-1">✓</span>
+                        <span className="text-foreground/80">Ethically sourced from trusted farms</span>
                       </li>
                     </ul>
                   </div>
@@ -335,43 +583,110 @@ export default function Home() {
           </div>
         </section>
        
-        {/* Testimonials */}
-        <section className="py-20 bg-muted">
+        {/* Customer Reviews / Testimonials */}
+        <section className="section-spacing">
           <div className="container">
-            <h2 className="text-3xl text-center mb-16 animate-on-scroll fade-up">Helping people create beautiful spaces</h2>
+            <div className="text-center max-w-3xl mx-auto mb-16 animate-on-scroll fade-up">
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-4">
+                <span>⭐ Customer Reviews</span>
+              </div>
+              <h2 className="font-playfair mb-4">Loved by Our Customers</h2>
+              <p className="text-lg text-foreground/70">
+                Don't just take our word for it—hear what our community has to say
+              </p>
+            </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {[0, 1, 2].map((index) => (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {[
+                {
+                  name: "Sarah Miller",
+                  role: "Interior Designer",
+                  review: "The felt wall hanging I purchased transformed my living room. The colors are vibrant, the craftsmanship is exceptional, and it adds such a warm, artistic touch to our home. Absolutely love it!",
+                  rating: 5
+                },
+                {
+                  name: "James Wilson",
+                  role: "New Parent",
+                  review: "I ordered several felt animals from the collection for my daughter's nursery. They are absolutely adorable, meticulously made, and completely safe. A perfect heirloom gift that will last generations!",
+                  rating: 5
+                },
+                {
+                  name: "Emily Zhang",
+                  role: "Sustainability Advocate",
+                  review: "As someone who appreciates traditional crafts, I'm impressed by the attention to detail in every piece. Their commitment to sustainable materials and fair trade aligns perfectly with my values.",
+                  rating: 5
+                }
+              ].map((testimonial, index) => (
                 <div 
                   key={index}
-                  className="p-6 bg-background rounded-xl animate-on-scroll fade-up card-hover-effect" 
+                  className="group p-8 bg-white rounded-2xl border border-border hover:border-primary/30 shadow-soft hover:shadow-soft-lg transition-all duration-500 animate-on-scroll fade-up" 
                   style={{ transitionDelay: `${index * 100}ms` }}
                 >
-                  <p className="mb-6 italic text-muted-foreground">
-                    {index === 0 && 
-                      "The felt wall hanging I purchased from Felt Artistry transformed my living room. The colors are vibrant, the craftsmanship is exceptional, and it adds such a warm, artistic touch to our home."}
-                    {index === 1 && 
-                      "I ordered several felt animals from the Woodland Collection for my daughter's nursery. They are absolutely adorable, meticulously made, and completely child-safe. A perfect heirloom gift!"}
-                    {index === 2 && 
-                      "As someone who appreciates traditional crafts, I'm impressed by the attention to detail in every Felt Artistry piece. Their commitment to sustainable materials aligns perfectly with my values."}
+                  {/* Star Rating */}
+                  <div className="flex gap-1 mb-4">
+                    {[...Array(testimonial.rating)].map((_, i) => (
+                      <svg key={i} className="w-5 h-5 text-primary" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                      </svg>
+                    ))}
+                  </div>
+
+                  <p className="text-foreground/70 leading-relaxed mb-6 italic">
+                    "{testimonial.review}"
                   </p>
-                  <div className="flex items-center">
-                    <div className="w-10 h-10 rounded-full bg-primary/10 mr-3"></div>
+                  
+                  <div className="flex items-center pt-4 border-t border-border">
+                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center mr-4 group-hover:scale-110 transition-transform duration-500">
+                      <span className="text-primary font-semibold text-lg">
+                        {testimonial.name.split(' ').map(n => n[0]).join('')}
+                      </span>
+                    </div>
                     <div>
-                      <p className="font-medium">
-                        {index === 0 && "Sarah Miller"}
-                        {index === 1 && "James Wilson"}
-                        {index === 2 && "Emily Zhang"}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        {index === 0 && "Interior Designer"}
-                        {index === 1 && "New Parent"}
-                        {index === 2 && "Sustainability Advocate"}
-                      </p>
+                      <p className="font-semibold text-foreground">{testimonial.name}</p>
+                      <p className="text-sm text-foreground/60">{testimonial.role}</p>
                     </div>
                   </div>
                 </div>
               ))}
+            </div>
+
+            {/* Trust badges */}
+            <div className="flex flex-wrap justify-center items-center gap-8 mt-16 pt-12 border-t border-border animate-on-scroll fade-up">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                  <svg className="w-6 h-6 text-primary" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                  </svg>
+                </div>
+                <div>
+                  <div className="font-bold text-xl">4.9/5</div>
+                  <div className="text-sm text-foreground/60">Average Rating</div>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                  <svg className="w-6 h-6 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                  </svg>
+                </div>
+                <div>
+                  <div className="font-bold text-xl">5,000+</div>
+                  <div className="text-sm text-foreground/60">Happy Customers</div>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                  <svg className="w-6 h-6 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                  </svg>
+                </div>
+                <div>
+                  <div className="font-bold text-xl">100%</div>
+                  <div className="text-sm text-foreground/60">Secure Checkout</div>
+                </div>
+              </div>
             </div>
           </div>
         </section>
@@ -440,49 +755,6 @@ export default function Home() {
                   {contactError && <p className="text-red-600 mt-2">{contactError}</p>}
                 </div>
               </form>
-            </div>
-          </div>
-        </section>
-
-        {/* Categories Section */}
-        <section className="py-12 sm:py-20 bg-muted/50">
-          <div className="container px-4 sm:px-6">
-            <div className="text-center mb-8 sm:mb-12">
-              <h2 className="text-2xl sm:text-3xl font-medium mb-4 animate-fade-up">Explore Our Collections</h2>
-              <p className="text-muted-foreground animate-fade-up animate-delay-100 text-sm sm:text-base">
-                Browse our carefully curated categories of handcrafted felt products
-              </p>
-            </div>
-            <div>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 max-w-2xl md:max-w-6xl mx-auto">
-                {categories.slice(0, 4).map((category, index) => (
-                  <Link 
-                    href={`/shop/${category.id}`} 
-                    key={category.id}
-                    className="group relative aspect-[1/1.2] rounded-lg overflow-hidden animate-fade-up w-full bg-white"
-                    style={{ animationDelay: `${index * 100}ms` }}
-                  >
-                    <div className="absolute inset-0 bg-white flex items-center justify-center p-4">
-                      <Image
-                        src={category.image}
-                        alt={category.name}
-                        fill
-                        className="object-contain transition-transform duration-500 group-hover:scale-110"
-                      />
-                    </div>
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/0 to-black/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                      <div className="absolute bottom-0 left-0 right-0 p-2 sm:p-4">
-                        <h3 className="text-sm sm:text-base font-medium text-white mb-1 transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
-                          {category.name}
-                        </h3>
-                        <p className="text-white/80 text-xs transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300 delay-75 line-clamp-2">
-                          {category.description}
-                        </p>
-                      </div>
-                    </div>
-                  </Link>
-                ))}
-              </div>
             </div>
           </div>
         </section>

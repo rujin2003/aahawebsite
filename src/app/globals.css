@@ -4,65 +4,76 @@
 
 @layer base {
   :root {
-    --background: 30 30% 98%;
-    --foreground: 20 10% 15%;
+    /* Premium earthy color palette */
+    --background: 32 25% 97%;
+    --foreground: 25 20% 18%;
 
     --card: 0 0% 100%;
-    --card-foreground: 20 10% 15%;
+    --card-foreground: 25 20% 18%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 20 10% 15%;
+    --popover-foreground: 25 20% 18%;
 
-    --primary: 355 65% 60%;
-    --primary-foreground: 355 100% 97%;
+    /* Warm terracotta as primary accent */
+    --primary: 15 65% 55%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 30 50% 97%;
-    --secondary-foreground: 20 10% 15%;
+    /* Soft cream background */
+    --secondary: 38 35% 92%;
+    --secondary-foreground: 25 20% 18%;
 
-    --muted: 30 10% 94%;
-    --muted-foreground: 20 5% 45%;
+    /* Subtle warm gray */
+    --muted: 30 15% 88%;
+    --muted-foreground: 25 15% 42%;
 
-    --accent: 355 80% 95%;
-    --accent-foreground: 20 10% 15%;
+    /* Gentle sage accent */
+    --accent: 145 20% 85%;
+    --accent-foreground: 25 20% 18%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 20 5% 90%;
-    --input: 20 5% 90%;
-    --ring: 355 65% 60%;
+    --border: 30 12% 88%;
+    --input: 30 12% 88%;
+    --ring: 15 65% 55%;
 
-    --radius: 0.5rem;
+    --radius: 0.75rem;
+
+    /* Additional premium colors */
+    --earth-brown: 25 45% 35%;
+    --sage-green: 145 25% 45%;
+    --warm-beige: 38 40% 88%;
+    --soft-clay: 20 35% 65%;
   }
 
   .dark {
-    --background: 20 10% 5%;
-    --foreground: 0 0% 95%;
+    --background: 25 25% 10%;
+    --foreground: 32 25% 95%;
 
-    --card: 0 0% 8%;
-    --card-foreground: 0 0% 95%;
+    --card: 25 20% 12%;
+    --card-foreground: 32 25% 95%;
 
-    --popover: 0 0% 8%;
-    --popover-foreground: 0 0% 95%;
+    --popover: 25 20% 12%;
+    --popover-foreground: 32 25% 95%;
 
-    --primary: 355 65% 60%;
-    --primary-foreground: 355 100% 97%;
+    --primary: 15 65% 55%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 20 5% 12%;
-    --secondary-foreground: 0 0% 95%;
+    --secondary: 25 15% 18%;
+    --secondary-foreground: 32 25% 95%;
 
-    --muted: 0 0% 15%;
-    --muted-foreground: 0 0% 65%;
+    --muted: 25 15% 20%;
+    --muted-foreground: 30 15% 65%;
 
-    --accent: 355 85% 30%;
-    --accent-foreground: 0 0% 95%;
+    --accent: 145 20% 25%;
+    --accent-foreground: 32 25% 95%;
 
-    --destructive: 0 84.2% 50.2%;
-    --destructive-foreground: 0 0% 98%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 0 0% 20%;
-    --input: 0 0% 20%;
-    --ring: 355 65% 60%;
+    --border: 25 15% 22%;
+    --input: 25 15% 22%;
+    --ring: 15 65% 55%;
   }
 }
 
@@ -73,6 +84,10 @@
   body {
     @apply bg-background text-foreground font-montserrat;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    /* Better mobile scrolling */
+    -webkit-overflow-scrolling: touch;
+    /* Prevent text size adjustment on orientation change */
+    -webkit-text-size-adjust: 100%;
   }
 
   .font-sans {
@@ -102,7 +117,34 @@
   }
 
   p {
-    @apply font-montserrat text-foreground/80;
+    @apply font-montserrat text-foreground/80 leading-relaxed;
+  }
+
+  /* Premium typography scales */
+  h1 {
+    @apply text-4xl md:text-5xl lg:text-6xl font-light tracking-tight;
+    letter-spacing: -0.02em;
+  }
+
+  h2 {
+    @apply text-3xl md:text-4xl lg:text-5xl font-light tracking-tight;
+    letter-spacing: -0.01em;
+  }
+
+  h3 {
+    @apply text-2xl md:text-3xl lg:text-4xl font-normal;
+  }
+
+  h4 {
+    @apply text-xl md:text-2xl font-medium;
+  }
+
+  /* Improve readability */
+  body {
+    @apply antialiased;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 }
 
@@ -497,6 +539,111 @@ button, a {
   left: 8px;
   animation: lds-ellipsis1 0.6s infinite;
 }
+
+/* Premium utility classes */
+@layer utilities {
+  /* Spacing utilities for better layouts */
+  .section-spacing {
+    @apply py-16 md:py-24 lg:py-32;
+  }
+
+  .section-spacing-sm {
+    @apply py-12 md:py-16 lg:py-20;
+  }
+
+  .container-padding {
+    @apply px-6 md:px-10 lg:px-16;
+  }
+
+  /* Enhanced hover effects */
+  .hover-lift {
+    @apply transition-all duration-300 ease-out;
+  }
+
+  .hover-lift:hover {
+    @apply -translate-y-1 shadow-lg;
+  }
+
+  .hover-scale {
+    @apply transition-transform duration-300 ease-out;
+  }
+
+  .hover-scale:hover {
+    @apply scale-105;
+  }
+
+  /* Image overlay effects */
+  .image-overlay-gradient {
+    @apply absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent;
+  }
+
+  /* Glass morphism effect */
+  .glass-effect {
+    @apply backdrop-blur-sm bg-white/80 border border-white/20;
+  }
+
+  /* Soft shadows */
+  .shadow-soft {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.06);
+  }
+
+  .shadow-soft-lg {
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06), 0 2px 6px rgba(0, 0, 0, 0.04);
+  }
+
+  /* Button hover glow */
+  .btn-glow:hover {
+    box-shadow: 0 0 20px rgba(var(--primary-rgb), 0.3);
+  }
+
+  /* Mobile-specific optimizations */
+  @media (max-width: 768px) {
+    /* Larger tap targets on mobile */
+    button, a[role="button"] {
+      min-height: 44px;
+      min-width: 44px;
+    }
+
+    /* Prevent horizontal scroll */
+    body {
+      overflow-x: hidden;
+    }
+
+    /* Optimize section spacing for mobile */
+    .section-spacing {
+      @apply py-12 md:py-16;
+    }
+
+    .section-spacing-sm {
+      @apply py-8 md:py-12;
+    }
+
+    /* Better mobile typography */
+    h1 {
+      @apply text-3xl;
+    }
+
+    h2 {
+      @apply text-2xl;
+    }
+
+    h3 {
+      @apply text-xl;
+    }
+  }
+
+  /* Reduce motion for users who prefer it */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
 .lds-ellipsis div:nth-child(2) {
   left: 8px;
   animation: lds-ellipsis2 0.6s infinite;
@@ -532,4 +679,77 @@ button, a {
   100% {
     transform: translate(24px, 0);
   }
+}
+
+/* Tag animations for badges */
+@keyframes fade-in-tag {
+  0% {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+@keyframes bounce-subtle {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-2px);
+  }
+}
+
+@keyframes leaf-sway {
+  0%, 100% {
+    transform: rotate(0deg);
+  }
+  25% {
+    transform: rotate(8deg);
+  }
+  75% {
+    transform: rotate(-8deg);
+  }
+}
+
+@keyframes glow-pulse {
+  0%, 100% {
+    box-shadow: 0 0 5px rgba(var(--primary-rgb, 200, 120, 80), 0.3);
+  }
+  50% {
+    box-shadow: 0 0 15px rgba(var(--primary-rgb, 200, 120, 80), 0.5);
+  }
+}
+
+.animate-fade-in-tag {
+  animation: fade-in-tag 0.6s ease-out forwards;
+  opacity: 0;
+}
+
+.animate-shimmer {
+  animation: shimmer 3s ease-in-out infinite;
+}
+
+.animate-bounce-subtle {
+  animation: bounce-subtle 2s ease-in-out infinite;
+}
+
+.animate-leaf-sway {
+  animation: leaf-sway 3s ease-in-out infinite;
+  display: inline-block;
+}
+
+.animate-glow-pulse {
+  animation: glow-pulse 2s ease-in-out infinite;
 }

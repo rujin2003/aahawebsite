@@ -2,10 +2,12 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Menu, User, ShoppingCart } from "lucide-react";
 import CartDropdown from "@/components/cart-dropdown";
+import { SearchModal } from "@/components/search-modal";
 import { cn } from "@/lib/utils";
 import Image from 'next/image';
 import { supabase } from "@/lib/supabase";
@@ -19,12 +21,15 @@ const mainNavItems = [
 ];
 
 export function SiteHeader() {
+  const pathname = usePathname();
+  const isHomePage = pathname === "/";
   const [isScrolled, setIsScrolled] = useState(false);
   const [isAnimated, setIsAnimated] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userInitials, setUserInitials] = useState<string>("");
   const [isVisible, setIsVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
+  const [searchOpen, setSearchOpen] = useState(false);
 
   useEffect(() => {
     setIsAnimated(true);
@@ -89,56 +94,74 @@ export function SiteHeader() {
       window.removeEventListener("scroll", throttledHandleScroll);
     };
   }, [lastScrollY]); 
+
+  // Custom home page header logic
+  const isHomeHeaderExpanded = isHomePage && !isScrolled;
+
   return (
     <header 
       className={cn(
-        "fixed top-0 left-0 right-0 z-50 px-4 sm:px-6 md:px-8 lg:px-10 transition-all duration-300 ease-in-out",
+        "fixed top-0 left-0 right-0 z-50 px-4 sm:px-6 md:px-8 lg:px-10 transition-all duration-500 ease-in-out",
         isVisible ? "translate-y-0" : "-translate-y-full",
-        isScrolled ? "pt-4" : "pt-8"
+        isScrolled ? "pt-4" : isHomePage ? "pt-8" : "pt-8"
       )}
     >
-      <div
-        className={cn(
-          "mx-auto max-w-6xl transition-all duration-500",
-          "rounded-full border",
-          "animate-fade-down animate-duration-1000 animate-delay-300",
-          isScrolled
-            ? "bg-white/95 backdrop-blur-md border-white/20 shadow-[0_8px_32px_rgba(0,0,0,0.12)]" 
-            : "bg-white/95 backdrop-blur-md border-white/20 shadow-[0_0px_20px_rgba(0,0,0,0.15)]"
-        )}
-      >
+      <div className="relative mx-auto max-w-7xl">
+        
+        {/* Background Layer - Handles the shape and "hole" for logo on Home */}
+        <div
+          className={cn(
+            "absolute inset-0 transition-all duration-500 ease-out border shadow-soft",
+            isHomeHeaderExpanded 
+              ? "bg-white/95 backdrop-blur-md rounded-r-3xl rounded-l-none left-[140px] md:left-[260px] border-l-0" 
+              : "bg-white/95 backdrop-blur-md rounded-full left-0 border-border/20",
+            isScrolled && "bg-white/98 border-border/30 shadow-soft-lg"
+          )}
+        />
+
+        {/* Content Layer */}
         <div className={cn(
-          "flex items-center justify-between px-4 md:px-6 transition-all duration-300",
-          isScrolled ? "h-10 md:h-12" : "h-12 md:h-14"
+          "relative z-10 flex items-center justify-between px-5 md:px-8 transition-all duration-300",
+          isScrolled ? "h-[48px] md:h-[56px]" : "h-[56px] md:h-[64px]"
         )}>
           <div className="flex items-center">
-            <Link
-              href="/"
-              className={cn(
-                "flex items-center transition-all duration-300",
-                isAnimated ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
-              )}
-              style={{ transitionDelay: '100ms' }}
-            >
-              <Image 
-                src="/logo.svg" 
-                alt="Aaha Felt Logo" 
-                width={130} 
-                height={45} 
-                className="h-12 w-auto sm:h-13 md:h-20 sm:w-auto md:w-auto"
-              />
-            </Link>
+           <Link
+  href="/"
+  className={cn(
+    "flex items-center shrink-0 transition-all duration-500 hover:opacity-80",
+    isAnimated ? "opacity-100" : "opacity-0"
+  )}
+  style={{ transitionDelay: "100ms" }}
+>
+ <Image 
+  src="/logo.svg" 
+  alt="Aaha Felt - Handcrafted Home Décor" 
+  width={300} 
+  height={100} 
+  priority
+  className={cn(
+    "w-auto object-contain transition-all duration-300",
+    isHomeHeaderExpanded
+      ? "h-[100px] md:h-[130px]"   // ⬅ Bigger on homepage
+      : isScrolled
+        ? "h-[48px] md:h-[56px]"  // Compact on scroll
+        : "h-[64px] md:h-[72px]"  // Normal size
+  )}
+/>
+
+</Link>
+
           </div>
 
           {/* Desktop navigation */}
-          <nav className="hidden md:flex items-center space-x-6">
+          <nav className="hidden lg:flex items-center space-x-8">
             {mainNavItems.map((item, index) => (
               <Link
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  "text-sm font-medium hover:text-primary transition-all duration-300 relative group",
-                  isScrolled ? "text-gray-700 font-semibold" : "text-gray-700", 
+                  "text-sm font-medium transition-all duration-300 relative group",
+                  "text-foreground/80 hover:text-primary",
                   isAnimated ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
                 )}
                 style={{ transitionDelay: `${150 + index * 50}ms` }}
@@ -146,32 +169,52 @@ export function SiteHeader() {
                 {item.name}
                 <span className={cn(
                   "absolute -bottom-1 left-0 w-0 h-0.5 transition-all duration-300 group-hover:w-full",
-                  "bg-primary"
+                  "bg-gradient-to-r from-primary to-primary/50 rounded-full"
                 )} />
               </Link>
             ))}
           </nav>
 
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center gap-3">
+            {/* Search Icon (Desktop) */}
+            <button
+              onClick={() => setSearchOpen(true)}
+              className={cn(
+                "hidden md:flex items-center justify-center w-9 h-9",
+                "rounded-full transition-all duration-300",
+                "hover:bg-muted hover:scale-105",
+                isAnimated ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
+              )}
+              style={{ transitionDelay: '250ms' }}
+              aria-label="Search"
+            >
+              <svg className="w-5 h-5 text-foreground/60" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </button>
+
+            {/* Account Link */}
             <Link
               href={isLoggedIn ? "/account" : "/signin"}
               className={cn(
-                "hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full",
-                "text-sm font-medium transition-all duration-300 hover:scale-105",
-                "bg-[#AED6F1] text-gray-700 hover:bg-[#AED6F1]/90",
+                "hidden md:flex items-center justify-center transition-all duration-300",
+                "hover:scale-105",
                 isAnimated ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
               )}
               style={{ transitionDelay: '300ms' }}
             >
-              <User className="w-4 h-4" />
               {isLoggedIn && userInitials ? (
-                <span className="font-semibold">{userInitials}</span>
+                <div className="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center text-sm font-semibold shadow-soft hover:shadow-lg transition-all duration-300">
+                  {userInitials}
+                </div>
               ) : (
-                <span>Sign In</span>
+                <div className="w-10 h-10 rounded-full bg-primary/10 text-primary hover:bg-primary hover:text-white flex items-center justify-center transition-all duration-300 shadow-soft hover:shadow-lg">
+                  <User className="w-5 h-5" />
+                </div>
               )}
             </Link>
 
-            {/* Cart Icon with Circular Background */}
+            {/* Cart Icon */}
             <div
               className={cn(
                 "transition-all duration-300",
@@ -184,8 +227,9 @@ export function SiteHeader() {
                 size="icon" 
                 asChild
                 className={cn(
-                  "rounded-full transition-all duration-300 hover:scale-105",
-                  "bg-[#769a6e] text-white hover:bg-[#769a6e]/90"
+                  "rounded-full w-10 h-10 transition-all duration-300",
+                  "bg-primary text-white hover:bg-primary/90 hover:scale-105",
+                  "shadow-soft hover:shadow-lg"
                 )}
               >
                 <Link href="/cart">
@@ -256,7 +300,8 @@ export function SiteHeader() {
           </div>
         </div>
       </div>
-    </header>
-  );
-}
 
+      {/* Search Modal */}
+      <SearchModal open={searchOpen} onOpenChange={setSearchOpen} />
+    </header>
+  );}

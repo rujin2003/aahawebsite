@@ -5,6 +5,7 @@ import "./globals.css";
 import ClientBody from "./ClientBody";
 import { ThemeProvider } from "@/components/theme-provider";
 import { CartProvider } from "@/components/cart-provider";
+import { WishlistProvider } from "@/contexts/WishlistContext";
 import { Toaster } from "sonner";
 
 // Google fonts for a more aesthetic look
@@ -75,11 +76,12 @@ export default function RootLayout({
           enableSystem={false}
           disableTransitionOnChange
         >
-          <CartProvider>
-            
-            {children}
-            <Toaster position="bottom-right" />
-          </CartProvider>
+          <WishlistProvider>
+            <CartProvider>
+              {children}
+              <Toaster position="bottom-right" />
+            </CartProvider>
+          </WishlistProvider>
         </ThemeProvider>
       </ClientBody>
     </html>

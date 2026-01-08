@@ -4,14 +4,15 @@ import { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { ArrowLeft, ArrowRight, ShoppingCart } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, Heart } from "lucide-react";
 import { Product } from '@/lib/supabase'
 import { supabase } from '@/lib/supabase';
 import { useCart } from '@/components/cart-provider';
+import { useWishlist } from '@/contexts/WishlistContext';
 import { useCountryStore } from "@/lib/countryStore";
 import { getCategoriesQuery, getProductsQuery } from '@/lib/country';
 import { toast } from 'sonner';
+import { cn } from "@/lib/utils";
 
 interface ProductSliderProps {
   title?: string;
@@ -86,12 +87,14 @@ export function ProductSlider({ title, products: initialProducts, categoryId, co
 
   useEffect(() => {
     const handleResize = () => {
-      if (window.innerWidth < 768) {
-        setVisibleProducts(1);
-      } else if (window.innerWidth < 1024) {
+      if (window.innerWidth < 640) {
         setVisibleProducts(2);
-      } else {
+      } else if (window.innerWidth < 768) {
+        setVisibleProducts(2);
+      } else if (window.innerWidth < 1024) {
         setVisibleProducts(3);
+      } else {
+        setVisibleProducts(4);
       }
     };
 
@@ -141,9 +144,9 @@ export function ProductSlider({ title, products: initialProducts, categoryId, co
 
   if (loading) {
     return (
-      <div className="relative w-full py-8">
-        <div className="flex items-center justify-center h-64">
-          <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+      <div className="relative w-full py-6">
+        <div className="flex items-center justify-center h-48">
+          <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
         </div>
       </div>
     );
@@ -154,28 +157,39 @@ export function ProductSlider({ title, products: initialProducts, categoryId, co
   }
 
   return (
-    <div className="relative w-full py-8">
-      {title && <h3 className="text-2xl font-saans mb-8 text-center">{title}</h3>}
+    <div className="relative w-full py-4">
+      {title && <h3 className="text-2xl font-playfair mb-8 text-center">{title}</h3>}
       
       {/* Slider Container */}
-      <div className="relative flex items-center">
+      <div className="relative group/slider">
         {/* Left Arrow */}
         <button
           onClick={handlePrev}
-          className="absolute left-0 z-10 bg-white shadow-lg p-2 rounded-full hidden md:flex"
           disabled={activeIndex === 0}
+          className={cn(
+            "absolute -left-3 md:-left-4 top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full hidden sm:flex items-center justify-center",
+            "bg-white/90 backdrop-blur-sm border border-border/50",
+            "hover:bg-primary hover:text-white hover:border-primary transition-all duration-200",
+            "opacity-0 group-hover/slider:opacity-100",
+            "disabled:opacity-0 disabled:cursor-not-allowed"
+          )}
+          aria-label="Previous products"
         >
-          <ArrowLeft className="w-6 h-6 text-gray-700" />
+          <ChevronLeft className="w-4 h-4" />
         </button>
 
         {/* Products */}
         <div ref={sliderRef} className="overflow-hidden w-full">
           <div
-            className="flex transition-transform duration-500 ease-in-out"
+            className="flex gap-3 md:gap-4 transition-transform duration-500 ease-out"
             style={{ transform: `translateX(-${activeIndex * (100 / visibleProducts)}%)` }}
           >
             {products.map((product) => (
-              <div key={product.id} className="w-full px-3" style={{ flex: `0 0 ${100 / visibleProducts}%` }}>
+              <div 
+                key={product.id} 
+                className="shrink-0" 
+                style={{ width: `calc(${100 / visibleProducts}% - ${(visibleProducts - 1) * 12 / visibleProducts}px)` }}
+              >
                 <ProductCard product={product} />
               </div>
             ))}
@@ -185,12 +199,42 @@ export function ProductSlider({ title, products: initialProducts, categoryId, co
         {/* Right Arrow */}
         <button
           onClick={handleNext}
-          className="absolute right-0 z-10 bg-white shadow-lg p-2 rounded-full hidden md:flex"
           disabled={activeIndex === maxIndex}
+          className={cn(
+            "absolute -right-3 md:-right-4 top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full hidden sm:flex items-center justify-center",
+            "bg-white/90 backdrop-blur-sm border border-border/50",
+            "hover:bg-primary hover:text-white hover:border-primary transition-all duration-200",
+            "opacity-0 group-hover/slider:opacity-100",
+            "disabled:opacity-0 disabled:cursor-not-allowed"
+          )}
+          aria-label="Next products"
         >
-          <ArrowRight className="w-6 h-6 text-gray-700" />
+          <ChevronRight className="w-4 h-4" />
         </button>
       </div>
+
+      {/* Minimal dots indicator */}
+      {maxIndex > 0 && (
+        <div className="flex justify-center gap-1 sm:gap-1.5 mt-4 sm:mt-6">
+          {Array.from({ length: maxIndex + 1 }).map((_, index) => (
+            <button
+              key={index}
+              onClick={() => {
+                if (!isAnimating) {
+                  setIsAnimating(true);
+                  setActiveIndex(index);
+                  setTimeout(() => setIsAnimating(false), 500);
+                }
+              }}
+              className={cn(
+                "w-1 h-1 sm:w-1.5 sm:h-1.5 rounded-full transition-all duration-300",
+                activeIndex === index ? "bg-primary w-3 sm:w-4" : "bg-border/60 hover:bg-primary/30"
+              )}
+              aria-label={`Go to slide ${index + 1}`}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -198,38 +242,131 @@ export function ProductSlider({ title, products: initialProducts, categoryId, co
 export function ProductCard({ product }: { product: Product }) {
   const fallbackImage = "/placeholder.png";
   const imageUrl = product.images?.[0] || fallbackImage;
+  const [isHovered, setIsHovered] = useState(false);
+  const { addItem } = useCart();
+  const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
+  const isSupportedCountry = useCountryStore(s => s.isSupportedCountry);
+  const inWishlist = isInWishlist(product.id);
+
+  const handleQuickAdd = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (!isSupportedCountry) {
+      toast.error('Shopping is not available in your country');
+      return;
+    }
+    
+    const totalStock = Object.values(product.size_stock || {}).reduce((sum, stock) => sum + stock, 0) || 999;
+    
+    addItem({
+      id: product.id,
+      name: product.title,
+      price: product.price,
+      image: product.images[0],
+      size: 'One Size',
+      stock: totalStock,
+      minQuantity: product.minimum_quantity || 1
+    }, 1);
+    
+    toast.success('Added to cart!');
+  };
+
+  const handleWishlistToggle = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (inWishlist) {
+      removeFromWishlist(product.id);
+    } else {
+      addToWishlist({
+        id: product.id,
+        title: product.title,
+        price: product.price,
+        image: product.images[0] || fallbackImage,
+      });
+    }
+  };
 
   return (
-    <Card className="group relative overflow-hidden">
-      <Link href={`/shop/product/${product.id}`}>
-        <div className="relative">
-          <div className="aspect-square overflow-hidden bg-white flex items-center justify-center">
-            <Image
-              src={imageUrl}
-              alt={product.title || "Product image"}
-              draggable={false}
-              width={400}
-              height={400}
-              className="object-contain w-full h-full transition-transform group-hover:scale-105 duration-300 bg-white"
-              onError={(e) => {
-                const target = e.target as HTMLImageElement;
-                target.src = fallbackImage;
-              }}
-            />
-          </div>
-        </div>
-        <div className="p-4">
-          <h3 className="font-medium text-base truncate">{product.title || "Untitled Product"}</h3>
-          {/* Price Display */}
-          {useCountryStore(s => s.isSupportedCountry) ? (
-            <div className="text-lg font-semibold text-primary mt-1">
-              {product.price ? `$${Number(product.price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '...'}
-            </div>
-          ) : (
-            <div></div>
+    <Link 
+      href={`/shop/product/${product.id}`}
+      className="group block"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      {/* Product Image */}
+      <div className="relative aspect-[3/4] overflow-hidden rounded-lg bg-secondary/20 mb-3">
+        <Image
+          src={imageUrl}
+          alt={product.title || "Product image"}
+          draggable={false}
+          fill
+          className={cn(
+            "object-cover transition-transform duration-500 ease-out",
+            isHovered ? "scale-105" : "scale-100"
           )}
-        </div>
-      </Link>
-    </Card>
+          sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+          onError={(e) => {
+            const target = e.target as HTMLImageElement;
+            target.src = fallbackImage;
+          }}
+        />
+        
+        {/* Wishlist Button - Always visible on mobile, hover on desktop */}
+        <button
+          onClick={handleWishlistToggle}
+          className={cn(
+            "absolute top-2 right-2 w-7 h-7 rounded-full",
+            "bg-white/80 backdrop-blur-sm",
+            "flex items-center justify-center",
+            "transition-all duration-200",
+            "sm:opacity-0 sm:group-hover:opacity-100",
+            isHovered ? "opacity-100" : ""
+          )}
+        >
+          <Heart 
+            className={cn(
+              "w-3.5 h-3.5 transition-colors duration-200",
+              inWishlist 
+                ? "fill-primary text-primary" 
+                : "text-foreground/60 hover:text-primary"
+            )}
+          />
+        </button>
+
+        {/* Quick Add Button */}
+        {isSupportedCountry && (
+          <button
+            onClick={handleQuickAdd}
+            className={cn(
+              "absolute bottom-2 right-2 w-7 h-7 rounded-full",
+              "bg-white/90 backdrop-blur-sm",
+              "flex items-center justify-center",
+              "hover:bg-primary hover:text-white transition-all duration-200",
+              "sm:opacity-0 sm:group-hover:opacity-100",
+              isHovered ? "opacity-100" : ""
+            )}
+          >
+            <Plus className="w-3.5 h-3.5" />
+          </button>
+        )}
+      </div>
+      
+      {/* Product Info - Minimal */}
+      <div className="space-y-0.5">
+        <h3 className="text-sm font-medium text-foreground line-clamp-1 group-hover:text-primary transition-colors duration-200">
+          {product.title || "Untitled Product"}
+        </h3>
+        
+        {isSupportedCountry ? (
+          <p className="text-sm text-foreground/70">
+            ${Number(product.price).toFixed(2)}
+          </p>
+        ) : (
+          <p className="text-xs text-muted-foreground">Contact for pricing</p>
+        )}
+      </div>
+    </Link>
   );
 }
