@@ -12,7 +12,6 @@ import { cn } from "@/lib/utils";
 import Image from 'next/image';
 import { supabase } from "@/lib/supabase";
 
-// Updated navigation items
 const mainNavItems = [
   { name: "Shop", href: "/shop" },
   { name: "Company", href: "/company" },
@@ -39,7 +38,6 @@ export function SiteHeader() {
       setIsLoggedIn(!!user);
       
       if (user?.user_metadata?.full_name) {
-        // Get initials from full name
         const names = user.user_metadata.full_name.split(' ');
         const initials = names
           .map((name: string) => name[0])
@@ -50,33 +48,25 @@ export function SiteHeader() {
     };
 
     checkUser();
-
-    
   }, []);
 
   useEffect(() => {
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
       
-      // Set scrolled state
       setIsScrolled(currentScrollY > 20);
       
-      // Handle header visibility with improved logic
       if (currentScrollY < 50) {
-        // Always show header at the top
         setIsVisible(true);
       } else if (currentScrollY > lastScrollY && currentScrollY > 100) {
-        // Hide when scrolling down (after 100px)
         setIsVisible(false);
       } else if (currentScrollY < lastScrollY) {
-        // Show when scrolling up
         setIsVisible(true);
       }
       
       setLastScrollY(currentScrollY);
     };
 
-    // Throttle scroll events for better performance
     let ticking = false;
     const throttledHandleScroll = () => {
       if (!ticking) {
@@ -95,25 +85,24 @@ export function SiteHeader() {
     };
   }, [lastScrollY]); 
 
-  // Custom home page header logic
   const isHomeHeaderExpanded = isHomePage && !isScrolled;
 
   return (
     <header 
       className={cn(
-        "fixed top-0 left-0 right-0 z-50 px-3 sm:px-4 md:px-8 lg:px-10 transition-all duration-500 ease-in-out",
+        "fixed top-0 left-0 right-0 z-50 px-2 sm:px-4 md:px-6 lg:px-10 transition-all duration-500 ease-in-out",
         isVisible ? "translate-y-0" : "-translate-y-full",
-        isScrolled ? "pt-2 sm:pt-4" : isHomePage ? "pt-4 sm:pt-6 md:pt-8" : "pt-4 sm:pt-6 md:pt-8"
+        isScrolled ? "pt-2 sm:pt-3" : isHomePage ? "pt-3 sm:pt-4 md:pt-6 lg:pt-8" : "pt-3 sm:pt-4 md:pt-6"
       )}
     >
       <div className="relative mx-auto max-w-7xl">
         
-        {/* Background Layer - Handles the shape and "hole" for logo on Home */}
+        {/* Background Layer */}
         <div
           className={cn(
             "absolute inset-0 transition-all duration-500 ease-out border shadow-soft",
             isHomeHeaderExpanded 
-              ? "bg-white/95 backdrop-blur-md rounded-r-3xl rounded-l-none left-[100px] sm:left-[140px] md:left-[260px] border-l-0" 
+              ? "bg-white/95 backdrop-blur-md rounded-r-2xl sm:rounded-r-3xl rounded-l-none left-[80px] sm:left-[120px] md:left-[180px] lg:left-[260px] border-l-0" 
               : "bg-white/95 backdrop-blur-md rounded-full left-0 border-border/20",
             isScrolled && "bg-white/98 border-border/30 shadow-soft-lg"
           )}
@@ -121,40 +110,38 @@ export function SiteHeader() {
 
         {/* Content Layer */}
         <div className={cn(
-          "relative z-10 flex items-center justify-between px-3 sm:px-5 md:px-8 transition-all duration-300",
-          isScrolled ? "h-[44px] sm:h-[48px] md:h-[56px]" : "h-[48px] sm:h-[56px] md:h-[64px]"
+          "relative z-10 flex items-center justify-between px-2 sm:px-4 md:px-6 lg:px-8 transition-all duration-300",
+          isScrolled ? "h-9 sm:h-10 md:h-11" : "h-11 sm:h-12 md:h-14 lg:h-16"
         )}>
           <div className="flex items-center">
-           <Link
-  href="/"
-  className={cn(
-    "flex items-center shrink-0 transition-all duration-500 hover:opacity-80",
-    isAnimated ? "opacity-100" : "opacity-0"
-  )}
-  style={{ transitionDelay: "100ms" }}
->
- <Image 
-  src="/logo.svg" 
-  alt="Aaha Felt - Handcrafted Home Décor" 
-  width={300} 
-  height={100} 
-  priority
-  className={cn(
-    "w-auto object-contain transition-all duration-300",
-    isHomeHeaderExpanded
-      ? "h-[60px] sm:h-[80px] md:h-[130px]"   // Responsive: smaller on mobile
-      : isScrolled
-        ? "h-[40px] sm:h-[48px] md:h-[56px]"  // Compact on scroll
-        : "h-[48px] sm:h-[56px] md:h-[72px]"  // Normal size
-  )}
-/>
-
-</Link>
-
+            <Link
+              href="/"
+              className={cn(
+                "flex items-center shrink-0 transition-all duration-500 hover:opacity-80",
+                isAnimated ? "opacity-100" : "opacity-0"
+              )}
+              style={{ transitionDelay: "100ms" }}
+            >
+              <Image 
+                src="/logo.svg" 
+                alt="Aaha Felt - Handcrafted Home Décor" 
+                width={300} 
+                height={100} 
+                priority
+                className={cn(
+                  "w-auto object-contain transition-all duration-300",
+                  isHomeHeaderExpanded
+                    ? "h-[40px] xs:h-[50px] sm:h-[65px] md:h-[80px] lg:h-[100px]"
+                    : isScrolled
+                      ? "h-[26px] xs:h-[30px] sm:h-[36px] md:h-[42px]"
+                      : "h-[32px] xs:h-[38px] sm:h-[44px] md:h-[52px] lg:h-[58px]"
+                )}
+              />
+            </Link>
           </div>
 
           {/* Desktop navigation */}
-          <nav className="hidden lg:flex items-center space-x-8">
+          <nav className="hidden lg:flex items-center space-x-6 xl:space-x-8">
             {mainNavItems.map((item, index) => (
               <Link
                 key={item.href}
@@ -175,12 +162,12 @@ export function SiteHeader() {
             ))}
           </nav>
 
-          <div className="flex items-center gap-3">
-            {/* Search Icon (Desktop) */}
+          <div className="flex items-center gap-2 sm:gap-3">
+            {/* Search Icon (Desktop only) */}
             <button
               onClick={() => setSearchOpen(true)}
               className={cn(
-                "hidden md:flex items-center justify-center w-9 h-9",
+                "hidden md:flex items-center justify-center w-8 h-8 lg:w-9 lg:h-9",
                 "rounded-full transition-all duration-300",
                 "hover:bg-muted hover:scale-105",
                 isAnimated ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
@@ -188,12 +175,12 @@ export function SiteHeader() {
               style={{ transitionDelay: '250ms' }}
               aria-label="Search"
             >
-              <svg className="w-5 h-5 text-foreground/60" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className="w-4 h-4 lg:w-5 lg:h-5 text-foreground/60" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
             </button>
 
-            {/* Account Link */}
+            {/* Account Link (Desktop only) */}
             <Link
               href={isLoggedIn ? "/account" : "/signin"}
               className={cn(
@@ -204,12 +191,12 @@ export function SiteHeader() {
               style={{ transitionDelay: '300ms' }}
             >
               {isLoggedIn && userInitials ? (
-                <div className="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center text-sm font-semibold shadow-soft hover:shadow-lg transition-all duration-300">
+                <div className="w-8 h-8 lg:w-10 lg:h-10 rounded-full bg-primary text-white flex items-center justify-center text-xs lg:text-sm font-semibold shadow-soft hover:shadow-lg transition-all duration-300">
                   {userInitials}
                 </div>
               ) : (
-                <div className="w-10 h-10 rounded-full bg-primary/10 text-primary hover:bg-primary hover:text-white flex items-center justify-center transition-all duration-300 shadow-soft hover:shadow-lg">
-                  <User className="w-5 h-5" />
+                <div className="w-8 h-8 lg:w-10 lg:h-10 rounded-full bg-primary/10 text-primary hover:bg-primary hover:text-white flex items-center justify-center transition-all duration-300 shadow-soft hover:shadow-lg">
+                  <User className="w-4 h-4 lg:w-5 lg:h-5" />
                 </div>
               )}
             </Link>
@@ -227,13 +214,13 @@ export function SiteHeader() {
                 size="icon" 
                 asChild
                 className={cn(
-                  "rounded-full w-10 h-10 transition-all duration-300",
+                  "rounded-full w-8 h-8 sm:w-9 sm:h-9 lg:w-10 lg:h-10 transition-all duration-300",
                   "bg-primary text-white hover:bg-primary/90 hover:scale-105",
                   "shadow-soft hover:shadow-lg"
                 )}
               >
                 <Link href="/cart">
-                  <ShoppingCart className="h-5 w-5" />
+                  <ShoppingCart className="h-4 w-4 sm:h-4.5 sm:w-4.5 lg:h-5 lg:w-5" />
                 </Link>
               </Button>
             </div>
@@ -243,7 +230,7 @@ export function SiteHeader() {
               <SheetTrigger
                 asChild
                 className={cn(
-                  "md:hidden transition-all duration-300",
+                  "lg:hidden transition-all duration-300",
                   isAnimated ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
                 )}
                 style={{ transitionDelay: '400ms' }}
@@ -253,17 +240,17 @@ export function SiteHeader() {
                   size="icon"
                   aria-label="Menu"
                   className={cn(
-                    "rounded-full transition-all duration-300 hover:scale-105",
+                    "rounded-full transition-all duration-300 hover:scale-105 w-8 h-8 sm:w-9 sm:h-9",
                     "text-gray-700 hover:bg-gray-100"
                   )}
                 >
-                  <Menu className="h-5 w-5" />
+                  <Menu className="h-4 w-4 sm:h-5 sm:w-5" />
                 </Button>
               </SheetTrigger>
               <SheetContent 
                 side="right" 
                 className={cn(
-                  "rounded-l-3xl border-none backdrop-blur-md transition-all duration-300",
+                  "rounded-l-3xl border-none backdrop-blur-md transition-all duration-300 w-[280px] sm:w-[320px]",
                   "bg-background/95 shadow-2xl"
                 )}
               >
@@ -301,7 +288,7 @@ export function SiteHeader() {
         </div>
       </div>
 
-      {/* Search Modal */}
       <SearchModal open={searchOpen} onOpenChange={setSearchOpen} />
     </header>
-  );}
+  );
+}

@@ -182,7 +182,8 @@ export default function Home() {
 
       <main className="flex-1 pt-0">
       {/* Enhanced Hero Section with Premium Design */}
-<section className="relative min-h-[75vh] sm:min-h-[80vh] lg:min-h-[90vh] flex items-center overflow-hidden bg-gradient-to-br from-secondary via-background to-accent/10">
+{/* Enhanced Hero Section with Premium Design - Fully Responsive */}
+<section className="relative min-h-[600px] xs:min-h-[650px] sm:min-h-[700px] md:min-h-[80vh] lg:min-h-[90vh] flex items-center overflow-hidden bg-gradient-to-br from-secondary via-background to-accent/10">
   {/* Background Image with Parallax Effect */}
   <div className="absolute inset-0 z-0">
     <Image
@@ -197,26 +198,25 @@ export default function Home() {
       placeholder="blur"
       blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFgABAQEAAAAAAAAAAAAAAAAAAAUH/8QAIhAAAgEDBAMBAAAAAAAAAAAAAQIDAAQRBQYSIRMxQVH/xAAVAQEBAAAAAAAAAAAAAAAAAAADBP/EABkRAAMBAQEAAAAAAAAAAAAAAAABAhEDIf/aAAwDAQACEQMRAD8Awa0jljMjMpVc4VlIPYG9EHg/tbjaO6dQu7KCa5u2lldQWd+yT+mlKtTqCy0//9k="
     />
-    {/* Subtle overlay for better text readability */}
     <div className="absolute inset-0 bg-gradient-to-br from-background/60 via-background/40 to-transparent"></div>
   </div>
   
   {/* Organic shapes for visual interest */}
-  <div className="absolute top-0 right-0 w-[400px] sm:w-[600px] h-[400px] sm:h-[600px] opacity-20 blur-3xl">
+  <div className="absolute top-0 right-0 w-[250px] sm:w-[400px] md:w-[500px] lg:w-[600px] h-[250px] sm:h-[400px] md:h-[500px] lg:h-[600px] opacity-20 blur-3xl">
     <div className="absolute top-0 right-0 w-full h-full rounded-full bg-primary/20"></div>
   </div>
-  <div className="absolute bottom-0 left-0 w-[350px] sm:w-[500px] h-[350px] sm:h-[500px] opacity-20 blur-3xl">
+  <div className="absolute bottom-0 left-0 w-[200px] sm:w-[350px] md:w-[450px] lg:w-[500px] h-[200px] sm:h-[350px] md:h-[450px] lg:h-[500px] opacity-20 blur-3xl">
     <div className="absolute bottom-0 left-0 w-full h-full rounded-full bg-accent/30"></div>
   </div>
 
-  <div className="container relative z-10 py-16 sm:py-20 md:py-24">
-    <div className="grid lg:grid-cols-2 gap-8 sm:gap-12 lg:gap-16 items-center">
+  <div className="container relative z-10 py-12 xs:py-14 sm:py-16 md:py-20 lg:py-24 px-4 sm:px-6">
+    <div className="grid lg:grid-cols-2 gap-8 sm:gap-10 md:gap-12 lg:gap-16 items-center">
       {/* Left: Content */}
-      <div className="space-y-6 sm:space-y-8 max-w-2xl mx-auto lg:mx-0">
+      <div className="space-y-4 xs:space-y-5 sm:space-y-6 lg:space-y-8 max-w-2xl mx-auto lg:mx-0">
         {/* Badge */}
-        <div className="group inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-white/80 backdrop-blur-sm border border-primary/10 shadow-soft animate-on-scroll fade-up hover:shadow-md hover:border-primary/30 transition-all duration-300 cursor-default">
-          <div className="w-2 h-2 rounded-full bg-primary animate-pulse"></div>
-          <span className="text-xs sm:text-sm font-medium text-foreground flex items-center gap-1.5">
+        <div className="group inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-white/80 backdrop-blur-sm border border-primary/10 shadow-soft animate-on-scroll fade-up hover:shadow-md hover:border-primary/30 transition-all duration-300 cursor-default">
+          <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-primary animate-pulse"></div>
+          <span className="text-[10px] xs:text-xs sm:text-sm font-medium text-foreground flex items-center gap-1 sm:gap-1.5">
             <span className="inline-block animate-fade-in-tag" style={{ animationDelay: '0ms' }}>Sustainable</span>
             <span className="text-primary/40">•</span>
             <span className="inline-block animate-fade-in-tag" style={{ animationDelay: '150ms' }}>Handcrafted</span>
@@ -226,26 +226,26 @@ export default function Home() {
         </div>
 
         {/* Headline */}
-        <h1 className="animate-on-scroll fade-up font-playfair leading-[1.1] text-4xl sm:text-5xl md:text-6xl lg:text-7xl" style={{ transitionDelay: '100ms' }}>
+        <h1 className="animate-on-scroll fade-up font-playfair leading-[1.1] text-3xl xs:text-4xl sm:text-5xl md:text-6xl lg:text-7xl" style={{ transitionDelay: '100ms' }}>
           Transform Your Space<br />
           <span className="text-primary">with Artisan Felt</span>
         </h1>
 
         {/* Subheadline */}
-        <p className="text-lg sm:text-xl md:text-2xl text-foreground/70 leading-relaxed animate-on-scroll fade-up max-w-xl" style={{ transitionDelay: '200ms' }}>
+        <p className="text-base xs:text-lg sm:text-xl md:text-2xl text-foreground/70 leading-relaxed animate-on-scroll fade-up max-w-xl" style={{ transitionDelay: '200ms' }}>
           Discover eco-friendly home décor crafted with love by skilled artisans using traditional wool felting techniques.
         </p>
 
         {/* CTA Buttons */}
-        <div className="flex flex-col sm:flex-row flex-wrap gap-4 animate-on-scroll fade-up" style={{ transitionDelay: '300ms' }}>
+        <div className="flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4 animate-on-scroll fade-up" style={{ transitionDelay: '300ms' }}>
           <Button 
             size="lg" 
-            className="rounded-full px-8 h-14 text-base shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 w-full sm:w-auto" 
+            className="rounded-full px-6 sm:px-8 h-12 sm:h-14 text-sm sm:text-base shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 w-full sm:w-auto" 
             asChild
           >
             <Link href="/shop">
               Explore Collection
-              <svg className="w-5 h-5 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className="w-4 h-4 sm:w-5 sm:h-5 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
               </svg>
             </Link>
@@ -253,7 +253,7 @@ export default function Home() {
           <Button 
             size="lg" 
             variant="outline" 
-            className="rounded-full px-8 h-14 text-base border-2 hover:bg-primary/5 transition-all duration-300 w-full sm:w-auto" 
+            className="rounded-full px-6 sm:px-8 h-12 sm:h-14 text-sm sm:text-base border-2 hover:bg-primary/5 transition-all duration-300 w-full sm:w-auto" 
             asChild
           >
             <Link href="/company">
@@ -263,7 +263,7 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Right: Featured Product Image (Optional) */}
+      {/* Right: Featured Product Image - Hidden on mobile, visible on lg+ */}
       <div className="hidden lg:block relative animate-on-scroll fade-left" style={{ transitionDelay: '300ms' }}>
         <div className="relative aspect-square rounded-3xl overflow-hidden shadow-soft-lg">
           <Image
@@ -272,7 +272,7 @@ export default function Home() {
             fill
             className="object-cover"
             priority
-            sizes="(max-width: 1024px) 100vw, 50vw"
+            sizes="(max-width: 1024px) 0vw, 50vw"
           />
           {/* Floating badge */}
           <div className="absolute top-6 right-6 px-4 py-2 rounded-full bg-white shadow-lg backdrop-blur-sm">
@@ -286,13 +286,12 @@ export default function Home() {
   </div>
 
   {/* Scroll indicator */}
-  <div className="absolute bottom-6 sm:bottom-8 left-1/2 -translate-x-1/2 animate-bounce">
+  <div className="absolute bottom-4 sm:bottom-6 md:bottom-8 left-1/2 -translate-x-1/2 animate-bounce">
     <svg className="w-5 h-5 sm:w-6 sm:h-6 text-foreground/40" fill="none" viewBox="0 0 24 24" stroke="currentColor">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
     </svg>
   </div>
 </section>
-
 
 <MissionSection></MissionSection>
 
