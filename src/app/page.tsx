@@ -187,7 +187,7 @@ export default function Home() {
   {/* Background Image with Parallax Effect */}
   <div className="absolute inset-0 z-0">
     <Image
-      src="/hero-bg.png"
+      src="/hero-bg.webp"
       alt="Handcrafted felt products in a beautiful home setting"
       fill
       className="object-cover opacity-40"
@@ -195,8 +195,6 @@ export default function Home() {
       fetchPriority="high"
       quality={75}
       sizes="100vw"
-      placeholder="blur"
-      blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFgABAQEAAAAAAAAAAAAAAAAAAAUH/8QAIhAAAgEDBAMBAAAAAAAAAAAAAQIDAAQRBQYSIRMxQVH/xAAVAQEBAAAAAAAAAAAAAAAAAAADBP/EABkRAAMBAQEAAAAAAAAAAAAAAAABAhEDIf/aAAwDAQACEQMRAD8Awa0jljMjMpVc4VlIPYG9EHg/tbjaO6dQu7KCa5u2lldQWd+yT+mlKtTqCy0//9k="
     />
     <div className="absolute inset-0 bg-gradient-to-br from-background/60 via-background/40 to-transparent"></div>
   </div>
@@ -267,7 +265,7 @@ export default function Home() {
       <div className="hidden lg:block relative animate-on-scroll fade-left" style={{ transitionDelay: '300ms' }}>
         <div className="relative aspect-square rounded-3xl overflow-hidden shadow-soft-lg">
           <Image
-            src="/hero-bg.png"
+            src="/hero-bg.webp"
             alt="Featured felt products"
             fill
             className="object-cover"
@@ -373,10 +371,13 @@ export default function Home() {
               <div className="relative animate-on-scroll fade-right">
                 <div className="relative aspect-[4/5] rounded-3xl overflow-hidden shadow-soft-lg">
                   <Image
-                    src="/hero-bg.png"
+                    src="/artisan-img.png"
                     alt="Artisan crafting felt products"
                     fill
                     className="object-cover"
+                    loading="lazy"
+                    sizes="(max-width: 1024px) 100vw, 50vw"
+                    quality={80}
                   />
                 </div>
                 {/* Decorative elements */}
@@ -762,11 +763,88 @@ export default function Home() {
         </section>
 
         {/* Features Section */}
-        <section className="py-20">
-          <div className="container">
+        <section className="py-20 relative overflow-hidden">
+          {/* Soft Abstract Green Wave Background with Flowing SVG Waves */}
+          <div className="absolute inset-0 -z-10">
+            {/* Base off-white background */}
+            <div className="absolute inset-0 bg-[#faf9f7]"></div>
+            
+            {/* SVG Wave Layer 1 - Sage Green (back) */}
+            <svg 
+              className="absolute w-[200%] h-full -left-1/4 top-0 opacity-25"
+              viewBox="0 0 1440 400" 
+              preserveAspectRatio="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path 
+                fill="#9CAF88" 
+                d="M0,160 C120,200 240,120 360,140 C480,160 600,220 720,200 C840,180 960,100 1080,120 C1200,140 1320,200 1440,180 L1440,280 C1320,260 1200,320 1080,300 C960,280 840,220 720,240 C600,260 480,320 360,300 C240,280 120,220 0,240 Z"
+              />
+            </svg>
+            
+            {/* SVG Wave Layer 2 - Eucalyptus */}
+            <svg 
+              className="absolute w-[180%] h-full -left-1/3 top-0 opacity-30"
+              viewBox="0 0 1440 400" 
+              preserveAspectRatio="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path 
+                fill="#84A98C" 
+                d="M0,180 C180,140 300,220 480,200 C660,180 780,100 960,130 C1140,160 1260,240 1440,200 L1440,260 C1260,300 1140,220 960,250 C780,280 660,360 480,330 C300,300 180,220 0,260 Z"
+              />
+            </svg>
+            
+            {/* SVG Wave Layer 3 - Moss Green */}
+            <svg 
+              className="absolute w-[220%] h-full -left-1/2 top-0 opacity-20"
+              viewBox="0 0 1440 400" 
+              preserveAspectRatio="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path 
+                fill="#8FBC8F" 
+                d="M0,200 C160,160 280,240 440,220 C600,200 720,120 880,150 C1040,180 1200,260 1360,230 C1400,222 1420,215 1440,210 L1440,250 C1420,255 1400,262 1360,270 C1200,300 1040,220 880,250 C720,280 600,360 440,330 C280,300 160,220 0,260 Z"
+              />
+            </svg>
+            
+            {/* SVG Wave Layer 4 - Mint (foreground) */}
+            <svg 
+              className="absolute w-[160%] h-full -left-1/4 top-0 opacity-35"
+              viewBox="0 0 1440 400" 
+              preserveAspectRatio="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path 
+                fill="#A8D5BA" 
+                d="M0,190 C100,220 200,160 350,175 C500,190 620,250 780,230 C940,210 1060,140 1200,160 C1340,180 1400,220 1440,210 L1440,240 C1400,250 1340,290 1200,270 C1060,250 940,180 780,200 C620,220 500,280 350,265 C200,250 100,190 0,220 Z"
+              />
+            </svg>
+            
+            {/* SVG Wave Layer 5 - Light Olive accent */}
+            <svg 
+              className="absolute w-[190%] h-full -left-1/3 top-0 opacity-15"
+              viewBox="0 0 1440 400" 
+              preserveAspectRatio="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path 
+                fill="#B4C4A4" 
+                d="M0,195 C140,170 260,230 420,210 C580,190 700,130 860,155 C1020,180 1160,250 1320,225 C1380,215 1420,205 1440,200 L1440,245 C1420,250 1380,260 1320,270 C1160,295 1020,225 860,250 C700,275 580,335 420,310 C260,285 140,225 0,250 Z"
+              />
+            </svg>
+            
+            {/* Top fade overlay */}
+            <div className="absolute top-0 left-0 right-0 h-24 bg-gradient-to-b from-[#faf9f7] to-transparent"></div>
+            
+            {/* Bottom fade overlay */}
+            <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-[#faf9f7] to-transparent"></div>
+          </div>
+          
+          <div className="container relative z-10">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               <div className="text-center animate-fade-up">
-                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-[#4A90E2]/20 flex items-center justify-center">
+                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-[#4A90E2]/20 flex items-center justify-center backdrop-blur-sm">
                   <svg className="w-8 h-8 text-[#4A90E2]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                   </svg>
@@ -777,7 +855,7 @@ export default function Home() {
                 </p>
               </div>
               <div className="text-center animate-fade-up animate-delay-100">
-                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-[#50C878]/20 flex items-center justify-center">
+                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-[#50C878]/20 flex items-center justify-center backdrop-blur-sm">
                   <svg className="w-8 h-8 text-[#50C878]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
@@ -788,7 +866,7 @@ export default function Home() {
                 </p>
               </div>
               <div className="text-center animate-fade-up animate-delay-200">
-                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-[#FF9F43]/20 flex items-center justify-center">
+                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-[#FF9F43]/20 flex items-center justify-center backdrop-blur-sm">
                   <svg className="w-8 h-8 text-[#FF9F43]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 4a2 2 0 114 0v1a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-1a2 2 0 100 4h1a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1v-1a2 2 0 10-4 0v1a1 1 0 01-1 1H7a1 1 0 01-1-1v-3a1 1 0 00-1-1H4a2 2 0 110-4h1a1 1 0 001-1V7a1 1 0 011-1h3a1 1 0 001-1V4z" />
                   </svg>

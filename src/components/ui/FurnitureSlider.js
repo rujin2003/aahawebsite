@@ -4,6 +4,7 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, ArrowRight } from "lucide-react";
+import Image from "next/image";
 
 const slides = [
   {
@@ -93,11 +94,18 @@ export default function FurnitureSlider() {
             </div>
 
             <div className="w-[50%] flex flex-col items-center justify-center relative">
-              <img
-                src={slide.image}
-                alt="Furniture"
-                className="w-full h-auto max-h-[400px] object-contain"
-              />
+              <div className="relative w-full h-[400px]">
+                <Image
+                  src={slide.image}
+                  alt="Furniture"
+                  fill
+                  className="object-contain"
+                  loading={index === 0 ? "eager" : "lazy"}
+                  priority={index === 0}
+                  sizes="(max-width: 768px) 80vw, 40vw"
+                  quality={75}
+                />
+              </div>
               <div className="absolute bottom-6 right-6 bg-white/70 px-6 py-4 rounded-xl shadow">
                 <h3 className="text-xl font-semibold">
                   {slide.product.name}

@@ -72,7 +72,7 @@ export default {
       },
       },
       backgroundImage: {
-        'hero-pattern': "url('/hero-bg.png')",
+        'hero-pattern': "url('/hero-bg.webp')",
         'gradient-primary': "linear-gradient(to right, hsl(var(--primary) / 0.8), hsl(var(--primary) / 0.3))",
         'gradient-accent': "linear-gradient(to right, hsl(var(--accent)), hsl(var(--primary) / 0.2), hsl(var(--secondary)))",
       }
