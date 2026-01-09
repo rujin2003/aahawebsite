@@ -216,7 +216,13 @@ export default async function ProductPage(props: { params: paramsType }) {
                     src={image}
                     alt={`${product.title} - Image ${index + 1}`}
                     fill
+                    priority={index === 0}
+                    loading={index === 0 ? "eager" : "lazy"}
+                    placeholder="blur"
+                    blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFgABAQEAAAAAAAAAAAAAAAAAAAUH/8QAIhAAAgEDBAMBAAAAAAAAAAAAAQIDAAQRBRIhMQYTQVH/xAAVAQEBAAAAAAAAAAAAAAAAAAADBP/EABkRAAIDAQAAAAAAAAAAAAAAAAECAAMRIf/aAAwDAQACEQMRAD8AxrT9Vv7K8juILqeKZDlZI3KsD+EGtC0/z/XNQvorGPUrpBM4RpFlYBQTjJ/K0pSuXyxMwZ4yN5H/2Q=="
+                    sizes="(max-width: 768px) 100vw, 50vw"
                     className="object-cover rounded-lg"
+                    quality={85}
                   />
                 </div>
               ))}
