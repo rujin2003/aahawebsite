@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,6 +14,8 @@ export function SignInForm() {
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectTo = searchParams.get("redirect") || "/";
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,15 +30,11 @@ export function SignInForm() {
       if (error) throw error;
 
       if (data.session) {
-        // Set the session in localStorage
         localStorage.setItem('supabase.auth.token', JSON.stringify(data.session));
-        
-        // Wait for the session to be properly set
         await new Promise(resolve => setTimeout(resolve, 100));
-        
         toast.success("Signed in successfully!");
-        router.refresh(); // Refresh the page to update the auth state
-        router.push("/");
+        router.refresh();
+        router.push(redirectTo);
       }
     } catch (error: unknown) {
       console.error('Sign in error:', error);

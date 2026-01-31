@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
 
@@ -51,6 +51,25 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const [mounted, setMounted] = useState(false);
   const [promoCode, setPromoCode] = useState<string | null>(null);
   const [promoDiscount, setPromoDiscount] = useState(0);
+  const pendingAddToast = useRef<{ type: 'add' | 'update'; name: string } | null>(null);
+  const pendingRemoveToast = useRef<{ name: string; size: string } | null>(null);
+  const prevItemsLength = useRef(0);
+
+  // Show a single toast per cart action (avoids double toast from Strict Mode or duplicate callers)
+  useEffect(() => {
+    if (!mounted) return;
+    if (pendingAddToast.current) {
+      const { type, name } = pendingAddToast.current;
+      pendingAddToast.current = null;
+      toast.success(type === 'add' ? `Added ${name} to cart` : `Updated ${name} quantity in cart`);
+    }
+    if (pendingRemoveToast.current) {
+      const { name, size } = pendingRemoveToast.current;
+      pendingRemoveToast.current = null;
+      toast.info(`Removed ${name} (Size: ${size}) from cart`);
+    }
+    prevItemsLength.current = items.length;
+  }, [mounted, items]);
 
   // Initialize cart from localStorage on client side only
   useEffect(() => {
@@ -156,12 +175,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
           toast.error(`Cannot add more items. Only ${existingItem.stock} available in stock for size ${existingItem.size}`);
           return prevItems;
         }
-        
-        // Item already exists, update quantity - show toast only once
-        setTimeout(() => {
-          toast.success(`Updated ${newItem.name} quantity in cart`);
-        }, 0);
-        
+        pendingAddToast.current = { type: 'update', name: newItem.name };
         return prevItems.map(item =>
           (item.id === newItem.id &&
             item.size === newItem.size &&
@@ -181,12 +195,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
           toast.error(`Minimum quantity for this item is ${minQuantity}`);
           return prevItems;
         }
-        
-        // Add new item - show toast only once
-        setTimeout(() => {
-          toast.success(`Added ${newItem.name} to cart`);
-        }, 0);
-        
+        pendingAddToast.current = { type: 'add', name: newItem.name };
         return [...prevItems, { ...newItem, quantity }];
       }
     });
@@ -199,9 +208,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     setItems(prevItems => {
       const itemToRemove = prevItems.find(item => item.id === id);
       if (itemToRemove) {
-        setTimeout(() => {
-          toast.info(`Removed ${itemToRemove.name} (Size: ${itemToRemove.size}) from cart`);
-        }, 0);
+        pendingRemoveToast.current = { name: itemToRemove.name, size: itemToRemove.size };
       }
       return prevItems.filter(item => item.id !== id);
     });

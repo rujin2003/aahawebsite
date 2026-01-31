@@ -12,7 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ProductSlider } from "@/components/product-slider";
 import AddToCartButton from '@/components/add-to-cart-button';
 import Link from "next/link";
-import Image from "next/image";
+import { ImageWithSkeleton } from "@/components/ui/image-with-skeleton";
 import { Heart, ArrowLeft, Check,  Plus, Minus } from "lucide-react";
 import { cn } from '@/lib/utils';
 import { supabase } from '@/lib/supabase';
@@ -287,17 +287,16 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-16">
             <div className="relative animate-fade-right">
               <div className="mb-4 aspect-square bg-muted/50 rounded-2xl overflow-hidden flex items-center justify-center p-8">
-                <Image
+                <ImageWithSkeleton
                   src={product.images[activeImage] || fallbackImage}
                   alt={product.title || "Product image"}
                   width={400}
                   height={400}
                   priority
-                  placeholder="blur"
-                  blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFgABAQEAAAAAAAAAAAAAAAAAAAUH/8QAIhAAAgEDBAMBAAAAAAAAAAAAAQIDAAQRBRIhMQYTQVH/xAAVAQEBAAAAAAAAAAAAAAAAAAADBP/EABkRAAIDAQAAAAAAAAAAAAAAAAECAAMRIf/aAAwDAQACEQMRAD8AxrT9Vv7K8juILqeKZDlZI3KsD+EGtC0/z/XNQvorGPUrpBM4RpFlYBQTjJ/K0pSuXyxMwZ4yN5H/2Q=="
                   sizes="(max-width: 1024px) 100vw, 50vw"
                   quality={85}
                   className="object-contain transition-all duration-300"
+                  fallbackSrc={fallbackImage}
                   onError={(e) => {
                     const target = e.target as HTMLImageElement;
                     target.src = fallbackImage;
@@ -317,17 +316,16 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
                     )}
                     onClick={() => setActiveImage(i)}
                   >
-                    <Image
+                    <ImageWithSkeleton
                       src={image || fallbackImage}
                       alt={`${product.title || "Product"} view ${i+1}`}
                       width={100}
                       height={100}
                       loading="lazy"
-                      placeholder="blur"
-                      blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFgABAQEAAAAAAAAAAAAAAAAAAAUH/8QAIhAAAgEDBAMBAAAAAAAAAAAAAQIDAAQRBRIhMQYTQVH/xAAVAQEBAAAAAAAAAAAAAAAAAAADBP/EABkRAAIDAQAAAAAAAAAAAAAAAAECAAMRIf/aAAwDAQACEQMRAD8AxrT9Vv7K8juILqeKZDlZI3KsD+EGtC0/z/XNQvorGPUrpBM4RpFlYBQTjJ/K0pSuXyxMwZ4yN5H/2Q=="
                       sizes="100px"
                       quality={75}
                       className="object-contain w-full h-full"
+                      fallbackSrc={fallbackImage}
                       onError={(e) => {
                         const target = e.target as HTMLImageElement;
                         target.src = fallbackImage;

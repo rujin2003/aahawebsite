@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
-import { sendContactFormEmail } from '@/lib/mailing'
+import { sendContactEmail } from '@/lib/nodemailer'
+
+export const runtime = 'nodejs'
 
 export async function POST(request: Request) {
   try {
@@ -31,10 +33,10 @@ export async function POST(request: Request) {
     // Save to Supabase
     const { data, error } = await supabase
       .from('contacts')
-      .insert([{ 
-        name, 
-        email, 
-        subject, 
+      .insert([{
+        name,
+        email,
+        subject,
         message,
         source: body.source || 'website',
         created_at: new Date().toISOString()
@@ -49,32 +51,31 @@ export async function POST(request: Request) {
       )
     }
 
-    // Send email via mailing microservice
-    let emailSent = false;
+    // Send email via Nodemailer (same as order confirmation)
+    let emailSent = false
     try {
-      const emailPayload = {
+      const result = await sendContactEmail({
         name,
         email,
         subject,
         message,
         source: body.source || 'website',
-        created_at: new Date().toISOString()
+      })
+      if (result.ok) {
+        console.log('Contact form email sent successfully')
+        emailSent = true
+      } else {
+        console.error('Contact form email failed:', result.error)
       }
-
-      const emailResponse = await sendContactFormEmail(emailPayload)
-      console.log('Contact form email sent successfully:', emailResponse)
-      emailSent = true;
     } catch (emailError) {
       console.error('Failed to send contact form email:', emailError)
-      // Don't fail the entire request if email fails, just log the error
-      // The form submission is still saved to the database
     }
 
     console.log('Successfully saved contact form submission:', data)
-    return NextResponse.json({ 
-      success: true, 
+    return NextResponse.json({
+      success: true,
       data,
-      emailSent 
+      emailSent
     })
   } catch (error) {
     console.error('Contact form submission error:', error)
@@ -83,5 +84,4 @@ export async function POST(request: Request) {
       { status: 500 }
     )
   }
-} 
-export const runtime = 'edge';
+}

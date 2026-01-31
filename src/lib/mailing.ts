@@ -1,5 +1,8 @@
-const MAILING_SERVICE_BASE_URL =
-  process.env.NEXT_PUBLIC_MAILING_SERVICE_BASE_URL || "http://localhost:8081";
+// Use internal Nodemailer API. On server we need absolute URL (SITE_URL); on client same-origin is fine.
+function getMailBaseUrl(): string {
+  if (typeof window !== 'undefined') return '';
+  return process.env.SITE_URL || 'http://localhost:3000';
+}
 
 
 export interface OrderEmailPayload {
@@ -43,13 +46,13 @@ export interface MailingServiceResponse {
 }
 
 /**
- * Send order confirmation email via the Go mailing microservice
+ * Send order confirmation email via internal Nodemailer API
  */
 export async function sendOrderConfirmationEmail(payload: OrderEmailPayload): Promise<MailingServiceResponse> {
   try {
     console.log('Sending order confirmation email with payload:', JSON.stringify(payload, null, 2));
-    
-    const response = await fetch(`${MAILING_SERVICE_BASE_URL}/api/mail/order`, {
+    const base = getMailBaseUrl();
+    const response = await fetch(`${base}/api/mail/order`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -86,13 +89,13 @@ export async function sendOrderConfirmationEmail(payload: OrderEmailPayload): Pr
 }
 
 /**
- * Send contact form email via the Go mailing microservice
+ * Send contact form email via internal Nodemailer API
  */
 export async function sendContactFormEmail(payload: ContactEmailPayload): Promise<MailingServiceResponse> {
   try {
     console.log('Sending contact form email with payload:', JSON.stringify(payload, null, 2));
-    
-    const response = await fetch(`${MAILING_SERVICE_BASE_URL}/api/mail/contact`, {
+    const base = getMailBaseUrl();
+    const response = await fetch(`${base}/api/mail/contact`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

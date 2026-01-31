@@ -3,6 +3,8 @@ import { SiteFooter } from "@/components/site-footer";
 import Image from "next/image";
 import { Separator } from "@/components/ui/separator";
 
+export const runtime = "edge";
+
 export default function AboutPage() {
   return (
     <div className="flex min-h-screen flex-col">

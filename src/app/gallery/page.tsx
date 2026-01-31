@@ -1,12 +1,14 @@
 "use client";
 
+export const runtime = "edge";
+
 import { useEffect, useState } from 'react'
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { X, ArrowLeft, ArrowRight } from "lucide-react";
-import Image from "next/image";
+import { ImageWithSkeleton } from "@/components/ui/image-with-skeleton";
 import { Gallery } from '@/lib/supabase'
 import { Loading } from "@/components/ui/loading"
 
@@ -86,7 +88,7 @@ export default function GalleryPage() {
                       onClick={() => setSelectedImage(item.id)}
                     >
                       <div className={`relative ${heightClass}`}>
-                        <Image
+                        <ImageWithSkeleton
                           src={item.image_url}
                           alt={item.title}
                           fill
@@ -121,7 +123,7 @@ export default function GalleryPage() {
                   <X className="w-6 h-6" />
                 </Button>
                 <div className="relative aspect-[4/3] w-full">
-                  <Image
+                  <ImageWithSkeleton
                     src={gallery.find(img => img.id === selectedImage)?.image_url || ""}
                     alt={gallery.find(img => img.id === selectedImage)?.title || ""}
                     fill

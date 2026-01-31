@@ -11,14 +11,23 @@ export async function POST(request: NextRequest) {
 
     if (!orderCreationId || !razorpayPaymentId || !razorpaySignature) {
       return NextResponse.json(
-        { error: 'Missing required payment verification data' },
+        { success: false, error: 'Missing required payment verification data' },
         { status: 400 }
+      );
+    }
+
+    const secret = process.env.RAZORPAY_SECRET;
+    if (!secret) {
+      console.error('RAZORPAY_SECRET is not set');
+      return NextResponse.json(
+        { success: false, error: 'Payment verification is not configured' },
+        { status: 500 }
       );
     }
 
     // Create the signature digest using Web Crypto API
     const encoder = new TextEncoder();
-    const keyData = encoder.encode(process.env.RAZORPAY_SECRET!);
+    const keyData = encoder.encode(secret);
     const messageData = encoder.encode(`${orderCreationId}|${razorpayPaymentId}`);
     
     const key = await crypto.subtle.importKey(
@@ -37,7 +46,7 @@ export async function POST(request: NextRequest) {
     // Compare our digest with the actual signature
     if (digest !== razorpaySignature) {
       return NextResponse.json(
-        { error: 'Transaction not legitimate!' },
+        { success: false, error: 'Payment signature verification failed. Please contact support if you were charged.' },
         { status: 400 }
       );
     }

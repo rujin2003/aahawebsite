@@ -63,8 +63,6 @@ export default function Categories() {
                     className="object-cover transition-transform duration-500 group-hover:scale-110"
                     priority={index < 4}
                     loading={index < 4 ? "eager" : "lazy"}
-                    placeholder="blur"
-                    blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFgABAQEAAAAAAAAAAAAAAAAAAAUH/8QAIhAAAgEDBAMBAAAAAAAAAAAAAQIDAAQRBRIhMQYTQVH/xAAVAQEBAAAAAAAAAAAAAAAAAAADBP/EABkRAAIDAQAAAAAAAAAAAAAAAAECAAMRIf/aAAwDAQACEQMRAD8AxrT9Vv7K8juILqeKZDlZI3KsD+EGtC0/z/XNQvorGPUrpBM4RpFlYBQTjJ/K0pSuXyxMwZ4yN5H/2Q=="
                     sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 25vw"
                     quality={75}
                   />

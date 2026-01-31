@@ -1,14 +1,15 @@
 "use client";
 
+export const runtime = "edge";
+
 import { useState, useEffect } from "react";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { useCart } from "@/components/cart-provider";
-import { Minus, Plus, Trash2, CreditCard, ShoppingBag } from "lucide-react";
+import { Minus, Plus, Trash2, CreditCard, ShoppingBag, PlusCircle } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { toast } from "sonner";
@@ -17,6 +18,16 @@ import { supabase } from "@/lib/supabase";
 import { Label } from "@/components/ui/label";
 import { useCountryStore } from "@/lib/countryStore";
 import { convertUSDToLocalCurrency } from '@/lib/utils';
+import { useAuth } from "@/hooks/use-auth";
+import { CartSignInDialog } from "@/components/cart-signin-dialog";
+import { parseAddress, formatAddress, validateAddress, type AddressParts } from "@/lib/address";
+import {
+  fetchUserAddresses,
+  addressRowToParts,
+  upsertAddressForCheckout,
+  type AddressRow,
+} from "@/lib/addresses";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
   loadRazorpayScript, 
   createRazorpayOrder, 
@@ -28,25 +39,67 @@ import {
 } from "@/lib/payment";
 import { RazorpayOptions, RazorpayResponse } from "@/types/razorpay";
 
+const emptyAddress: AddressParts = {
+  street: "",
+  city: "",
+  state: "",
+  country: "",
+  zipCode: "",
+};
+
 export default function CartPage() {
   const { items, removeItem, updateQuantity, totalPrice, clearCart, promoCode, promoDiscount, applyPromoCode, removePromoCode } = useCart();
+  const { user, isAuthenticated } = useAuth();
   const countryCode = useCountryStore(s=>s.countryCode)
   const isSupportedCountry = useCountryStore(s=>s.isSupportedCountry)
   const [loading, setLoading] = useState(false);
   const [orderCompleted, setOrderCompleted] = useState(false);
   const [promoCodeInput, setPromoCodeInput] = useState('');
   const [applyingPromo, setApplyingPromo] = useState(false);
+  const [signInDialogOpen, setSignInDialogOpen] = useState(false);
   const [localPrices, setLocalPrices] = useState<Record<string, { amount: number; symbol: string; code: string }>>({});
   const [localTotalPrice, setLocalTotalPrice] = useState<{ amount: number; symbol: string; code: string } | null>(null);
   const [localPromoDiscount, setLocalPromoDiscount] = useState<{ amount: number; symbol: string; code: string } | null>(null);
-  const [shippingAddress, setShippingAddress] = useState({
-    street: '',
-    city: '',
-    state: '',
-    country: '',
-    zipCode: ''
-  });
+  const [shippingAddress, setShippingAddress] = useState<AddressParts>({ ...emptyAddress });
+  const [savedAddresses, setSavedAddresses] = useState<AddressRow[]>([]);
+  const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
   const router = useRouter();
+
+  // Load saved addresses from addresses table (and optionally migrate profile.address once)
+  useEffect(() => {
+    if (!isAuthenticated || !user?.id) return;
+    let mounted = true;
+    (async () => {
+      try {
+        const list = await fetchUserAddresses(supabase, user.id);
+        if (!mounted) return;
+        setSavedAddresses(list);
+        const defaultOrFirst = list.find((a) => a.is_default) ?? list[0];
+        if (defaultOrFirst) {
+          setShippingAddress(addressRowToParts(defaultOrFirst));
+          setSelectedAddressId(defaultOrFirst.id);
+        } else {
+          // One-time: try to migrate profile.address into addresses table
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("address")
+            .eq("id", user.id)
+            .single();
+          const parsed = parseAddress(profile?.address);
+          if (parsed && mounted) {
+            const { insertAddress } = await import("@/lib/addresses");
+            const inserted = await insertAddress(supabase, user.id, parsed, { setDefault: true });
+            setSavedAddresses((prev) => [inserted, ...prev]);
+            setShippingAddress(parsed);
+            setSelectedAddressId(inserted.id);
+          }
+        }
+      } catch (e) {
+        if (mounted) setSavedAddresses([]);
+      }
+    })();
+    return () => { mounted = false; };
+  }, [isAuthenticated, user?.id]);
 
   // Convert prices to local currency
   useEffect(() => {
@@ -94,21 +147,23 @@ export default function CartPage() {
       return;
     }
 
-    // Validate shipping address
-    if (!shippingAddress.street || !shippingAddress.city || !shippingAddress.state || !shippingAddress.country || !shippingAddress.zipCode) {
-      toast.error("Please fill in all shipping address fields");
+    if (!isAuthenticated || !user) {
+      setSignInDialogOpen(true);
+      return;
+    }
+
+    const addressValidation = validateAddress(shippingAddress);
+    if (!addressValidation.ok) {
+      toast.error(addressValidation.message);
       return;
     }
 
     setLoading(true);
 
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        toast.error("Please sign in to place an order");
-        router.push("/signin");
-        return;
+      // Save or update address in addresses table for next time
+      if (user?.id) {
+        await upsertAddressForCheckout(supabase, user.id, shippingAddress, selectedAddressId);
       }
 
       // First, get the actual product IDs from the database
@@ -123,10 +178,10 @@ export default function CartPage() {
       // Format shipping address
       const formattedAddress = `${shippingAddress.street}, ${shippingAddress.city}, ${shippingAddress.state}, ${shippingAddress.country}, ${shippingAddress.zipCode}`;
 
-      // Prepare order payload
+      // Prepare order payload (will be created only after successful payment)
       const orderPayload = {
         user_id: user.id,
-        status: 'to_be_verified',
+        status: 'pending',
         total_amount: totalPrice,
         shipping_address: formattedAddress,
         country_code: countryCode,
@@ -140,27 +195,15 @@ export default function CartPage() {
           return {
             product_id: product.id,
             quantity: item.quantity,
-            price: item.price,
-            product_name: item.name,
-            product_image: item.image,
-            size: item.size
+            price: Number(item.price),
+            product_name: item.name || 'Product',
+            product_image: item.image || null,
+            size: item.size ?? 'N/A'
           };
         })
       };
 
-      // Create order first
-      const { data: order, error: orderError } = await supabase
-        .from('orders')
-        .insert([orderPayload])
-        .select()
-        .single();
-
-      if (orderError) {
-        console.error('Order creation error:', orderError);
-        throw orderError;
-      }
-
-      // Load Razorpay script
+      // Load Razorpay script (do NOT create DB order yet - only after payment succeeds)
       const scriptLoaded = await loadRazorpayScript();
       if (!scriptLoaded) {
         toast.error("Payment gateway failed to load. Please try again.");
@@ -168,8 +211,21 @@ export default function CartPage() {
         return;
       }
 
-      // Create Razorpay order
-      const razorpayOrder = await createRazorpayOrder(totalPrice, 'INR');
+      // Convert cart total (USD) to user's local currency for payment
+      const localTotal = await convertUSDToLocalCurrency(totalPrice, countryCode ?? 'US');
+      const paymentAmount = localTotal.amount;
+      const paymentCurrency = localTotal.code;
+
+      // Create Razorpay order in local currency (no DB order yet)
+      let razorpayOrder: { id: string; amount: number; currency: string };
+      try {
+        razorpayOrder = await createRazorpayOrder(paymentAmount, paymentCurrency);
+      } catch (razorpayErr) {
+        const msg = razorpayErr instanceof Error ? razorpayErr.message : 'Failed to create payment order';
+        toast.error(msg);
+        setLoading(false);
+        return;
+      }
 
       // Get user profile for prefill
       const { data: profile } = await supabase
@@ -187,7 +243,7 @@ export default function CartPage() {
         amount: razorpayOrder.amount.toString(),
         currency: razorpayOrder.currency,
         name: "Aaha Felt",
-        description: `Order #${order.id}`,
+        description: "Cart checkout",
         image: "/logo.png", // Add your logo path
         order_id: razorpayOrder.id,
         handler: async function (response: RazorpayResponse) {
@@ -199,44 +255,58 @@ export default function CartPage() {
               razorpaySignature: response.razorpay_signature,
             };
 
-            // Verify payment
+            // Verify payment with Razorpay before creating any DB order
             const verificationResult = await verifyPayment(paymentData);
             
-            if (verificationResult.success) {
-              // Save payment record
-              const paymentRecord = await savePaymentRecord(
-                order.id,
-                paymentData,
-                totalPrice,
-                'INR'
-              );
-
-              // Update order with payment
-              await updateOrderWithPayment(order.id, paymentRecord.id);
-
-              // Send order confirmation email
-              let emailSent = false;
-              try {
-                const { sendOrderConfirmationEmail } = await import('@/lib/payment');
-                await sendOrderConfirmationEmail(order.id);
-                emailSent = true;
-              } catch (emailError) {
-                console.error('Failed to send order confirmation email:', emailError);
-                // Don't fail the payment flow if email fails
-              }
-
-              // Clear cart and show success
-              clearCart();
+            if (!verificationResult.success) {
+              const msg = (verificationResult as { error?: string })?.error ?? 'Payment verification failed';
+              toast.error(msg);
               setLoading(false);
-              setOrderCompleted(true);
-              
-              if (emailSent) {
-                toast.success("Payment successful! Your order has been placed and confirmation email sent.");
-              } else {
-                toast.success("Payment successful! Your order has been placed. (Email confirmation may be delayed)");
-              }
+              return;
+            }
+
+            // Only after successful verification: create DB order
+            const { data: order, error: orderError } = await supabase
+              .from('orders')
+              .insert([orderPayload])
+              .select()
+              .single();
+
+            if (orderError) {
+              console.error('Order creation error after payment:', orderError);
+              toast.error('Order could not be saved. Please contact support with payment ID: ' + paymentData.razorpayPaymentId);
+              setLoading(false);
+              return;
+            }
+
+            // Save payment record (amount in local currency as charged)
+            const paymentRecord = await savePaymentRecord(
+              order.id,
+              paymentData,
+              paymentAmount,
+              paymentCurrency
+            );
+
+            await updateOrderWithPayment(order.id, paymentRecord.id);
+
+            // Send order confirmation email
+            let emailSent = false;
+            try {
+              const { sendOrderConfirmationEmail } = await import('@/lib/payment');
+              await sendOrderConfirmationEmail(order.id);
+              emailSent = true;
+            } catch (emailError) {
+              console.error('Failed to send order confirmation email:', emailError);
+            }
+
+            clearCart();
+            setLoading(false);
+            setOrderCompleted(true);
+            
+            if (emailSent) {
+              toast.success("Payment successful! Your order has been placed and confirmation email sent.");
             } else {
-              throw new Error('Payment verification failed');
+              toast.success("Payment successful! Your order has been placed. (Email confirmation may be delayed)");
             }
           } catch (error) {
             console.error('Payment processing error:', error);
@@ -251,7 +321,7 @@ export default function CartPage() {
         },
         notes: {
           address: formattedAddress,
-          order_id: order.id,
+          razorpay_order_id: razorpayOrder.id,
         },
         theme: {
           color: "#0f172a", // slate-900
@@ -270,7 +340,8 @@ export default function CartPage() {
 
     } catch (error: unknown) {
       console.error('Payment setup error:', error);
-      toast.error(error instanceof Error ? error.message : 'Failed to setup payment');
+      const message = error instanceof Error ? error.message : 'Failed to setup payment';
+      toast.error(message);
       setLoading(false);
     }
   };
@@ -467,7 +538,10 @@ export default function CartPage() {
                       </div>
                       {promoCode && (
                         <p className="text-sm text-green-600">
-                          Promo code applied: {promoCode} (-${promoDiscount.toFixed(2)})
+                          Promo code applied: {promoCode}
+                          {localPromoDiscount
+                            ? ` (-${localPromoDiscount.symbol}${localPromoDiscount.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })})`
+                            : ` (-$${promoDiscount.toFixed(2)})`}
                         </p>
                       )}
                     </div>
@@ -476,14 +550,64 @@ export default function CartPage() {
 
                     <div className="space-y-4">
                       <h3 className="font-medium">Shipping Address</h3>
-                      <div className="space-y-3">
+                      {isAuthenticated && savedAddresses.length > 0 && (
+                        <div className="flex flex-col sm:flex-row gap-3 sm:items-end">
+                          <div className="flex-1 min-w-0">
+                            <Label className="text-xs text-muted-foreground mb-1.5 block">Saved addresses</Label>
+                            <Select
+                              value={selectedAddressId ?? "new"}
+                              onValueChange={(value) => {
+                                if (value === "new") {
+                                  setShippingAddress({ ...emptyAddress });
+                                  setSelectedAddressId(null);
+                                  toast.info("Enter a new address");
+                                } else {
+                                  const addr = savedAddresses.find((a) => a.id === value);
+                                  if (addr) {
+                                    setShippingAddress(addressRowToParts(addr));
+                                    setSelectedAddressId(addr.id);
+                                  }
+                                }
+                              }}
+                            >
+                              <SelectTrigger className="w-full">
+                                <SelectValue placeholder="Choose an address" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="new">Add new address</SelectItem>
+                                {savedAddresses.map((addr) => (
+                                  <SelectItem key={addr.id} value={addr.id}>
+                                    {addr.label || `${addr.street}, ${addr.city}`}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                            <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="shrink-0"
+                            onClick={() => {
+                              setShippingAddress({ ...emptyAddress });
+                              setSelectedAddressId(null);
+                              toast.info("Enter a new address");
+                            }}
+                          >
+                            <PlusCircle className="w-3.5 h-3.5 mr-1.5" />
+                            New address
+                          </Button>
+                        </div>
+                      )}
+                      <div className="rounded-lg border border-border bg-muted/30 p-4 space-y-3">
                         <div>
                           <Label htmlFor="street">Street Address</Label>
                           <Input
                             id="street"
                             value={shippingAddress.street}
-                            onChange={(e) => setShippingAddress({ ...shippingAddress, street: e.target.value })}
+                            onChange={(e) => setShippingAddress((a) => ({ ...a, street: e.target.value }))}
                             placeholder="123 Main St"
+                            className="mt-1"
                             required
                           />
                         </div>
@@ -493,18 +617,20 @@ export default function CartPage() {
                             <Input
                               id="city"
                               value={shippingAddress.city}
-                              onChange={(e) => setShippingAddress({ ...shippingAddress, city: e.target.value })}
+                              onChange={(e) => setShippingAddress((a) => ({ ...a, city: e.target.value }))}
                               placeholder="City"
+                              className="mt-1"
                               required
                             />
                           </div>
                           <div>
-                            <Label htmlFor="state">State/Province</Label>
+                            <Label htmlFor="state">State / Province</Label>
                             <Input
                               id="state"
                               value={shippingAddress.state}
-                              onChange={(e) => setShippingAddress({ ...shippingAddress, state: e.target.value })}
+                              onChange={(e) => setShippingAddress((a) => ({ ...a, state: e.target.value }))}
                               placeholder="State"
+                              className="mt-1"
                               required
                             />
                           </div>
@@ -515,18 +641,20 @@ export default function CartPage() {
                             <Input
                               id="country"
                               value={shippingAddress.country}
-                              onChange={(e) => setShippingAddress({ ...shippingAddress, country: e.target.value })}
+                              onChange={(e) => setShippingAddress((a) => ({ ...a, country: e.target.value }))}
                               placeholder="Country"
+                              className="mt-1"
                               required
                             />
                           </div>
                           <div>
-                            <Label htmlFor="zipCode">ZIP/Postal Code</Label>
+                            <Label htmlFor="zipCode">ZIP / Postal Code</Label>
                             <Input
                               id="zipCode"
                               value={shippingAddress.zipCode}
-                              onChange={(e) => setShippingAddress({ ...shippingAddress, zipCode: e.target.value })}
+                              onChange={(e) => setShippingAddress((a) => ({ ...a, zipCode: e.target.value }))}
                               placeholder="ZIP Code"
+                              className="mt-1"
                               required
                             />
                           </div>
@@ -580,6 +708,26 @@ export default function CartPage() {
                       )}
                     </div>
 
+                    {!isAuthenticated && items.length > 0 && (
+                      <p className="text-sm text-muted-foreground mt-2">
+                        Sign in to checkout.{" "}
+                        <button
+                          type="button"
+                          className="text-primary hover:underline font-medium"
+                          onClick={() => setSignInDialogOpen(true)}
+                        >
+                          Sign in
+                        </button>
+                        {" or "}
+                        <button
+                          type="button"
+                          className="text-primary hover:underline font-medium"
+                          onClick={() => setSignInDialogOpen(true)}
+                        >
+                          create an account
+                        </button>
+                      </p>
+                    )}
                     <Button
                       className="w-full rounded-full mt-4"
                       onClick={handlePayment}
@@ -605,6 +753,7 @@ export default function CartPage() {
         </div>
       </main>
       <SiteFooter />
+      <CartSignInDialog open={signInDialogOpen} onOpenChange={setSignInDialogOpen} />
     </div>
   );
 }

@@ -4,6 +4,8 @@ import { SiteFooter } from "@/components/site-footer";
 import { Loading } from "@/components/ui/loading"
 import ShopClient from './ShopClient'
 
+export const runtime = "edge";
+
 function ShopLoadingFallback() {
   return (
     <div className="flex min-h-screen flex-col pt-20">

@@ -9,14 +9,19 @@ This guide will help you set up Razorpay payment integration for your e-commerce
 
 ## Environment Variables
 
-Create a `.env.local` file in your project root and add the following variables:
+Create a `.env.local` (or `.env`) file in your project root and add:
 
 ```env
 # Razorpay Configuration
-RAZORPAY_KEY_ID=your_razorpay_key_id_here
-RAZORPAY_SECRET=your_razorpay_secret_here
-NEXT_PUBLIC_RAZORPAY_KEY_ID=your_razorpay_key_id_here
+# Key ID = "Live API Key" from Razorpay Dashboard (used server + client)
+RAZORPAY_KEY_ID=rzp_live_xxxx
+RAZORPAY_SECRET=your_live_secret_here
+NEXT_PUBLIC_RAZORPAY_KEY_ID=rzp_live_xxxx
 ```
+
+**Which key to use:**
+- **Live API Key** (starts with `rzp_live_`) → set as `RAZORPAY_KEY_ID` and `NEXT_PUBLIC_RAZORPAY_KEY_ID` (same value).
+- **Live Key Secret** → set as `RAZORPAY_SECRET` only. Never put the secret in `NEXT_PUBLIC_*` or in client code.
 
 ## Database Setup
 

@@ -9,7 +9,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Product, Category, supabase } from '@/lib/supabase'
 import Link from "next/link";
-import Image from "next/image";
+import { ImageWithSkeleton } from "@/components/ui/image-with-skeleton";
 import { Heart } from 'lucide-react'
 import { Loading } from "@/components/ui/loading"
 
@@ -327,7 +327,7 @@ function ProductCard({ product, colorVariants, isPriority = false }: { product: 
 
             {/* Product Image */}
             <div className="aspect-[4/3] overflow-hidden bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center rounded-xl relative">
-              <Image
+              <ImageWithSkeleton
                 src={selectedVariant.images?.[0] || '/placeholder.png'}
                 alt={selectedVariant.title}
                 width={280}
@@ -335,8 +335,7 @@ function ProductCard({ product, colorVariants, isPriority = false }: { product: 
                 draggable={false}
                 priority={isPriority}
                 loading={isPriority ? "eager" : "lazy"}
-                placeholder="blur"
-                blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFgABAQEAAAAAAAAAAAAAAAAAAAUH/8QAIhAAAgEDBAMBAAAAAAAAAAAAAQIDAAQRBRIhMQYTQVH/xAAVAQEBAAAAAAAAAAAAAAAAAAADBP/EABkRAAIDAQAAAAAAAAAAAAAAAAECAAMRIf/aAAwDAQACEQMRAD8AxrT9Vv7K8juILqeKZDlZI3KsD+EGtC0/z/XNQvorGPUrpBM4RpFlYBQTjJ/K0pSuXyxMwZ4yN5H/2Q=="
+                fallbackSrc="/placeholder.png"
                 sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
                 className="object-contain w-full h-full transition-all duration-500 group-hover:scale-110 rounded-xl"
               />

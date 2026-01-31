@@ -6,12 +6,18 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
-// Currency symbols for supported countries
-const CURRENCY_MAP: Record<string, { code: string; symbol: string }> = {
+// Currency symbols for supported countries (single source of truth for display + payment)
+export const CURRENCY_MAP: Record<string, { code: string; symbol: string }> = {
   IN: { code: 'INR', symbol: '₹' },
   NZ: { code: 'NZD', symbol: 'NZ$' },
   CAN: { code: 'CAD', symbol: 'CA$' },
+  US: { code: 'USD', symbol: '$' },
 };
+
+/** Get currency code and symbol for a country (for display labels). */
+export function getCurrencyForCountry(countryCode: string): { code: string; symbol: string } {
+  return CURRENCY_MAP[countryCode] || { code: 'USD', symbol: '$' };
+}
 
 // In-memory cache for exchange rates
 const exchangeRateCache: Record<string, { rate: number; timestamp: number }> = {};
@@ -21,7 +27,7 @@ export async function convertUSDToLocalCurrency(
   usdAmount: number,
   countryCode: string
 ): Promise<{ amount: number; symbol: string; code: string }> {
-  const currency = CURRENCY_MAP[countryCode] || { code: 'USD', symbol: '$' };
+  const currency = getCurrencyForCountry(countryCode);
   if (currency.code === 'USD') {
     return { amount: usdAmount, symbol: '$', code: 'USD' };
   }

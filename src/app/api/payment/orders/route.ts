@@ -2,11 +2,21 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export async function POST(request: NextRequest) {
   try {
+    const keyId = process.env.RAZORPAY_KEY_ID;
+    const secret = process.env.RAZORPAY_SECRET;
+    if (!keyId || !secret) {
+      console.error('Razorpay keys missing: RAZORPAY_KEY_ID and RAZORPAY_SECRET must be set');
+      return NextResponse.json(
+        { error: 'Payment gateway is not configured. Please contact support.' },
+        { status: 500 }
+      );
+    }
+
     const { amount, currency = 'INR', receipt } = await request.json();
 
-    if (!amount) {
+    if (!amount || typeof amount !== 'number' || amount <= 0) {
       return NextResponse.json(
-        { error: 'Amount is required' },
+        { error: 'Valid amount is required' },
         { status: 400 }
       );
     }
@@ -17,10 +27,8 @@ export async function POST(request: NextRequest) {
       receipt: receipt || `receipt_${Date.now()}`,
     };
 
-    // Create basic auth header
-    const auth = btoa(`${process.env.RAZORPAY_KEY_ID}:${process.env.RAZORPAY_SECRET}`);
+    const auth = btoa(`${keyId}:${secret}`);
 
-    // Make direct API call to Razorpay
     const response = await fetch('https://api.razorpay.com/v1/orders', {
       method: 'POST',
       headers: {
@@ -30,22 +38,24 @@ export async function POST(request: NextRequest) {
       body: JSON.stringify(options),
     });
 
+    const data = await response.json().catch(() => ({}));
+
     if (!response.ok) {
-      const errorData = await response.json();
-      console.error('Razorpay API error:', errorData);
+      const message = (data as { error?: { description?: string; reason?: string } })?.error?.description
+        ?? (data as { error?: string }).error
+        ?? 'Failed to create payment order';
+      console.error('Razorpay API error:', data);
       return NextResponse.json(
-        { error: 'Failed to create order' },
+        { error: message },
         { status: response.status }
       );
     }
 
-    const order = await response.json();
-    return NextResponse.json(order);
-
+    return NextResponse.json(data);
   } catch (error) {
     console.error('Error creating Razorpay order:', error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: error instanceof Error ? error.message : 'Internal server error' },
       { status: 500 }
     );
   }

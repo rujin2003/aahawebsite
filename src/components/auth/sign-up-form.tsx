@@ -1,13 +1,22 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import Link from "next/link";
+import { formatAddress, validateAddress, type AddressParts } from "@/lib/address";
+
+const emptyAddress: AddressParts = {
+  street: "",
+  city: "",
+  state: "",
+  country: "",
+  zipCode: "",
+};
 
 export function SignUpForm() {
   const [email, setEmail] = useState("");
@@ -15,18 +24,25 @@ export function SignUpForm() {
   const [fullName, setFullName] = useState("");
   const [username, setUsername] = useState("");
   const [phone, setPhone] = useState("");
-  const [address, setAddress] = useState("");
+  const [address, setAddress] = useState<AddressParts>({ ...emptyAddress });
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectTo = searchParams.get("redirect") || "/";
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
+    const addressValidation = validateAddress(address);
+    if (!addressValidation.ok) {
+      toast.error(addressValidation.message);
+      return;
+    }
     setIsLoading(true);
 
     try {
       console.log('Starting registration process...');
-      
-      // First, sign up the user
+      const addressString = formatAddress(address);
+
       const { data: authData, error: signUpError } = await supabase.auth.signUp({
         email,
         password,
@@ -53,7 +69,6 @@ export function SignUpForm() {
 
       console.log('User created successfully, creating profile...');
 
-      // Then create the profile
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .insert([
@@ -63,7 +78,7 @@ export function SignUpForm() {
             email: email,
             username: username,
             phone: phone,
-            address: address,
+            address: addressString,
           },
         ])
         .select()
@@ -85,9 +100,18 @@ export function SignUpForm() {
         throw new Error('Profile creation failed - no data returned');
       }
 
+      // Save first address to addresses table if available
+      try {
+        const { insertAddress } = await import('@/lib/addresses');
+        await insertAddress(supabase, authData.user.id, address, { setDefault: true });
+      } catch (addrErr) {
+        console.warn('Could not save address to addresses table:', addrErr);
+      }
+
       console.log('Registration completed successfully');
-      toast.success("Account created successfully! Please check your email for verification.");
-      router.push("/");
+      toast.success("Account created! Please check your email to verify your account.");
+      const redirect = redirectTo !== "/" ? `?redirect=${encodeURIComponent(redirectTo)}` : "";
+      router.push(`/verify-email${redirect}`);
     } catch (error: unknown) {
       console.error('Registration error:', error);
       if (error instanceof Error) {
@@ -150,14 +174,43 @@ export function SignUpForm() {
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="address">Address</Label>
-          <Input
-            id="address"
-            placeholder="123 Main St, City, Country"
-            value={address}
-            onChange={(e) => setAddress(e.target.value)}
-            required
-          />
+          <Label>Address</Label>
+          <div className="space-y-2">
+            <Input
+              placeholder="Street address"
+              value={address.street}
+              onChange={(e) => setAddress((a) => ({ ...a, street: e.target.value }))}
+              required
+            />
+            <div className="grid grid-cols-2 gap-2">
+              <Input
+                placeholder="City"
+                value={address.city}
+                onChange={(e) => setAddress((a) => ({ ...a, city: e.target.value }))}
+                required
+              />
+              <Input
+                placeholder="State / Province"
+                value={address.state}
+                onChange={(e) => setAddress((a) => ({ ...a, state: e.target.value }))}
+                required
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <Input
+                placeholder="Country"
+                value={address.country}
+                onChange={(e) => setAddress((a) => ({ ...a, country: e.target.value }))}
+                required
+              />
+              <Input
+                placeholder="ZIP / Postal code"
+                value={address.zipCode}
+                onChange={(e) => setAddress((a) => ({ ...a, zipCode: e.target.value }))}
+                required
+              />
+            </div>
+          </div>
         </div>
         <div className="space-y-2">
           <Label htmlFor="password">Password</Label>

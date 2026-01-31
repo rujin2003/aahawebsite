@@ -33,50 +33,48 @@ export function loadRazorpayScript(): Promise<boolean> {
 
 // Create Razorpay order
 export async function createRazorpayOrder(amount: number, currency: string = 'INR'): Promise<RazorpayOrder> {
-  try {
-    const response = await fetch('/api/payment/orders', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        amount,
-        currency,
-        receipt: `receipt_${Date.now()}`,
-      }),
-    });
+  const response = await fetch('/api/payment/orders', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      amount,
+      currency,
+      receipt: `receipt_${Date.now()}`,
+    }),
+  });
 
-    if (!response.ok) {
-      throw new Error('Failed to create payment order');
-    }
+  const data = await response.json().catch(() => ({}));
 
-    return await response.json();
-  } catch (error) {
-    console.error('Error creating Razorpay order:', error);
-    throw error;
+  if (!response.ok) {
+    const message = (data as { error?: string }).error ?? 'Failed to create payment order';
+    console.error('Razorpay order creation failed:', data);
+    throw new Error(message);
   }
+
+  return data as RazorpayOrder;
 }
 
 // Verify payment
-export async function verifyPayment(paymentData: PaymentData) {
-  try {
-    const response = await fetch('/api/payment/verify', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(paymentData),
-    });
+export async function verifyPayment(paymentData: PaymentData): Promise<{ success: boolean; error?: string }> {
+  const response = await fetch('/api/payment/verify', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(paymentData),
+  });
 
-    if (!response.ok) {
-      throw new Error('Payment verification failed');
-    }
+  const data = await response.json().catch(() => ({ success: false }));
 
-    return await response.json();
-  } catch (error) {
-    console.error('Error verifying payment:', error);
-    throw error;
+  if (!response.ok) {
+    const error = (data as { error?: string }).error ?? 'Payment verification failed';
+    console.error('Payment verification failed:', data);
+    return { success: false, error };
   }
+
+  return data as { success: boolean; error?: string };
 }
 
 // Save payment record to database

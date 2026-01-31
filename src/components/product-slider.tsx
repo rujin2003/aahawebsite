@@ -1,13 +1,15 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import Image from "next/image";
 import Link from "next/link";
+import { ImageWithSkeleton } from "@/components/ui/image-with-skeleton";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight, Plus, Heart } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { ChevronLeft, ChevronRight, Plus, Heart, LogIn, UserPlus } from "lucide-react";
 import { Product } from '@/lib/supabase'
 import { supabase } from '@/lib/supabase';
 import { useCart } from '@/components/cart-provider';
+import { useAuth } from '@/hooks/use-auth';
 import { useWishlist } from '@/contexts/WishlistContext';
 import { useCountryStore } from "@/lib/countryStore";
 import { getCategoriesQuery, getProductsQuery } from '@/lib/country';
@@ -243,7 +245,9 @@ export function ProductCard({ product }: { product: Product }) {
   const fallbackImage = "/placeholder.png";
   const imageUrl = product.images?.[0] || fallbackImage;
   const [isHovered, setIsHovered] = useState(false);
+  const [quickAddOpen, setQuickAddOpen] = useState(false);
   const { addItem } = useCart();
+  const { isAuthenticated } = useAuth();
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
   const isSupportedCountry = useCountryStore(s => s.isSupportedCountry);
   const inWishlist = isInWishlist(product.id);
@@ -268,8 +272,6 @@ export function ProductCard({ product }: { product: Product }) {
       stock: totalStock,
       minQuantity: product.minimum_quantity || 1
     }, 1);
-    
-    toast.success('Added to cart!');
   };
 
   const handleWishlistToggle = (e: React.MouseEvent) => {
@@ -297,7 +299,7 @@ export function ProductCard({ product }: { product: Product }) {
     >
       {/* Product Image */}
       <div className="relative aspect-[3/4] overflow-hidden rounded-lg bg-secondary/20 mb-3">
-        <Image
+        <ImageWithSkeleton
           src={imageUrl}
           alt={product.title || "Product image"}
           draggable={false}
@@ -309,14 +311,13 @@ export function ProductCard({ product }: { product: Product }) {
           sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
           quality={75}
           loading="lazy"
-          placeholder="blur"
-          blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFgABAQEAAAAAAAAAAAAAAAAAAAUH/8QAIhAAAgEDBAMBAAAAAAAAAAAAAQIDAAQRBRIhMQYTQVH/xAAVAQEBAAAAAAAAAAAAAAAAAAADBP/EABkRAAIDAQAAAAAAAAAAAAAAAAECAAMRIf/aAAwDAQACEQMRAD8AxrT9Vv7K8juILqeKZDlZI3KsD+EGtC0/z/XNQvorGPUrpBM4RpFlYBQTjJ/K0pSuXyxMwZ4yN5H/2Q=="
+          fallbackSrc={fallbackImage}
           onError={(e) => {
             const target = e.target as HTMLImageElement;
             target.src = fallbackImage;
           }}
         />
-        
+
         {/* Wishlist Button - Always visible on mobile, hover on desktop */}
         <button
           onClick={handleWishlistToggle}
@@ -341,19 +342,62 @@ export function ProductCard({ product }: { product: Product }) {
 
         {/* Quick Add Button */}
         {isSupportedCountry && (
-          <button
-            onClick={handleQuickAdd}
-            className={cn(
-              "absolute bottom-2 right-2 w-7 h-7 rounded-full",
-              "bg-white/90 backdrop-blur-sm",
-              "flex items-center justify-center",
-              "hover:bg-primary hover:text-white transition-all duration-200",
-              "sm:opacity-0 sm:group-hover:opacity-100",
-              isHovered ? "opacity-100" : ""
-            )}
-          >
-            <Plus className="w-3.5 h-3.5" />
-          </button>
+          isAuthenticated ? (
+            <button
+              onClick={handleQuickAdd}
+              className={cn(
+                "absolute bottom-2 right-2 w-7 h-7 rounded-full",
+                "bg-white/90 backdrop-blur-sm",
+                "flex items-center justify-center",
+                "hover:bg-primary hover:text-white transition-all duration-200",
+                "sm:opacity-0 sm:group-hover:opacity-100",
+                isHovered ? "opacity-100" : ""
+              )}
+            >
+              <Plus className="w-3.5 h-3.5" />
+            </button>
+          ) : (
+            <Popover open={quickAddOpen} onOpenChange={setQuickAddOpen}>
+              <PopoverTrigger asChild>
+                <button
+                  onClick={(e) => e.preventDefault()}
+                  className={cn(
+                    "absolute bottom-2 right-2 w-7 h-7 rounded-full",
+                    "bg-white/90 backdrop-blur-sm",
+                    "flex items-center justify-center",
+                    "hover:bg-primary hover:text-white transition-all duration-200",
+                    "sm:opacity-0 sm:group-hover:opacity-100",
+                    isHovered ? "opacity-100" : ""
+                  )}
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                </button>
+              </PopoverTrigger>
+              <PopoverContent
+                className="w-56 p-3"
+                align="end"
+                side="bottom"
+                sideOffset={6}
+                onOpenAutoFocus={(e) => e.preventDefault()}
+              >
+                <p className="text-xs font-medium mb-2">Sign in to add to cart</p>
+                <div className="flex flex-col gap-1.5">
+                  <Button size="sm" className="w-full h-8 text-xs" asChild>
+                    <Link href="/signin" onClick={() => setQuickAddOpen(false)}>
+                      <LogIn className="w-3 h-3 mr-1.5" />
+                      Sign in
+                    </Link>
+                  </Button>
+                  <Button size="sm" variant="outline" className="w-full h-8 text-xs" asChild>
+                    <Link href="/signup" onClick={() => setQuickAddOpen(false)}>
+                      <UserPlus className="w-3 h-3 mr-1.5" />
+                      Create account
+                    </Link>
+                  </Button>
+                </div>
+              </PopoverContent>
+            </Popover>
+          )
         )}
       </div>
       
