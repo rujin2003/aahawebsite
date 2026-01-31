@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
-import { sendContactEmail } from '@/lib/nodemailer'
+import { sendContactEmailEdge } from '@/lib/email-edge'
 
-export const runtime = 'nodejs'
+export const runtime = 'edge'
 
 export async function POST(request: Request) {
   try {
@@ -51,10 +51,10 @@ export async function POST(request: Request) {
       )
     }
 
-    // Send email via Nodemailer (same as order confirmation)
+    // Send email via Edge-compatible path (Resend or MAIL_SERVICE_URL)
     let emailSent = false
     try {
-      const result = await sendContactEmail({
+      const result = await sendContactEmailEdge({
         name,
         email,
         subject,

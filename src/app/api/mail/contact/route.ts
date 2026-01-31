@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
-import { sendContactEmail } from '@/lib/nodemailer';
+import { sendContactEmailEdge } from '@/lib/email-edge';
 
-export const runtime = 'nodejs';
+export const runtime = 'edge';
 
 export async function POST(request: Request) {
   try {
@@ -14,7 +14,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const result = await sendContactEmail({
+    const result = await sendContactEmailEdge({
       name: payload.name,
       email: payload.email,
       subject: payload.subject,
