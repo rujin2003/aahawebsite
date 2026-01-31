@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
-import { sendContactEmailEdge } from '@/lib/email-edge'
+import { sendContactEmail } from '@/lib/email-api'
 
 export const runtime = 'edge'
 
@@ -51,16 +51,10 @@ export async function POST(request: Request) {
       )
     }
 
-    // Send email via Edge-compatible path (Resend or MAIL_SERVICE_URL)
+    // Send contact email via deployed mail API (type: contact)
     let emailSent = false
     try {
-      const result = await sendContactEmailEdge({
-        name,
-        email,
-        subject,
-        message,
-        source: body.source || 'website',
-      })
+      const result = await sendContactEmail({ name, email, message })
       if (result.ok) {
         console.log('Contact form email sent successfully')
         emailSent = true

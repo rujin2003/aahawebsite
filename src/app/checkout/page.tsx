@@ -41,15 +41,21 @@ export default function CheckoutPage() {
 
       if (error) throw error;
 
-      // Send order confirmation email
+      // Trigger admin + customer emails via mail API (sequential, do not block UI)
       let emailSent = false;
       try {
-        const { sendOrderConfirmationEmail } = await import('@/lib/payment');
-        await sendOrderConfirmationEmail(orderId);
-        emailSent = true;
+        const res = await fetch('/api/send-order-emails', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ orderId }),
+        });
+        const data = await res.json().catch(() => ({}));
+        emailSent = Boolean(data?.adminSent && data?.customerSent);
+        if (!emailSent && (data?.adminError || data?.customerError)) {
+          console.error('Order emails:', data.adminError ?? data.customerError);
+        }
       } catch (emailError) {
-        console.error('Failed to send order confirmation email:', emailError);
-        // Don't fail the payment flow if email fails
+        console.error('Failed to send order emails:', emailError);
       }
 
       if (emailSent) {

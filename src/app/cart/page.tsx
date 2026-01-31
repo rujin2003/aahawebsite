@@ -178,9 +178,20 @@ export default function CartPage() {
       // Format shipping address
       const formattedAddress = `${shippingAddress.street}, ${shippingAddress.city}, ${shippingAddress.state}, ${shippingAddress.country}, ${shippingAddress.zipCode}`;
 
+      // Get user display name for order and Razorpay prefill
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('full_name, phone')
+        .eq('id', user.id)
+        .single();
+      const userName = profile?.full_name || user.user_metadata?.full_name || '';
+      const userPhone = profile?.phone || user.phone || '';
+
       // Prepare order payload (will be created only after successful payment)
       const orderPayload = {
         user_id: user.id,
+        customer_name: userName || 'Customer',
+        customer_email: user.email ?? '',
         status: 'pending',
         total_amount: totalPrice,
         shipping_address: formattedAddress,
@@ -226,16 +237,6 @@ export default function CartPage() {
         setLoading(false);
         return;
       }
-
-      // Get user profile for prefill
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('full_name, phone')
-        .eq('id', user.id)
-        .single();
-
-      const userName = profile?.full_name || user.user_metadata?.full_name || '';
-      const userPhone = profile?.phone || user.phone || '';
 
       // Configure Razorpay options
       const options: RazorpayOptions = {
@@ -289,14 +290,26 @@ export default function CartPage() {
 
             await updateOrderWithPayment(order.id, paymentRecord.id);
 
-            // Send order confirmation email
+            // Trigger admin + customer emails via mail API (sequential, do not block UI)
             let emailSent = false;
             try {
-              const { sendOrderConfirmationEmail } = await import('@/lib/payment');
-              await sendOrderConfirmationEmail(order.id);
-              emailSent = true;
+              const res = await fetch('/api/send-order-emails', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  orderId: order.id,
+                  customerName: userName,
+                  customerEmail: user.email ?? '',
+                  total: order.total_amount,
+                }),
+              });
+              const data = await res.json().catch(() => ({}));
+              emailSent = Boolean(data?.adminSent && data?.customerSent);
+              if (!emailSent && (data?.adminError || data?.customerError)) {
+                console.error('Order emails:', data.adminError ?? data.customerError);
+              }
             } catch (emailError) {
-              console.error('Failed to send order confirmation email:', emailError);
+              console.error('Failed to send order emails:', emailError);
             }
 
             clearCart();
