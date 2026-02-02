@@ -276,6 +276,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     itemCount,
     totalPrice,
     promoCode,
+    promoCodeValid,
     promoDiscount,
     applyPromoCode,
     removePromoCode
