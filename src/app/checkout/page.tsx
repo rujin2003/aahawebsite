@@ -12,10 +12,13 @@ import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
+import { convertUSDToLocalCurrency } from '@/lib/utils';
+import { useCountryStore } from "@/lib/countryStore";
 
 export default function CheckoutPage() {
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+  const countryCode = useCountryStore(s => s.countryCode);
 
   const handlePayment = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -44,7 +47,7 @@ export default function CheckoutPage() {
       // Fetch order details for email
       const { data: order } = await supabase
         .from('orders')
-        .select('id, user_id, total_amount, items')
+        .select('id, user_id, total_amount, items, country_code')
         .eq('id', orderId)
         .single();
 
@@ -63,12 +66,24 @@ export default function CheckoutPage() {
           const customerName = profile?.full_name || user?.user_metadata?.full_name || 'Customer';
           const customerEmail = user?.email ?? '';
 
-          const emailItems = (order.items || []).map((item: any) => ({
-            name: item.product_name || 'Product',
-            qty: item.quantity || 1,
-            rate: Number(item.price ?? 0),
-            total: Number(item.price ?? 0) * (item.quantity || 1),
+          // Convert prices to local currency for email
+          const orderCountryCode = order.country_code || countryCode || 'US';
+          const currencyInfo = await convertUSDToLocalCurrency(1, orderCountryCode);
+          const currencySymbol = currencyInfo.symbol;
+          const currencyCode = currencyInfo.code;
+          
+          const emailItems = await Promise.all((order.items || []).map(async (item: any) => {
+            const localPrice = await convertUSDToLocalCurrency(item.price ?? 0, orderCountryCode);
+            return {
+              name: item.product_name || 'Product',
+              qty: item.quantity || 1,
+              rate: Number(localPrice.amount),
+              total: Number(localPrice.amount) * (item.quantity || 1),
+            };
           }));
+          
+          const localGrandTotal = await convertUSDToLocalCurrency(order.total_amount ?? 0, orderCountryCode);
+          
           const res = await fetch('/api/email', {
             method: 'POST',
             headers: {
@@ -81,7 +96,9 @@ export default function CheckoutPage() {
                 customerName,
                 customerEmail,
                 items: emailItems,
-                grandTotal: Number(order.total_amount ?? 0),
+                grandTotal: Number(localGrandTotal.amount),
+                currency: currencyCode,
+                currencySymbol: currencySymbol,
               },
             }),
           });

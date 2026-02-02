@@ -309,12 +309,23 @@ export default function CartPage() {
             // Trigger order placed email (single call; backend handles admin + customer)
             let emailSent = false;
             try {
-              const emailItems = items.map((item) => ({
-                name: item.name || 'Product',
-                qty: item.quantity,
-                rate: Number(item.price),
-                total: Number(item.price) * item.quantity,
-              }));
+                // Convert prices to local currency for email
+                const currencyInfo = await convertUSDToLocalCurrency(1, countryCode ?? 'US');
+                const currencySymbol = currencyInfo.symbol;
+                const currencyCode = currencyInfo.code;
+              
+                const emailItems = await Promise.all(items.map(async (item) => {
+                  const localPrice = await convertUSDToLocalCurrency(item.price, countryCode ?? 'US');
+                  return {
+                    name: item.name || 'Product',
+                    qty: item.quantity,
+                    rate: Number(localPrice.amount),
+                    total: Number(localPrice.amount) * item.quantity,
+                  };
+                }));
+              
+                const localGrandTotal = await convertUSDToLocalCurrency(order.total_amount ?? 0, countryCode ?? 'US');
+              
               const res = await fetch('/api/email', {
                 method: 'POST',
                 headers: {
@@ -327,7 +338,9 @@ export default function CartPage() {
                     customerName: userName || 'Customer',
                     customerEmail: user.email ?? '',
                     items: emailItems,
-                    grandTotal: Number(order.total_amount ?? 0),
+                      grandTotal: Number(localGrandTotal.amount),
+                      currency: currencyCode,
+                      currencySymbol: currencySymbol,
                   },
                 }),
               });
