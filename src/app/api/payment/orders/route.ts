@@ -4,8 +4,14 @@ export async function POST(request: NextRequest) {
   try {
     const keyId = process.env.RAZORPAY_KEY_ID;
     const secret = process.env.RAZORPAY_SECRET;
+    
+    console.log('Razorpay Key ID exists:', !!keyId);
+    console.log('Razorpay Secret exists:', !!secret);
+    
     if (!keyId || !secret) {
       console.error('Razorpay keys missing: RAZORPAY_KEY_ID and RAZORPAY_SECRET must be set');
+      console.error('Key ID:', keyId ? 'exists' : 'missing');
+      console.error('Secret:', secret ? 'exists' : 'missing');
       return NextResponse.json(
         { error: 'Payment gateway is not configured. Please contact support.' },
         { status: 500 }
@@ -28,6 +34,8 @@ export async function POST(request: NextRequest) {
     };
 
     const auth = btoa(`${keyId}:${secret}`);
+
+    console.log('Creating Razorpay order with:', { amount: options.amount, currency, receipt: options.receipt });
 
     const response = await fetch('https://api.razorpay.com/v1/orders', {
       method: 'POST',
@@ -61,4 +69,5 @@ export async function POST(request: NextRequest) {
   }
 }
 
-export const runtime = 'edge';
+// Use Node.js runtime instead of edge for better env variable support
+export const runtime = 'nodejs';

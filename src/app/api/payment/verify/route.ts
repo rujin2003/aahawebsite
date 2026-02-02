@@ -67,4 +67,5 @@ export async function POST(request: NextRequest) {
   }
 }
 
-export const runtime = 'edge';
+// Use Node.js runtime instead of edge for better env variable support
+export const runtime = 'nodejs';

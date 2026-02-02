@@ -44,7 +44,7 @@ export default function CheckoutPage() {
       // Fetch order details for email
       const { data: order } = await supabase
         .from('orders')
-        .select('id, customer_name, customer_email, total_amount, items')
+        .select('id, user_id, total_amount, items')
         .eq('id', orderId)
         .single();
 
@@ -52,6 +52,17 @@ export default function CheckoutPage() {
       let emailSent = false;
       if (order) {
         try {
+          // Get user details from auth and profiles
+          const { data: { user } } = await supabase.auth.getUser();
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('full_name')
+            .eq('id', order.user_id)
+            .single();
+          
+          const customerName = profile?.full_name || user?.user_metadata?.full_name || 'Customer';
+          const customerEmail = user?.email ?? '';
+
           const emailItems = (order.items || []).map((item: any) => ({
             name: item.product_name || 'Product',
             qty: item.quantity || 1,
@@ -67,8 +78,8 @@ export default function CheckoutPage() {
               type: 'order_placed',
               data: {
                 orderId: order.id,
-                customerName: order.customer_name || 'Customer',
-                customerEmail: order.customer_email ?? '',
+                customerName,
+                customerEmail,
                 items: emailItems,
                 grandTotal: Number(order.total_amount ?? 0),
               },

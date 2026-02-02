@@ -208,8 +208,6 @@ export default function CartPage() {
       // Prepare order payload (will be created only after successful payment)
       const orderPayload = {
         user_id: user.id,
-        customer_name: userName || 'Customer',
-        customer_email: user.email ?? '',
         status: 'pending',
         total_amount: totalWithShipping,
         shipping_address: formattedAddress,
