@@ -25,6 +25,7 @@ type CartContextType = {
   itemCount: number;
   totalPrice: number;
   promoCode: string | null;
+  promoCodeValid: boolean;
   promoDiscount: number;
   applyPromoCode: (code: string) => Promise<boolean>;
   removePromoCode: () => void;
@@ -39,6 +40,7 @@ const defaultCartContext: CartContextType = {
   itemCount: 0,
   totalPrice: 0,
   promoCode: null,
+  promoCodeValid: false,
   promoDiscount: 0,
   applyPromoCode: async () => false,
   removePromoCode: () => { }
@@ -50,6 +52,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
   const [mounted, setMounted] = useState(false);
   const [promoCode, setPromoCode] = useState<string | null>(null);
+  const [promoCodeValid, setPromoCodeValid] = useState(false);
   const [promoDiscount, setPromoDiscount] = useState(0);
   const pendingAddToast = useRef<{ type: 'add' | 'update'; name: string } | null>(null);
   const pendingRemoveToast = useRef<{ name: string; size: string } | null>(null);
@@ -77,6 +80,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     const storedCart = localStorage.getItem('cart');
     const storedPromoCode = localStorage.getItem('promoCode');
     const storedPromoDiscount = localStorage.getItem('promoDiscount');
+    const storedPromoValid = localStorage.getItem('promoCodeValid');
 
     if (storedCart) {
       try {
@@ -91,6 +95,10 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       setPromoCode(storedPromoCode);
     }
 
+    if (storedPromoValid) {
+      setPromoCodeValid(storedPromoValid === 'true');
+    }
+
     if (storedPromoDiscount) {
       setPromoDiscount(parseFloat(storedPromoDiscount));
     }
@@ -103,12 +111,14 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       if (promoCode) {
         localStorage.setItem('promoCode', promoCode);
         localStorage.setItem('promoDiscount', promoDiscount.toString());
+        localStorage.setItem('promoCodeValid', promoCodeValid.toString());
       } else {
         localStorage.removeItem('promoCode');
         localStorage.removeItem('promoDiscount');
+        localStorage.removeItem('promoCodeValid');
       }
     }
-  }, [items, mounted, promoCode, promoDiscount]);
+  }, [items, mounted, promoCode, promoDiscount, promoCodeValid]);
 
   // Calculate total item count
   const itemCount = items.reduce((total, item) => total + item.quantity, 0);
@@ -131,6 +141,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
       if (error || !data) {
         toast.error('Invalid or inactive promo code');
+        setPromoCodeValid(false);
         return false;
       }
 
@@ -140,11 +151,13 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
       setPromoCode(code);
       setPromoDiscount(discount);
+      setPromoCodeValid(true);
       toast.success('Promo code applied successfully!');
       return true;
     } catch (error) {
       console.error('Error applying promo code:', error);
       toast.error('Failed to apply promo code');
+      setPromoCodeValid(false);
       return false;
     }
   };
@@ -154,6 +167,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     if (!mounted) return;
     setPromoCode(null);
     setPromoDiscount(0);
+    setPromoCodeValid(false);
     toast.info('Promo code removed');
   };
 
@@ -250,7 +264,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     if (!mounted) return;
 
     setItems([]);
-   
+
   };
 
   const value = {

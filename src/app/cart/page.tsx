@@ -48,7 +48,7 @@ const emptyAddress: AddressParts = {
 };
 
 export default function CartPage() {
-  const { items, removeItem, updateQuantity, totalPrice, clearCart, promoCode, promoDiscount, applyPromoCode, removePromoCode } = useCart();
+  const { items, removeItem, updateQuantity, totalPrice, clearCart, promoCode, promoCodeValid, promoDiscount, applyPromoCode, removePromoCode } = useCart();
   const { user, isAuthenticated } = useAuth();
   const countryCode = useCountryStore(s=>s.countryCode)
   const isSupportedCountry = useCountryStore(s=>s.isSupportedCountry)
@@ -124,7 +124,10 @@ export default function CartPage() {
       const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
 
       // Calculate shipping cost based on country and item count
-      const shipping = countryCode ? calculateShippingCost(countryCode, totalItems) : { amount: 0, symbol: '$', code: 'USD' };
+      // Exempt shipping if promo code contains "SHIPPING"
+      const baseShipping = countryCode ? calculateShippingCost(countryCode, totalItems) : { amount: 0, symbol: '$', code: 'USD' };
+      const isFreeShipping = promoCodeValid && promoCode?.includes('SHIPPING');
+      const shipping = isFreeShipping ? { ...baseShipping, amount: 0 } : baseShipping;
       setShippingCost(shipping);
 
       // Convert total price
@@ -731,10 +734,10 @@ export default function CartPage() {
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Shipping</span>
                       {isSupportedCountry ? (
-                        <span>
+                        <span className={promoCodeValid && promoCode?.includes('SHIPPING') ? 'text-green-600' : ''}>
                           {shippingCost.amount > 0
                             ? `${shippingCost.symbol}${shippingCost.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-                            : 'Free'}
+                            : promoCodeValid && promoCode?.includes('SHIPPING') ? 'Free (Promo Applied)' : 'Free'}
                         </span>
                       ) : (
                         <span>Free</span>
