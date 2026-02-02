@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
     const encoder = new TextEncoder();
     const keyData = encoder.encode(secret);
     const messageData = encoder.encode(`${orderCreationId}|${razorpayPaymentId}`);
-    
+
     const key = await crypto.subtle.importKey(
       'raw',
       keyData,
@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
       false,
       ['sign']
     );
-    
+
     const signature = await crypto.subtle.sign('HMAC', key, messageData);
     const digest = Array.from(new Uint8Array(signature))
       .map(b => b.toString(16).padStart(2, '0'))
@@ -67,5 +67,4 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// Use Node.js runtime instead of edge for better env variable support
-export const runtime = 'nodejs';
+export const runtime = 'edge';
