@@ -60,11 +60,11 @@ export default function AccountPage() {
   // Convert prices to local currency when orders change
   useEffect(() => {
     if (!isSupportedCountry || !orders.length) return;
-    
+
     const convertPrices = async () => {
       const newLocalPrices: Record<string, { amount: number; symbol: string; code: string }> = {};
       const newLocalOrderTotals: Record<string, { amount: number; symbol: string; code: string }> = {};
-      
+
       for (const order of orders) {
         // Convert order total
         if (!countryCode) {
@@ -73,7 +73,7 @@ export default function AccountPage() {
           const convertedTotal = await convertUSDToLocalCurrency(order.total_amount, countryCode);
           newLocalOrderTotals[order.id] = convertedTotal;
         }
-        
+
         // Convert item prices
         for (const item of order.items) {
           if (!countryCode) {
@@ -84,11 +84,11 @@ export default function AccountPage() {
           }
         }
       }
-      
+
       setLocalPrices(newLocalPrices);
       setLocalOrderTotals(newLocalOrderTotals);
     };
-    
+
     convertPrices();
   }, [orders, countryCode, isSupportedCountry]);
 
@@ -289,7 +289,7 @@ export default function AccountPage() {
       if (error) throw error;
 
       // Update the orders list
-      setOrders(orders.map(order => 
+      setOrders(orders.map(order =>
         order.id === orderId ? { ...order, status: 'cancelled' } : order
       ));
 
@@ -355,7 +355,7 @@ export default function AccountPage() {
               </Button>
             </div>
 
-            <Tabs defaultValue="profile" className="space-y-8">
+            <Tabs defaultValue={isSupportedCountry ? "orders" : "settings"} className="space-y-8">
               <TabsList>
                 {isSupportedCountry && (
                   <>
@@ -363,7 +363,6 @@ export default function AccountPage() {
                     <TabsTrigger value="returns">Returns</TabsTrigger>
                   </>
                 )}
-                <TabsTrigger value="profile">Profile</TabsTrigger>
                 <TabsTrigger value="settings">Settings</TabsTrigger>
               </TabsList>
 
@@ -415,7 +414,7 @@ export default function AccountPage() {
                               </div>
                               <p className="font-medium">
                                 {isSupportedCountry ? (
-                                  localPrices[item.id] 
+                                  localPrices[item.id]
                                     ? `${localPrices[item.id].symbol}${(localPrices[item.id].amount * item.quantity).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
                                     : '...'
                                 ) : (
@@ -431,7 +430,7 @@ export default function AccountPage() {
                             <p className="font-medium">Total</p>
                             <p className="font-medium">
                               {isSupportedCountry ? (
-                                localOrderTotals[order.id] 
+                                localOrderTotals[order.id]
                                   ? `${localOrderTotals[order.id].symbol}${localOrderTotals[order.id].amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
                                   : '...'
                               ) : (
@@ -566,54 +565,6 @@ export default function AccountPage() {
               )}
 
               {/* Profile Tab */}
-              <TabsContent value="profile" className="space-y-6">
-                <Card className="p-6">
-                  <form onSubmit={handleProfileUpdate} className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="email">Email</Label>
-                      <Input
-                        id="email"
-                        type="email"
-                        value={profile?.email || ''}
-                        disabled
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="username">Username</Label>
-                      <Input
-                        id="username"
-                        value={profile?.username || ''}
-                        disabled
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="fullName">Full Name</Label>
-                      <Input
-                        id="fullName"
-                        value={profile?.full_name || ''}
-                        onChange={(e) => setProfile({ ...profile, full_name: e.target.value })}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="phone">Phone</Label>
-                      <Input
-                        id="phone"
-                        value={profile?.phone || ''}
-                        onChange={(e) => setProfile({ ...profile, phone: e.target.value })}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="address">Address</Label>
-                      <Input
-                        id="address"
-                        value={profile?.address || ''}
-                        onChange={(e) => setProfile({ ...profile, address: e.target.value })}
-                      />
-                    </div>
-                    <Button type="submit">Save Changes</Button>
-                  </form>
-                </Card>
-              </TabsContent>
 
               {/* Settings Tab */}
               <TabsContent value="settings" className="space-y-6">
@@ -644,43 +595,12 @@ export default function AccountPage() {
                       We take your privacy seriously. Read our privacy policy to understand how we collect,
                       use, and protect your personal information.
                     </p>
-                    <Button variant="outline" onClick={() => window.open('/privacy-policy', '_blank')}>
+                      <Button variant="outline" onClick={() => window.open('/privacypolicy.pdf', '_blank')}>
                       View Privacy Policy
                     </Button>
                   </div>
                 </Card>
 
-                <Card className="p-6 border-red-200">
-                  <div className="space-y-4">
-                    <h2 className="text-xl font-semibold text-red-600">Delete Account</h2>
-                    <p className="text-sm text-muted-foreground">
-                      Permanently delete your account and all associated data. This action cannot be undone.
-                    </p>
-                    <Dialog>
-                      <DialogTrigger asChild>
-                        <Button variant="destructive">Delete Account</Button>
-                      </DialogTrigger>
-                      <DialogContent>
-                        <DialogHeader>
-                          <DialogTitle>Are you sure?</DialogTitle>
-                          <DialogDescription>
-                            This action cannot be undone. This will permanently delete your account
-                            and remove all your data from our servers.
-                          </DialogDescription>
-                        </DialogHeader>
-                        <DialogFooter>
-                          <Button
-                            variant="destructive"
-                            onClick={handleDeleteAccount}
-                            disabled={isDeleting}
-                          >
-                            {isDeleting ? "Deleting..." : "Yes, delete my account"}
-                          </Button>
-                        </DialogFooter>
-                      </DialogContent>
-                    </Dialog>
-                  </div>
-                </Card>
 
                 <Card className="p-6">
                   <div className="space-y-4">
@@ -688,8 +608,8 @@ export default function AccountPage() {
                     <p className="text-sm text-muted-foreground">
                       Sign out of your account. You can sign back in at any time.
                     </p>
-                    <Button 
-                      variant="outline" 
+                    <Button
+                      variant="outline"
                       onClick={handleSignOut}
                       className="w-full"
                     >

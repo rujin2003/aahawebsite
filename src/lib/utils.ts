@@ -60,3 +60,50 @@ export async function convertUSDToLocalCurrency(
     return { amount: usdAmount, symbol: '$', code: 'USD' };
   }
 }
+
+/**
+ * Calculate shipping cost based on country and item count
+ * @param countryCode - Country code (IN, CAN, NZ, etc.)
+ * @param totalItems - Total number of items in the cart
+ * @returns Shipping cost in local currency with currency info
+ */
+export function calculateShippingCost(
+  countryCode: string,
+  totalItems: number
+): { amount: number; symbol: string; code: string } {
+  const currency = getCurrencyForCountry(countryCode);
+
+  switch (countryCode) {
+    case 'IN':
+      // India: Rs 400 base, Rs 700 if more than 15 items
+      return {
+        amount: totalItems > 15 ? 700 : 400,
+        symbol: currency.symbol,
+        code: currency.code,
+      };
+
+    case 'CAN':
+      // Canada: $25 base, $32 if more than 10 items
+      return {
+        amount: totalItems > 10 ? 32 : 25,
+        symbol: currency.symbol,
+        code: currency.code,
+      };
+
+    case 'NZ':
+      // New Zealand: $32 base, $60 if more than 10 items
+      return {
+        amount: totalItems > 10 ? 60 : 32,
+        symbol: currency.symbol,
+        code: currency.code,
+      };
+
+    default:
+      // Free shipping for unsupported countries or US
+      return {
+        amount: 0,
+        symbol: currency.symbol,
+        code: currency.code,
+      };
+  }
+}

@@ -71,7 +71,7 @@ export function SiteFooter() {
                 <h4 className="text-sm font-medium uppercase tracking-wider">Technology</h4>
                 <ul className="space-y-2">
                   <li>
-                    
+
                     <Link href="https://www.herdy.co.uk/did-ewe-know/what-is-felting-how-does-it-work/#" className="text-sm text-white/60 hover:text-white transition-colors">
                       Felting Process
                     </Link>
@@ -81,7 +81,7 @@ export function SiteFooter() {
                       Materials
                     </Link>
                   </li>
-                  
+
                 </ul>
               </div>
 
@@ -94,8 +94,8 @@ export function SiteFooter() {
                       About Us
                     </Link>
                   </li>
-                 
-                  
+
+
                 </ul>
               </div>
 
@@ -141,7 +141,7 @@ export function SiteFooter() {
                     </Link>
                   </li>
                   <li>
-                    <Link href="/privacy" className="text-sm text-white/60 hover:text-white transition-colors">
+                      <Link href="/privacypolicy.pdf" target="_blank" className="text-sm text-white/60 hover:text-white transition-colors">
                       Privacy Policy
                     </Link>
                   </li>
@@ -183,7 +183,7 @@ export function SiteFooter() {
             </div>
 
             {/* Credit */}
-           
+
             <p className="text-xs text-white/60 mt-6 text-right">
               Designed & created by{" "}
               <Link href="https://github.com/rujin2003" target="_blank" className="underline hover:text-primary">

@@ -17,7 +17,7 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { Label } from "@/components/ui/label";
 import { useCountryStore } from "@/lib/countryStore";
-import { convertUSDToLocalCurrency } from '@/lib/utils';
+import { convertUSDToLocalCurrency, calculateShippingCost } from '@/lib/utils';
 import { useAuth } from "@/hooks/use-auth";
 import { CartSignInDialog } from "@/components/cart-signin-dialog";
 import { parseAddress, formatAddress, validateAddress, type AddressParts } from "@/lib/address";
@@ -28,14 +28,14 @@ import {
   type AddressRow,
 } from "@/lib/addresses";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { 
-  loadRazorpayScript, 
-  createRazorpayOrder, 
-  verifyPayment, 
-  savePaymentRecord, 
+import {
+  loadRazorpayScript,
+  createRazorpayOrder,
+  verifyPayment,
+  savePaymentRecord,
   updateOrderWithPayment,
   createRazorpayPayment,
-  PaymentData 
+  PaymentData
 } from "@/lib/payment";
 import { RazorpayOptions, RazorpayResponse } from "@/types/razorpay";
 
@@ -60,6 +60,7 @@ export default function CartPage() {
   const [localPrices, setLocalPrices] = useState<Record<string, { amount: number; symbol: string; code: string }>>({});
   const [localTotalPrice, setLocalTotalPrice] = useState<{ amount: number; symbol: string; code: string } | null>(null);
   const [localPromoDiscount, setLocalPromoDiscount] = useState<{ amount: number; symbol: string; code: string } | null>(null);
+  const [shippingCost, setShippingCost] = useState<{ amount: number; symbol: string; code: string }>({ amount: 0, symbol: '$', code: 'USD' });
   const [shippingAddress, setShippingAddress] = useState<AddressParts>({ ...emptyAddress });
   const [savedAddresses, setSavedAddresses] = useState<AddressRow[]>([]);
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
@@ -104,10 +105,10 @@ export default function CartPage() {
   // Convert prices to local currency
   useEffect(() => {
     if (!isSupportedCountry || !items.length) return;
-    
+
     const convertPrices = async () => {
       const newLocalPrices: Record<string, { amount: number; symbol: string; code: string }> = {};
-      
+
       for (const item of items) {
         if (!countryCode) {
           newLocalPrices[item.id] = { amount: item.price, symbol: '$', code: 'USD' };
@@ -116,21 +117,32 @@ export default function CartPage() {
         const converted = await convertUSDToLocalCurrency(item.price, countryCode);
         newLocalPrices[item.id] = converted;
       }
-      
+
       setLocalPrices(newLocalPrices);
-      
+
+      // Calculate total number of items
+      const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
+
+      // Calculate shipping cost based on country and item count
+      const shipping = countryCode ? calculateShippingCost(countryCode, totalItems) : { amount: 0, symbol: '$', code: 'USD' };
+      setShippingCost(shipping);
+
       // Convert total price
       if (!countryCode) {
-        setLocalTotalPrice({ amount: totalPrice, symbol: '$', code: 'USD' });
+        setLocalTotalPrice({ amount: totalPrice + shipping.amount, symbol: '$', code: 'USD' });
         setLocalPromoDiscount({ amount: promoDiscount, symbol: '$', code: 'USD' });
       } else {
         const convertedTotal = await convertUSDToLocalCurrency(totalPrice, countryCode);
         const convertedPromoDiscount = await convertUSDToLocalCurrency(promoDiscount, countryCode);
-        setLocalTotalPrice(convertedTotal);
+        setLocalTotalPrice({
+          amount: convertedTotal.amount + shipping.amount,
+          symbol: convertedTotal.symbol,
+          code: convertedTotal.code
+        });
         setLocalPromoDiscount(convertedPromoDiscount);
       }
     };
-    
+
     convertPrices();
   }, [items, totalPrice, promoDiscount, countryCode, isSupportedCountry]);
 
@@ -187,13 +199,16 @@ export default function CartPage() {
       const userName = profile?.full_name || user.user_metadata?.full_name || '';
       const userPhone = profile?.phone || user.phone || '';
 
+      // Calculate total with shipping (in USD for the order record)
+      const totalWithShipping = totalPrice + shippingCost.amount;
+
       // Prepare order payload (will be created only after successful payment)
       const orderPayload = {
         user_id: user.id,
         customer_name: userName || 'Customer',
         customer_email: user.email ?? '',
         status: 'pending',
-        total_amount: totalPrice,
+        total_amount: totalWithShipping,
         shipping_address: formattedAddress,
         country_code: countryCode,
         promo_code: promoCode,
@@ -222,8 +237,8 @@ export default function CartPage() {
         return;
       }
 
-      // Convert cart total (USD) to user's local currency for payment
-      const localTotal = await convertUSDToLocalCurrency(totalPrice, countryCode ?? 'US');
+      // Convert cart total with shipping (USD) to user's local currency for payment
+      const localTotal = await convertUSDToLocalCurrency(totalWithShipping, countryCode ?? 'US');
       const paymentAmount = localTotal.amount;
       const paymentCurrency = localTotal.code;
 
@@ -258,7 +273,7 @@ export default function CartPage() {
 
             // Verify payment with Razorpay before creating any DB order
             const verificationResult = await verifyPayment(paymentData);
-            
+
             if (!verificationResult.success) {
               const msg = (verificationResult as { error?: string })?.error ?? 'Payment verification failed';
               toast.error(msg);
@@ -290,23 +305,35 @@ export default function CartPage() {
 
             await updateOrderWithPayment(order.id, paymentRecord.id);
 
-            // Trigger admin + customer emails via mail API (sequential, do not block UI)
+            // Trigger order placed email (single call; backend handles admin + customer)
             let emailSent = false;
             try {
-              const res = await fetch('/api/send-order-emails', {
+              const emailItems = items.map((item) => ({
+                name: item.name || 'Product',
+                qty: item.quantity,
+                rate: Number(item.price),
+                total: Number(item.price) * item.quantity,
+              }));
+              const res = await fetch('/api/email', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                  'Content-Type': 'application/json',
+                },
                 body: JSON.stringify({
-                  orderId: order.id,
-                  customerName: userName,
-                  customerEmail: user.email ?? '',
-                  total: order.total_amount,
+                  type: 'order_placed',
+                  data: {
+                    orderId: order.id,
+                    customerName: userName || 'Customer',
+                    customerEmail: user.email ?? '',
+                    items: emailItems,
+                    grandTotal: Number(order.total_amount ?? 0),
+                  },
                 }),
               });
-              const data = await res.json().catch(() => ({}));
-              emailSent = Boolean(data?.adminSent && data?.customerSent);
-              if (!emailSent && (data?.adminError || data?.customerError)) {
-                console.error('Order emails:', data.adminError ?? data.customerError);
+              emailSent = res.ok;
+              if (!res.ok) {
+                const text = await res.text().catch(() => '');
+                console.error('Order emails:', text || `HTTP ${res.status}`);
               }
             } catch (emailError) {
               console.error('Failed to send order emails:', emailError);
@@ -315,7 +342,7 @@ export default function CartPage() {
             clearCart();
             setLoading(false);
             setOrderCompleted(true);
-            
+
             if (emailSent) {
               toast.success("Payment successful! Your order has been placed and confirmation email sent.");
             } else {
@@ -462,7 +489,7 @@ export default function CartPage() {
                               <h3 className="font-medium">{item.name}</h3>
                               {isSupportedCountry ? (
                                 <p className="font-medium">
-                                  {localPrices[item.id] 
+                                  {localPrices[item.id]
                                     ? `${localPrices[item.id].symbol}${(localPrices[item.id].amount * item.quantity).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
                                     : '...'}
                                 </p>
@@ -681,7 +708,7 @@ export default function CartPage() {
                       <span className="text-muted-foreground">Subtotal</span>
                       {isSupportedCountry ? (
                         <span>
-                          {localTotalPrice 
+                          {localTotalPrice
                             ? `${localTotalPrice.symbol}${(localTotalPrice.amount + (promoDiscount > 0 ? localPromoDiscount?.amount || 0 : 0)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
                             : '...'}
                         </span>
@@ -694,7 +721,7 @@ export default function CartPage() {
                       <div className="flex justify-between text-green-600">
                         <span>Discount</span>
                         <span>
-                          {isSupportedCountry && localPromoDiscount 
+                          {isSupportedCountry && localPromoDiscount
                             ? `-${localPromoDiscount.symbol}${localPromoDiscount.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
                             : `-$${promoDiscount.toFixed(2)}`}
                         </span>
@@ -703,7 +730,15 @@ export default function CartPage() {
 
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Shipping</span>
-                      <span>Free</span>
+                      {isSupportedCountry ? (
+                        <span>
+                          {shippingCost.amount > 0
+                            ? `${shippingCost.symbol}${shippingCost.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                            : 'Free'}
+                        </span>
+                      ) : (
+                        <span>Free</span>
+                      )}
                     </div>
 
                     <Separator />
@@ -712,7 +747,7 @@ export default function CartPage() {
                       <span>Total</span>
                       {isSupportedCountry ? (
                         <span>
-                          {localTotalPrice 
+                          {localTotalPrice
                             ? `${localTotalPrice.symbol}${localTotalPrice.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
                             : '...'}
                         </span>

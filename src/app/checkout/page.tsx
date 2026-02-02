@@ -41,21 +41,47 @@ export default function CheckoutPage() {
 
       if (error) throw error;
 
-      // Trigger admin + customer emails via mail API (sequential, do not block UI)
+      // Fetch order details for email
+      const { data: order } = await supabase
+        .from('orders')
+        .select('id, customer_name, customer_email, total_amount, items')
+        .eq('id', orderId)
+        .single();
+
+      // Trigger order placed email (single call; backend handles admin + customer)
       let emailSent = false;
-      try {
-        const res = await fetch('/api/send-order-emails', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ orderId }),
-        });
-        const data = await res.json().catch(() => ({}));
-        emailSent = Boolean(data?.adminSent && data?.customerSent);
-        if (!emailSent && (data?.adminError || data?.customerError)) {
-          console.error('Order emails:', data.adminError ?? data.customerError);
+      if (order) {
+        try {
+          const emailItems = (order.items || []).map((item: any) => ({
+            name: item.product_name || 'Product',
+            qty: item.quantity || 1,
+            rate: Number(item.price ?? 0),
+            total: Number(item.price ?? 0) * (item.quantity || 1),
+          }));
+          const res = await fetch('/api/email', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              type: 'order_placed',
+              data: {
+                orderId: order.id,
+                customerName: order.customer_name || 'Customer',
+                customerEmail: order.customer_email ?? '',
+                items: emailItems,
+                grandTotal: Number(order.total_amount ?? 0),
+              },
+            }),
+          });
+          emailSent = res.ok;
+          if (!res.ok) {
+            const text = await res.text().catch(() => '');
+            console.error('Order emails:', text || `HTTP ${res.status}`);
+          }
+        } catch (emailError) {
+          console.error('Failed to send order emails:', emailError);
         }
-      } catch (emailError) {
-        console.error('Failed to send order emails:', emailError);
       }
 
       if (emailSent) {
@@ -134,4 +160,4 @@ export default function CheckoutPage() {
       <SiteFooter />
     </div>
   );
-} 
+}
