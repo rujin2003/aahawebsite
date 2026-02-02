@@ -23,7 +23,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const res = await fetch(`${mailApiUrl}/api/email`, {
+    const res = await fetch(`${mailApiUrl}/api/send-mail`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
