@@ -313,7 +313,7 @@ export default function CartPage() {
                 const currencyInfo = await convertUSDToLocalCurrency(1, countryCode ?? 'US');
                 const currencySymbol = currencyInfo.symbol;
                 const currencyCode = currencyInfo.code;
-              
+
                 const emailItems = await Promise.all(items.map(async (item) => {
                   const localPrice = await convertUSDToLocalCurrency(item.price, countryCode ?? 'US');
                   return {
@@ -323,9 +323,9 @@ export default function CartPage() {
                     total: Number(localPrice.amount) * item.quantity,
                   };
                 }));
-              
+
                 const localGrandTotal = await convertUSDToLocalCurrency(order.total_amount ?? 0, countryCode ?? 'US');
-              
+
               const res = await fetch('/api/email', {
                 method: 'POST',
                 headers: {

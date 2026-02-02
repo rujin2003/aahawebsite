@@ -5,7 +5,7 @@ ADD COLUMN IF NOT EXISTS customer_email TEXT;
 
 -- Update existing orders to populate customer_name and customer_email from auth.users
 UPDATE public.orders o
-SET 
+SET
   customer_name = COALESCE(p.full_name, u.email, 'Customer'),
   customer_email = u.email
 FROM auth.users u

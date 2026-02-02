@@ -4,10 +4,10 @@ export async function POST(request: NextRequest) {
   try {
     const keyId = process.env.RAZORPAY_KEY_ID;
     const secret = process.env.RAZORPAY_SECRET;
-    
+
     console.log('Razorpay Key ID exists:', !!keyId);
     console.log('Razorpay Secret exists:', !!secret);
-    
+
     if (!keyId || !secret) {
       console.error('Razorpay keys missing: RAZORPAY_KEY_ID and RAZORPAY_SECRET must be set');
       console.error('Key ID:', keyId ? 'exists' : 'missing');

@@ -62,7 +62,7 @@ export default function CheckoutPage() {
             .select('full_name')
             .eq('id', order.user_id)
             .single();
-          
+
           const customerName = profile?.full_name || user?.user_metadata?.full_name || 'Customer';
           const customerEmail = user?.email ?? '';
 
@@ -71,7 +71,7 @@ export default function CheckoutPage() {
           const currencyInfo = await convertUSDToLocalCurrency(1, orderCountryCode);
           const currencySymbol = currencyInfo.symbol;
           const currencyCode = currencyInfo.code;
-          
+
           const emailItems = await Promise.all((order.items || []).map(async (item: any) => {
             const localPrice = await convertUSDToLocalCurrency(item.price ?? 0, orderCountryCode);
             return {
@@ -81,9 +81,9 @@ export default function CheckoutPage() {
               total: Number(localPrice.amount) * (item.quantity || 1),
             };
           }));
-          
+
           const localGrandTotal = await convertUSDToLocalCurrency(order.total_amount ?? 0, orderCountryCode);
-          
+
           const res = await fetch('/api/email', {
             method: 'POST',
             headers: {
