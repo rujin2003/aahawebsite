@@ -22,6 +22,8 @@ const MissionSection = () => {
           ))}
         </div>
       </div>
+      {/* Gradient animation: disabled on mobile for performance.
+          Mobile gets a static gradient background instead. */}
       <style jsx>{`
         .gradient-background {
           background: linear-gradient(300deg, #f2d5e8, #d5e8f2, #f2e8d5);
@@ -37,6 +39,13 @@ const MissionSection = () => {
           }
           100% {
             background-position: 0% 50%;
+          }
+        }
+        @media (max-width: 768px) {
+          .gradient-background {
+            background: linear-gradient(300deg, #f2d5e8, #d5e8f2, #f2e8d5);
+            background-size: 100% 100%;
+            animation: none;
           }
         }
       `}</style>

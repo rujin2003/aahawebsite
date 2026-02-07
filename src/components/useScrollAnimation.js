@@ -1,36 +1,43 @@
-// Create this file as hooks/useScrollAnimation.js
+// hooks/useScrollAnimation.js
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 
 export function useScrollAnimation() {
   const [elements, setElements] = useState([]);
   const observer = useRef(null);
 
   useEffect(() => {
-    // Create a new IntersectionObserver
+    // On mobile, skip IntersectionObserver — CSS handles instant visibility
+    const isMobile = window.matchMedia('(max-width: 768px)').matches;
+
+    if (isMobile) {
+      // Immediately mark all tracked elements as visible
+      elements.forEach(el => {
+        if (el) el.classList.add('is-visible');
+      });
+      return;
+    }
+
+    // Desktop: full IntersectionObserver
     observer.current = new IntersectionObserver((entries) => {
       entries.forEach(entry => {
         if (entry.isIntersecting) {
-          // Add the visible class when the element is in view
           entry.target.classList.add('is-visible');
-          // Stop observing the element
           observer.current.unobserve(entry.target);
         }
       });
     }, {
-      threshold: 0.1, // Trigger when 10% of the element is visible
-      rootMargin: '0px 0px -100px 0px' // Adjust this to control when animations trigger
+      threshold: 0.1,
+      rootMargin: '0px 0px -100px 0px'
     });
 
-    // Observe all elements
     elements.forEach(element => {
       if (element) {
         observer.current.observe(element);
       }
     });
 
-    // Clean up
     return () => {
       if (observer.current) {
         observer.current.disconnect();
@@ -39,11 +46,11 @@ export function useScrollAnimation() {
   }, [elements]);
 
   // Add an element to be observed
-  const ref = (element) => {
+  const ref = useCallback((element) => {
     if (element && !elements.includes(element)) {
       setElements(prev => [...prev, element]);
     }
-  };
+  }, [elements]);
 
   return { ref };
 }

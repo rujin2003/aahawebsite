@@ -275,7 +275,6 @@
   @apply relative overflow-hidden;
   height: 220px;
 }
-
 /* Product image container with object-fit */
 .product-image-container {
   @apply w-full h-full relative overflow-hidden;
@@ -765,61 +764,126 @@ button, a {
 .animate-glow-pulse {
   animation: glow-pulse 2s ease-in-out infinite;
 }
-/* Disable animations on mobile devices for better performance */
+
+/* ==========================================================================
+   MOBILE PERFORMANCE OPTIMIZATION
+   Strategy: Disable heavy/decorative animations while preserving essential
+   UI feedback (loading spinners, button taps, basic transitions).
+   Desktop keeps all rich animations untouched.
+   ========================================================================== */
 @media (max-width: 768px) {
-  /* Disable all animations */
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.001ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.001ms !important;
+
+  /* --- 1. Make all scroll-triggered elements instantly visible --- */
+  .animate-on-scroll,
+  .animate-on-scroll.fade-up,
+  .animate-on-scroll.fade-down,
+  .animate-on-scroll.fade-left,
+  .animate-on-scroll.fade-right,
+  .animate-on-scroll.scale-up,
+  .animate-on-scroll.rotate-in {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+  .animate-on-scroll.is-visible {
+    opacity: 1 !important;
+    transform: none !important;
   }
 
-  /* Specifically disable scroll and on-demand animations */
-  .animate-on-scroll,
-  .animate-fade-up,
-  .animate-fade-down,
-  .animate-fade-left,
-  .animate-fade-right,
+  /* --- 2. Make reveal/stagger elements instantly visible --- */
+  .reveal-up,
+  .reveal-up.is-visible,
+  .fade-scale,
+  .fade-scale.is-visible {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+  .text-reveal > *,
+  .text-reveal.is-visible > * {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+  .stagger-animation > *,
+  .stagger-animation.is-visible > * {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+    transition-delay: 0ms !important;
+  }
+
+  /* --- 3. Kill continuous/decorative animations (GPU hogs) --- */
   .animate-float,
+  .float-animation,
   .animate-pulse-gentle,
   .animate-pulse-fast,
   .animate-pulse-elegant,
-  .float-animation,
-  .reveal-up,
-  .fade-scale,
-  .text-reveal,
-  .stagger-animation,
   .animate-bounce-subtle,
   .animate-leaf-sway,
   .animate-glow-pulse,
-  .animate-shimmer,
-  .animate-fade-in-tag,
-  .parallax-bg {
+  .animate-shimmer {
     animation: none !important;
-    transition: none !important;
   }
 
-  /* Disable hover animations */
-  .animate-on-scroll.is-visible,
-  .reveal-up.is-visible,
-  .fade-scale.is-visible,
-  .text-reveal.is-visible,
-  .stagger-animation.is-visible > * {
+  /* --- 4. Fix "Sustainable • Handcrafted • Unique" badge visibility ---
+     These use animate-fade-in-tag which sets opacity:0 by default.
+     On mobile we skip the animation and show them immediately. */
+  .animate-fade-in-tag {
     animation: none !important;
-    transform: none !important;
     opacity: 1 !important;
+    transform: none !important;
   }
 
-  /* Disable hover effects on cards and interactive elements */
-  .group:hover > *,
-  .group-hover\:shadow-\[0_8px_30px_rgba\(0\,0\,0\,0\.12\)\]:hover,
-  .group-hover\:-translate-y-2:hover,
-  .hover-lift,
-  .card-hover-effect {
-    transform: none !important;
-    box-shadow: initial !important;
+  /* --- 5. Kill parallax (iOS doesn't support it and it causes jank) --- */
+  .parallax-bg {
+    background-attachment: scroll !important;
+  }
+
+  /* --- 6. Disable heavy hover effects (no hover on touch anyway) --- */
+  .card-hover-effect,
+  .hover-lift {
     transition: none !important;
   }
-}
+  .card-hover-effect:hover,
+  .hover-lift:hover {
+    transform: none !important;
+  }
+
+  /* --- 7. Disable the category card hover translate --- */
+  .category-card:hover {
+    transform: none !important;
+  }
+
+  /* --- 8. Simplify group-hover transforms on product cards --- */
+  .group:hover .group-hover\:scale-110 {
+    transform: none !important;
+  }
+  .group:hover .group-hover\:-translate-y-2 {
+    transform: none !important;
+  }
+
+  /* --- 9. Keep animate-fade-up classes visible (Tailwind custom) --- */
+  .animate-fade-up {
+    opacity: 1 !important;
+    transform: none !important;
+    animation: none !important;
+  }
+
+  /* --- 10. Smooth scrolling for touch --- */
+  html {
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* --- 11. Prevent layout shift from blurred decorative shapes --- */
+  .blur-2xl,
+  .blur-3xl {
+    will-change: auto !important;
+    contain: layout style paint;
+  }
+
+  /* --- 12. WHITELIST: Loading spinner animations stay active ---
+     The lds-ellipsis and spin animations are essential UI feedback.
+     We intentionally do NOT disable them. They are GPU-friendly
+     (only transform: scale/translate). */

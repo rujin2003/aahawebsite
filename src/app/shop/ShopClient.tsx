@@ -154,7 +154,7 @@ export default function ShopClient() {
                 Handcrafted with Love
               </h1>
               <p className="text-lg text-muted-foreground animate-fade-up animate-delay-200 max-w-2xl mx-auto leading-relaxed">
-                Discover our exclusive collection of handcrafted felt products. Each piece tells a story of traditional craftsmanship, 
+                Discover our exclusive collection of handcrafted felt products. Each piece tells a story of traditional craftsmanship,
                 made with passion by skilled artisans using time-honored techniques.
               </p>
               <div className="flex items-center justify-center gap-6 mt-8 text-sm text-muted-foreground animate-fade-up animate-delay-300">
@@ -192,8 +192,8 @@ export default function ShopClient() {
           >
             <div className="flex justify-start mb-8 overflow-x-auto scroll-pl-4 scrollbar-hide">
               <TabsList className="bg-white border border-gray-200 p-1.5 rounded-2xl flex gap-1 min-w-max shadow-sm">
-                <TabsTrigger 
-                  value="all" 
+                <TabsTrigger
+                  value="all"
                   className="rounded-xl whitespace-nowrap px-6 py-2.5 data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-sm transition-all"
                 >
                   All Products
@@ -307,7 +307,7 @@ function ProductCard({ product, colorVariants, isPriority = false }: { product: 
 
   return (
     <div className="group relative">
-      <Card className="h-full flex flex-col overflow-hidden border-0 rounded-2xl transition-all duration-500 group-hover:shadow-[0_8px_30px_rgba(0,0,0,0.12)] group-hover:-translate-y-2 bg-white ring-1 ring-gray-100 group-hover:ring-primary/20">
+      <Card className="h-full flex flex-col overflow-hidden border-0 rounded-2xl bg-white ring-1 ring-gray-100 sm:transition-all sm:duration-500 sm:group-hover:shadow-[0_8px_30px_rgba(0,0,0,0.12)] sm:group-hover:-translate-y-2 sm:group-hover:ring-primary/20">
         <Link href={`/shop/product/${selectedVariant.id}`} className="flex flex-col h-full">
           <div className="relative p-4">
             {/* Wishlist Button */}
@@ -318,10 +318,10 @@ function ProductCard({ product, colorVariants, isPriority = false }: { product: 
               }}
               className="absolute top-3 right-3 z-10 w-8 h-8 flex items-center justify-center rounded-full bg-white/80 backdrop-blur-sm border border-white/20 transition-all opacity-0 group-hover:opacity-100 hover:bg-white hover:scale-110"
             >
-              <Heart 
+              <Heart
                 className={`w-4 h-4 transition-colors ${
                   isLiked ? 'fill-red-500 text-red-500' : 'text-gray-400 hover:text-red-500'
-                }`} 
+                }`}
               />
             </button>
 
@@ -337,9 +337,9 @@ function ProductCard({ product, colorVariants, isPriority = false }: { product: 
                 loading={isPriority ? "eager" : "lazy"}
                 fallbackSrc="/placeholder.png"
                 sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-                className="object-contain w-full h-full transition-all duration-500 group-hover:scale-110 rounded-xl"
+                className="object-contain w-full h-full rounded-xl sm:transition-transform sm:duration-500 sm:group-hover:scale-110"
               />
-              
+
               {/* Subtle overlay on hover */}
               <div className="absolute inset-0 bg-gradient-to-t from-black/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-xl"></div>
             </div>
@@ -370,7 +370,7 @@ function ProductCard({ product, colorVariants, isPriority = false }: { product: 
                   <div className="flex gap-2 items-center">
                     {colorVariants.slice(0, 6).map((variant) => {
                       const isLight = isLightColor(variant.color);
-                      
+
                       return (
                         <button
                           key={variant.id}
@@ -387,8 +387,8 @@ function ProductCard({ product, colorVariants, isPriority = false }: { product: 
                         >
                           <div
                             className={`w-full h-full rounded-full ${
-                              isLight 
-                                ? 'border-2 border-gray-200 shadow-sm' 
+                              isLight
+                                ? 'border-2 border-gray-200 shadow-sm'
                                 : 'border border-white/20 shadow-sm'
                             }`}
                             style={{ backgroundColor: variant.color }}
@@ -409,11 +409,11 @@ function ProductCard({ product, colorVariants, isPriority = false }: { product: 
               )}
             </div>
 
-            {/* View Product Button */}
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="w-full mt-4 opacity-0 group-hover:opacity-100 transform translate-y-2 group-hover:translate-y-0 transition-all duration-300 border-primary/20 hover:bg-primary hover:text-white"
+            {/* View Product Button — always visible on mobile, hover-reveal on desktop */}
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full mt-4 sm:opacity-0 sm:group-hover:opacity-100 sm:translate-y-2 sm:group-hover:translate-y-0 sm:transition-all sm:duration-300 border-primary/20 hover:bg-primary hover:text-white"
             >
               View Details
             </Button>
