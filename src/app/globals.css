@@ -886,4 +886,4 @@ button, a {
   /* --- 12. WHITELIST: Loading spinner animations stay active ---
      The lds-ellipsis and spin animations are essential UI feedback.
      We intentionally do NOT disable them. They are GPU-friendly
-     (only transform: scale/translate). */
+     (only transform: scale/translate). */}
