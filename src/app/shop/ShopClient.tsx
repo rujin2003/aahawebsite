@@ -326,7 +326,7 @@ function ProductCard({ product, colorVariants, isPriority = false }: { product: 
             </button>
 
             {/* Product Image */}
-            <div className="aspect-[4/3] overflow-hidden bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center rounded-xl relative">
+            <div className="aspect-[4/3] overflow-hidden bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center rounded-xl relative product-image-container">
               <ImageWithSkeleton
                 src={selectedVariant.images?.[0] || '/placeholder.png'}
                 alt={selectedVariant.title}

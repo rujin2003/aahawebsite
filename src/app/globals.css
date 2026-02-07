@@ -276,6 +276,18 @@
   height: 220px;
 }
 
+/* Product image container with object-fit */
+.product-image-container {
+  @apply w-full h-full relative overflow-hidden;
+}
+
+.product-image-container img {
+  object-fit: contain;
+  object-position: center;
+  width: 100%;
+  height: 100%;
+}
+
 /* Text color adjustments */
 .text-subtle {
   @apply text-foreground/80;
@@ -752,4 +764,62 @@ button, a {
 
 .animate-glow-pulse {
   animation: glow-pulse 2s ease-in-out infinite;
+}
+/* Disable animations on mobile devices for better performance */
+@media (max-width: 768px) {
+  /* Disable all animations */
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+
+  /* Specifically disable scroll and on-demand animations */
+  .animate-on-scroll,
+  .animate-fade-up,
+  .animate-fade-down,
+  .animate-fade-left,
+  .animate-fade-right,
+  .animate-float,
+  .animate-pulse-gentle,
+  .animate-pulse-fast,
+  .animate-pulse-elegant,
+  .float-animation,
+  .reveal-up,
+  .fade-scale,
+  .text-reveal,
+  .stagger-animation,
+  .animate-bounce-subtle,
+  .animate-leaf-sway,
+  .animate-glow-pulse,
+  .animate-shimmer,
+  .animate-fade-in-tag,
+  .parallax-bg {
+    animation: none !important;
+    transition: none !important;
+  }
+
+  /* Disable hover animations */
+  .animate-on-scroll.is-visible,
+  .reveal-up.is-visible,
+  .fade-scale.is-visible,
+  .text-reveal.is-visible,
+  .stagger-animation.is-visible > * {
+    animation: none !important;
+    transform: none !important;
+    opacity: 1 !important;
+  }
+
+  /* Disable hover effects on cards and interactive elements */
+  .group:hover > *,
+  .group-hover\:shadow-\[0_8px_30px_rgba\(0\,0\,0\,0\.12\)\]:hover,
+  .group-hover\:-translate-y-2:hover,
+  .hover-lift,
+  .card-hover-effect {
+    transform: none !important;
+    box-shadow: initial !important;
+    transition: none !important;
+  }
 }
