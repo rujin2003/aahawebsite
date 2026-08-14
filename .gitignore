@@ -42,3 +42,4 @@ next-env.d.ts
 
 # claude code session files
 .claude/
+package-lock.json
