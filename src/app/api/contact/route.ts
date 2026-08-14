@@ -30,8 +30,9 @@ export async function POST(request: Request) {
       )
     }
 
-    // Save to Supabase
-    const { data, error } = await supabase
+    // Save to Supabase — no .select(): contacts are only readable by admins
+    // under RLS, so asking for the inserted row back makes the insert fail
+    const { error } = await supabase
       .from('contacts')
       .insert([{
         name,
@@ -41,7 +42,6 @@ export async function POST(request: Request) {
         source: body.source || 'website',
         created_at: new Date().toISOString()
       }])
-      .select()
 
     if (error) {
       console.error('Supabase error:', error)
@@ -65,10 +65,9 @@ export async function POST(request: Request) {
       console.error('Failed to send contact form email:', emailError)
     }
 
-    console.log('Successfully saved contact form submission:', data)
+    console.log('Successfully saved contact form submission')
     return NextResponse.json({
       success: true,
-      data,
       emailSent
     })
   } catch (error) {
