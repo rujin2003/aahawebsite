@@ -8,13 +8,38 @@ interface CountryStore {
   getCountry: () => Promise<string>;
 }
 
+// The detected country is cached in localStorage so navigating between
+// pages (and return visits) doesn't block on the ipwho.is lookup.
+const CACHE_KEY = 'aaha-country-code';
+
+const readCachedCountry = (): string | null => {
+  if (typeof window === 'undefined') return null;
+  try {
+    const code = window.localStorage.getItem(CACHE_KEY);
+    return code && /^[A-Z]{2,3}$/.test(code) ? code : null;
+  } catch {
+    return null;
+  }
+};
+
+const writeCachedCountry = (code: string) => {
+  try {
+    window.localStorage.setItem(CACHE_KEY, code);
+  } catch {}
+};
+
+const isSupported = (code: string) =>
+  SUPPORTED_COUNTRIES.includes(code as SupportedCountry);
+
 export const useCountryStore = create<CountryStore>((set, get) => {
   let sharedPromise: Promise<string> | null = null;
 
+  const cached = readCachedCountry();
+
   return {
-    countryCode: null,
+    countryCode: cached,
     isLoading: false,
-    isSupportedCountry: false,
+    isSupportedCountry: cached ? isSupported(cached) : false,
 
     getCountry: async () => {
       const { countryCode } = get();
@@ -29,12 +54,12 @@ export const useCountryStore = create<CountryStore>((set, get) => {
           const res = await fetch('https://ipwho.is/');
           const data = await res.json();
           const code = data.country_code || 'US';
-          const isSupported = SUPPORTED_COUNTRIES.includes(code as SupportedCountry);
 
+          writeCachedCountry(code);
           set({
             countryCode: code,
             isLoading: false,
-            isSupportedCountry: isSupported,
+            isSupportedCountry: isSupported(code),
           });
 
           return code;
@@ -42,7 +67,7 @@ export const useCountryStore = create<CountryStore>((set, get) => {
           set({
             countryCode: 'US',
             isLoading: false,
-            isSupportedCountry: SUPPORTED_COUNTRIES.includes('US' as SupportedCountry),
+            isSupportedCountry: isSupported('US'),
           });
 
           return 'US';

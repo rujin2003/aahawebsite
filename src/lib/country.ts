@@ -1,7 +1,7 @@
 "use client";
 
-// List of supported countries
-export const SUPPORTED_COUNTRIES = ['IN', 'NZ', 'CAN'] as const;
+// Countries we ship to / show prices for (ISO-2 codes as returned by ipwho.is)
+export const SUPPORTED_COUNTRIES = ['AU', 'IN', 'NZ'] as const;
 export type SupportedCountry = typeof SUPPORTED_COUNTRIES[number];
 
 // Function to get user's country code
@@ -19,45 +19,20 @@ export async function getUserCountry(): Promise<string> {
 }
 
 
-// Function to get the appropriate query for categories based on user's country
-export function getCategoriesQuery(supabase: any, userCountryCode: string) {
-  console.log('Building query for country:', userCountryCode);
-
-  const isSupportedCountry = SUPPORTED_COUNTRIES.includes(userCountryCode as SupportedCountry);
-
-  let query = supabase
+// The full catalog is visible everywhere in the world — country_codes only
+// decide shipping availability and pricing, never what gets listed.
+export function getCategoriesQuery(supabase: any, _userCountryCode: string) {
+  return supabase
     .from('categories')
     .select('*')
     .order('name', { ascending: true });
-
-  if (isSupportedCountry) {
-    console.log('User is from supported country, filtering by country_codes');
-    query = query.contains('country_codes', [userCountryCode]);
-  } else {
-    console.log('User is from non-supported country, fetching items with null country_codes');
-    // query = query.is('country_codes', null);
-  }
-
-  return query;
 }
 
-// Function to get the appropriate query for products based on user's country
-export async function getProductsQuery(supabase: any, countryCode: string) {
-  const isSupported = SUPPORTED_COUNTRIES.includes(countryCode as SupportedCountry);
-
-  let query = supabase
+export async function getProductsQuery(supabase: any, _countryCode: string) {
+  return supabase
     .from('products')
     .select('*')
     .order('created_at', { ascending: false });
-
-  if (isSupported) {
-    
-    query = query.filter('country_codes', 'cs', `{${countryCode}}`);
-  } else {
- 
-  }
-
-  return query;
 }
 
 

@@ -48,7 +48,7 @@ export default function TermsAndConditionsPage() {
                   </div>
                   <div>
                     <CardTitle className="text-xl">Terms & Conditions Document</CardTitle>
-                    <p className="text-sm text-muted-foreground">Last updated: {new Date().toLocaleDateString()}</p>
+                    <p className="text-sm text-muted-foreground" suppressHydrationWarning>Last updated: {new Date().toLocaleDateString()}</p>
                   </div>
                 </div>
                 <div className="flex gap-2">

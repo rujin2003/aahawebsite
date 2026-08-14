@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import localFont from 'next/font/local';
 import { Montserrat, Playfair_Display } from "next/font/google";
 import "./globals.css";
 import ClientBody from "./ClientBody";
@@ -8,7 +7,6 @@ import { CartProvider } from "@/components/cart-provider";
 import { WishlistProvider } from "@/contexts/WishlistContext";
 import { Toaster } from "sonner";
 
-// Google fonts for a more aesthetic look
 const montserrat = Montserrat({
   subsets: ['latin'],
   variable: '--font-montserrat',
@@ -18,31 +16,6 @@ const montserrat = Montserrat({
 const playfair = Playfair_Display({
   subsets: ['latin'],
   variable: '--font-playfair',
-  display: 'swap',
-});
-
-// Custom fonts similar to Luminous Labs
-const sans = localFont({
-  src: [
-    {
-      path: '../../public/fonts/Switzer-Variable.woff2',
-      weight: '100 900',
-      style: 'normal',
-    },
-  ],
-  variable: '--font-sans',
-  display: 'swap',
-});
-
-const saans = localFont({
-  src: [
-    {
-      path: '../../public/fonts/Saans-Medium.woff2',
-      weight: '500',
-      style: 'normal',
-    },
-  ],
-  variable: '--font-saans',
   display: 'swap',
 });
 
@@ -66,7 +39,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${sans.variable} ${saans.variable} ${montserrat.variable} ${playfair.variable}`}
+      className={`${montserrat.variable} ${playfair.variable}`}
       suppressHydrationWarning
     >
       <ClientBody>

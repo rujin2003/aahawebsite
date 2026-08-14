@@ -217,7 +217,7 @@ export function ProductSlider({ title, products: initialProducts, categoryId, co
 
       {/* Minimal dots indicator */}
       {maxIndex > 0 && (
-        <div className="flex justify-center gap-1 sm:gap-1.5 mt-4 sm:mt-6">
+        <div className="flex justify-center gap-1.5 mt-4 sm:mt-6">
           {Array.from({ length: maxIndex + 1 }).map((_, index) => (
             <button
               key={index}
@@ -228,9 +228,10 @@ export function ProductSlider({ title, products: initialProducts, categoryId, co
                   setTimeout(() => setIsAnimating(false), 500);
                 }
               }}
+              style={{ minWidth: 0, minHeight: 0, padding: 0 }}
               className={cn(
-                "w-1 h-1 sm:w-1.5 sm:h-1.5 rounded-full transition-all duration-300",
-                activeIndex === index ? "bg-primary w-3 sm:w-4" : "bg-border/60 hover:bg-primary/30"
+                "h-1.5 rounded-full transition-all duration-300",
+                activeIndex === index ? "bg-primary w-4" : "w-1.5 bg-border/60 hover:bg-primary/30"
               )}
               aria-label={`Go to slide ${index + 1}`}
             />
@@ -305,7 +306,7 @@ export function ProductCard({ product }: { product: Product }) {
           draggable={false}
           fill
           className={cn(
-            "object-cover transition-transform duration-500 ease-out",
+            "object-contain p-3 transition-transform duration-500 ease-out",
             isHovered ? "scale-105" : "scale-100"
           )}
           sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"

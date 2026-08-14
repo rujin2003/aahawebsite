@@ -54,7 +54,7 @@ export async function POST(request: Request) {
     // Send contact email via deployed mail API (type: contact)
     let emailSent = false
     try {
-      const result = await sendContactEmail({ name, email, message })
+      const result = await sendContactEmail({ name, email, message, subject, source: body.source })
       if (result.ok) {
         console.log('Contact form email sent successfully')
         emailSent = true

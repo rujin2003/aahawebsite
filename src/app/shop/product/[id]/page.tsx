@@ -12,6 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ProductSlider } from "@/components/product-slider";
 import AddToCartButton from '@/components/add-to-cart-button';
 import Link from "next/link";
+import Image from "next/image";
 import { ImageWithSkeleton } from "@/components/ui/image-with-skeleton";
 import { Heart, ArrowLeft, Check,  Plus, Minus } from "lucide-react";
 import { cn } from '@/lib/utils';
@@ -286,16 +287,15 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-16">
             <div className="relative animate-fade-right">
-              <div className="mb-4 aspect-square bg-muted/50 rounded-2xl overflow-hidden flex items-center justify-center p-8">
+              <div className="relative mb-4 aspect-square bg-muted/50 rounded-2xl overflow-hidden">
                 <ImageWithSkeleton
                   src={product.images[activeImage] || fallbackImage}
                   alt={product.title || "Product image"}
-                  width={400}
-                  height={400}
+                  fill
                   priority
                   sizes="(max-width: 1024px) 100vw, 50vw"
                   quality={85}
-                  className="object-contain transition-all duration-300"
+                  className="object-contain p-8 transition-all duration-300"
                   fallbackSrc={fallbackImage}
                   onError={(e) => {
                     const target = e.target as HTMLImageElement;
@@ -309,7 +309,7 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
                   <button
                     key={i}
                     className={cn(
-                      "aspect-square rounded-xl overflow-hidden transition-all p-2 cursor-pointer bg-white",
+                      "relative aspect-square rounded-xl overflow-hidden transition-all cursor-pointer bg-white",
                       i === activeImage
                         ? "border-2 border-primary"
                         : "border-2 border-transparent hover:border-primary/50"
@@ -319,12 +319,11 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
                     <ImageWithSkeleton
                       src={image || fallbackImage}
                       alt={`${product.title || "Product"} view ${i+1}`}
-                      width={100}
-                      height={100}
+                      fill
                       loading="lazy"
                       sizes="100px"
                       quality={75}
-                      className="object-contain w-full h-full"
+                      className="object-contain p-2"
                       fallbackSrc={fallbackImage}
                       onError={(e) => {
                         const target = e.target as HTMLImageElement;
@@ -346,8 +345,14 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
                       : '...'}
                   </p>
                 ) : (
-                  <div className="text-lg text-destructive font-semibold">
-                    We'll be bringing service to your country soon
+                  <div className="flex items-start gap-3 p-4 rounded-xl bg-amber-50 border border-amber-200/70 mt-1">
+                    <svg className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <div>
+                      <p className="text-sm font-semibold text-amber-800">Not yet available in your region</p>
+                      <p className="text-xs text-amber-700/80 mt-0.5 leading-relaxed">We&apos;re expanding globally. Stay tuned — we&apos;ll notify you when we launch in your country.</p>
+                    </div>
                   </div>
                 )}
               </div>
@@ -476,8 +481,24 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
 
           {relatedProducts.length > 0 && (
             <div className="mt-20">
-              <h2 className="text-2xl mb-8 text-center">You may also like</h2>
-              <ProductSlider 
+              <div className="relative">
+                <Image
+                  src="/flowers/flower-white-head.png"
+                  alt=""
+                  width={99}
+                  height={128}
+                  className="hidden md:block absolute left-[24%] -top-5 w-10 -rotate-12 pointer-events-none"
+                />
+                <Image
+                  src="/flowers/flower-purple-head.png"
+                  alt=""
+                  width={130}
+                  height={125}
+                  className="hidden md:block absolute right-[23%] top-1 w-9 rotate-[15deg] pointer-events-none opacity-90"
+                />
+                <h2 className="text-2xl mb-8 text-center">You may also like</h2>
+              </div>
+              <ProductSlider
                 products={relatedProducts}
                 categoryId={product.category_id}
               />

@@ -1,12 +1,9 @@
 'use client'
-import FurnitureSlider from "@/components/ui/FurnitureSlider";
 
 import { useEffect, useState, useRef } from 'react'
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { ProductSlider } from "@/components/product-slider";
@@ -18,12 +15,16 @@ import { Loading } from "@/components/ui/loading"
 import { supabase } from '@/lib/supabase';
 import { Product } from '@/lib/supabase';
 import { toast } from "sonner";
+import { Leaf, Check } from "lucide-react";
 import { getCategoriesQuery, isAvailableInCountry } from '@/lib/country';
 import { useCountryStore } from "@/lib/countryStore";
 import { convertUSDToLocalCurrency } from '@/lib/utils';
 
 import Categories from "./category";
 import MissionSection from "@/components/mission_gradient";
+import { CinematicIntro } from "@/components/cinematic-intro";
+import { useIntroDone } from "@/lib/intro-state";
+import { cn } from "@/lib/utils";
 // import KiniHeroBanner from "@/components/kini_hero";
 
 export default function Home() {
@@ -41,6 +42,16 @@ export default function Home() {
   const countryCode = useCountryStore(s=>s.countryCode)
   const isSupportedCountry = useCountryStore(s => s.isSupportedCountry)
   const countryLoading = useCountryStore(s=>s.isLoading)
+  const introDone = useIntroDone()
+
+  // staged hero reveal, released the moment the cinematic intro lets go
+  const heroReveal = (delay: number) => ({
+    className: cn(
+      "transition-all duration-700 ease-out",
+      introDone ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"
+    ),
+    style: { transitionDelay: `${delay}ms` },
+  })
 
 
   useEffect(() => {
@@ -60,18 +71,59 @@ export default function Home() {
         }
         
       
-        // Fetch products
+        // Fetch products — parse defensively: an error page or empty body
+        // isn't valid JSON and would throw in Safari ("string did not match
+        // the expected pattern")
         const productsResponse = await fetch(`/api/products?countryCode=${countryCode || ''}`)
-        const productsData = await productsResponse.json()
+        let productsData: unknown = null
+        try {
+          productsData = await productsResponse.json()
+        } catch {
+          console.error('Products API returned a non-JSON response')
+        }
 
         if (productsResponse.ok && Array.isArray(productsData)) {
-          const processedProducts = productsData.map(product => ({
+          const withImages = productsData.map(product => ({
             ...product,
-            images: product.images && Array.isArray(product.images) && product.images.length > 0 
-              ? product.images 
+            images: product.images && Array.isArray(product.images) && product.images.length > 0
+              ? product.images
               : ['/placeholder.png']
-          })).slice(0, 7) // Limit products on the client side after fetching
-          setProducts(processedProducts)
+          }))
+
+          // one variant per product group
+          const seenGroups = new Set<string>()
+          const unique: Product[] = []
+          for (const p of withImages) {
+            const gid = p.group_id || p.id
+            if (!seenGroups.has(gid)) {
+              seenGroups.add(gid)
+              unique.push(p)
+            }
+          }
+
+          // round-robin across categories so the first products the visitor
+          // sees each come from a different collection
+          const byCategory = new Map<string, Product[]>()
+          for (const p of unique) {
+            const key = p.category_id || 'uncategorized'
+            const bucket = byCategory.get(key) || []
+            bucket.push(p)
+            byCategory.set(key, bucket)
+          }
+          const buckets = Array.from(byCategory.values())
+          const picks: Product[] = []
+          for (let round = 0; picks.length < 8; round++) {
+            let added = false
+            for (const bucket of buckets) {
+              if (bucket[round]) {
+                picks.push(bucket[round])
+                added = true
+                if (picks.length >= 8) break
+              }
+            }
+            if (!added) break
+          }
+          setProducts(picks)
         } else {
           console.error('Products API error:', productsData)
           setProducts([])
@@ -94,16 +146,15 @@ export default function Home() {
     
     const convertPrices = async () => {
       const newLocalPrices: Record<string, { amount: number; symbol: string; code: string }> = {};
-      
-      for (const product of products) {
-        if (!countryCode) {
-          newLocalPrices[product.id] = { amount: product.price, symbol: '$', code: 'USD' };
-          continue;
-        }
-        const converted = await convertUSDToLocalCurrency(product.price, countryCode);
-        newLocalPrices[product.id] = converted;
-      }
-      
+
+      await Promise.all(
+        products.map(async (product) => {
+          newLocalPrices[product.id] = countryCode
+            ? await convertUSDToLocalCurrency(product.price, countryCode)
+            : { amount: product.price, symbol: '$', code: 'USD' };
+        })
+      );
+
       setLocalPrices(newLocalPrices);
     };
     
@@ -129,7 +180,10 @@ export default function Home() {
         })
       })
 
-      const data = await response.json()
+      let data: { error?: string } = {}
+      try {
+        data = await response.json()
+      } catch {}
       if (response.ok) {
         setContactSuccess('Message sent successfully!')
         if (nameRef.current) nameRef.current.value = ''
@@ -181,77 +235,66 @@ export default function Home() {
       <SiteHeader />
 
       <main className="flex-1 pt-0">
-      {/* Enhanced Hero Section with Premium Design */}
-{/* Enhanced Hero Section with Premium Design - Fully Responsive */}
-<section className="relative min-h-[600px] xs:min-h-[650px] sm:min-h-[700px] md:min-h-[80vh] lg:min-h-[90vh] flex items-center overflow-hidden bg-gradient-to-br from-secondary via-background to-accent/10">
-  {/* Background Image with Parallax Effect */}
-  <div className="absolute inset-0 z-0">
+      {/* Scroll-scrubbed cinematic opening film */}
+      <CinematicIntro />
+
+      {/* Hero — the workshop the characters just rose out of. The hanging
+          felt characters are the only product imagery; everything behind
+          them is atmosphere. */}
+<section className="relative min-h-[600px] sm:min-h-[700px] md:min-h-[85vh] lg:min-h-[92vh] flex items-center overflow-hidden" style={{ backgroundColor: '#f4eee3' }}>
+  {/* soft plaster-wall light */}
+  <div className="absolute inset-0 z-0" style={{ background: 'linear-gradient(180deg, #f8f3ea 0%, #f4eee3 55%, #efe6d5 100%)' }}></div>
+  <div className="absolute -top-32 -right-24 w-[420px] h-[420px] rounded-full opacity-50 blur-3xl z-0" style={{ background: 'radial-gradient(circle, rgba(255,243,222,0.9), transparent 70%)', contain: 'layout paint' }}></div>
+
+  {/* the workshop table, after the characters left it for the navigation */}
+  <div className="absolute inset-x-0 bottom-0 z-0 h-[38%] sm:h-[42%]">
     <Image
-      src="/hero-bg.webp"
-      alt="Handcrafted felt products in a beautiful home setting"
+      src="/hero-table.webp"
+      alt="The Aaha Felt workshop table with wool, felt textiles and a wicker basket"
       fill
-      className="object-cover opacity-40"
+      className="object-cover"
+      style={{ filter: 'contrast(1.05) sepia(0.12) saturate(1.02) brightness(1.03)' }}
       priority
       fetchPriority="high"
-      quality={75}
+      quality={80}
       sizes="100vw"
     />
-    <div className="absolute inset-0 bg-gradient-to-br from-background/60 via-background/40 to-transparent"></div>
-  </div>
-  
-  {/* Organic shapes for visual interest */}
-  <div className="absolute top-0 right-0 w-[250px] sm:w-[400px] md:w-[500px] lg:w-[600px] h-[250px] sm:h-[400px] md:h-[500px] lg:h-[600px] opacity-20 blur-3xl">
-    <div className="absolute top-0 right-0 w-full h-full rounded-full bg-primary/20"></div>
-  </div>
-  <div className="absolute bottom-0 left-0 w-[200px] sm:w-[350px] md:w-[450px] lg:w-[500px] h-[200px] sm:h-[350px] md:h-[450px] lg:h-[500px] opacity-20 blur-3xl">
-    <div className="absolute bottom-0 left-0 w-full h-full rounded-full bg-accent/30"></div>
+    <div className="absolute inset-0" style={{ background: 'linear-gradient(180deg, #f4eee3 0%, rgba(244,238,227,0.85) 16%, rgba(244,238,227,0) 60%)' }}></div>
   </div>
 
-  <div className="container relative z-10 py-12 xs:py-14 sm:py-16 md:py-20 lg:py-24 px-4 sm:px-6">
-    <div className="grid lg:grid-cols-2 gap-8 sm:gap-10 md:gap-12 lg:gap-16 items-center">
-      {/* Left: Content */}
-      <div className="space-y-4 xs:space-y-5 sm:space-y-6 lg:space-y-8 max-w-2xl mx-auto lg:mx-0">
-        {/* Badge */}
-        <div className="group inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-white/80 backdrop-blur-sm border border-primary/10 shadow-soft animate-on-scroll fade-up hover:shadow-md hover:border-primary/30 transition-all duration-300 cursor-default">
-          <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-primary animate-pulse"></div>
-          <span className="text-[10px] xs:text-xs sm:text-sm font-medium text-foreground flex items-center gap-1 sm:gap-1.5">
-            <span className="inline-block animate-fade-in-tag" style={{ animationDelay: '0ms' }}>Sustainable</span>
-            <span className="text-primary/40">•</span>
-            <span className="inline-block animate-fade-in-tag" style={{ animationDelay: '150ms' }}>Handcrafted</span>
-            <span className="text-primary/40">•</span>
-            <span className="inline-block animate-fade-in-tag" style={{ animationDelay: '300ms' }}>Unique</span>
-          </span>
-        </div>
-
-        {/* Headline */}
-        <h1 className="animate-on-scroll fade-up font-playfair leading-[1.1] text-3xl xs:text-4xl sm:text-5xl md:text-6xl lg:text-7xl" style={{ transitionDelay: '100ms' }}>
+  <div className="container relative z-10 py-12 sm:py-16 md:py-20 lg:py-24 px-4 sm:px-6">
+    <div className="space-y-5 sm:space-y-6 lg:space-y-8 max-w-2xl mx-auto lg:mx-0">
+      <h1 {...heroReveal(140)}>
+        <span className="block font-playfair leading-[1.08] text-4xl sm:text-5xl md:text-6xl lg:text-7xl tracking-tight">
           Transform Your Space<br />
-          <span className="text-primary">with Artisan Felt</span>
-        </h1>
+          <span className="text-primary font-normal italic">with Artisan Felt</span>
+        </span>
+      </h1>
 
-        {/* Subheadline */}
-        <p className="text-base xs:text-lg sm:text-xl md:text-2xl text-foreground/70 leading-relaxed animate-on-scroll fade-up max-w-xl" style={{ transitionDelay: '200ms' }}>
+      <p {...heroReveal(300)}>
+        <span className="block text-base sm:text-lg md:text-xl text-foreground/70 leading-relaxed max-w-xl">
           Discover eco-friendly home décor crafted with love by skilled artisans using traditional wool felting techniques.
-        </p>
+        </span>
+      </p>
 
-        {/* CTA Buttons */}
-        <div className="flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4 animate-on-scroll fade-up" style={{ transitionDelay: '300ms' }}>
-          <Button 
-            size="lg" 
-            className="rounded-full px-6 sm:px-8 h-12 sm:h-14 text-sm sm:text-base shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 w-full sm:w-auto" 
+      <div {...heroReveal(440)}>
+        <div className="flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4">
+          <Button
+            size="lg"
+            className="group/btn rounded-full px-6 sm:px-8 h-12 sm:h-14 text-sm sm:text-base shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 w-full sm:w-auto"
             asChild
           >
             <Link href="/shop">
               Explore Collection
-              <svg className="w-4 h-4 sm:w-5 sm:h-5 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className="w-4 h-4 sm:w-5 sm:h-5 ml-2 transition-transform duration-300 group-hover/btn:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
               </svg>
             </Link>
           </Button>
-          <Button 
-            size="lg" 
-            variant="outline" 
-            className="rounded-full px-6 sm:px-8 h-12 sm:h-14 text-sm sm:text-base border-2 hover:bg-primary/5 transition-all duration-300 w-full sm:w-auto" 
+          <Button
+            size="lg"
+            variant="outline"
+            className="rounded-full px-6 sm:px-8 h-12 sm:h-14 text-sm sm:text-base border-2 border-foreground/20 hover:border-primary hover:bg-primary/5 transition-all duration-300 w-full sm:w-auto"
             asChild
           >
             <Link href="/company">
@@ -260,32 +303,11 @@ export default function Home() {
           </Button>
         </div>
       </div>
-
-      {/* Right: Featured Product Image - Hidden on mobile, visible on lg+ */}
-      <div className="hidden lg:block relative animate-on-scroll fade-left" style={{ transitionDelay: '300ms' }}>
-        <div className="relative aspect-square rounded-3xl overflow-hidden shadow-soft-lg">
-          <Image
-            src="/hero-bg.webp"
-            alt="Featured felt products"
-            fill
-            className="object-cover"
-            priority
-            sizes="(max-width: 1024px) 0vw, 50vw"
-          />
-          {/* Floating badge */}
-          <div className="absolute top-6 right-6 px-4 py-2 rounded-full bg-white shadow-lg backdrop-blur-sm">
-            <span className="text-sm font-medium">✨ New Arrivals</span>
-          </div>
-        </div>
-        {/* Decorative element */}
-        <div className="absolute -bottom-6 -right-6 w-32 h-32 rounded-full bg-primary/10 blur-2xl"></div>
-      </div>
     </div>
   </div>
 
-  {/* Scroll indicator */}
-  <div className="absolute bottom-4 sm:bottom-6 md:bottom-8 left-1/2 -translate-x-1/2 animate-bounce">
-    <svg className="w-5 h-5 sm:w-6 sm:h-6 text-foreground/40" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+  <div className="absolute bottom-4 sm:bottom-6 md:bottom-8 left-1/2 -translate-x-1/2 opacity-40 hover:opacity-60 transition-opacity duration-500">
+    <svg className="w-5 h-5 sm:w-6 sm:h-6 text-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
     </svg>
   </div>
@@ -294,71 +316,117 @@ export default function Home() {
 <MissionSection></MissionSection>
 
         {/* Categories Section */}
-        <section className="py-12 sm:py-16 bg-muted/50">
+        <section className="py-14 sm:py-20 bg-muted/50 overflow-hidden">
           <div className="container px-4 sm:px-6">
-            <div className="text-center mb-8 sm:mb-12">
-              <h2 className="text-2xl sm:text-3xl font-medium mb-4 animate-fade-up">Explore Our Collections</h2>
-              <p className="text-muted-foreground animate-fade-up animate-delay-100 text-sm sm:text-base">
-                Browse our carefully curated categories of handcrafted felt products
-              </p>
-            </div>
-            <div>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 max-w-2xl md:max-w-6xl mx-auto">
-                {categories.slice(0, 4).map((category, index) => (
-                  <Link 
-                    href={`/shop?category=${category.id}`} 
-                    key={category.id}
-                    className="group relative aspect-[1/1.2] rounded-lg overflow-hidden animate-fade-up w-full"
-                    style={{ animationDelay: `${index * 100}ms` }}
-                  >
-                    <div 
-                      className="absolute inset-0"
-                      style={{
-                        background: `url(${category.image}) center center / cover no-repeat`,
-                      }}
-                    />
-                    {/* Scaled layer for hover effect */}
-                    <div 
-                      className="absolute inset-[-10px] transition-transform duration-500 group-hover:scale-110"
-                      style={{
-                        background: `url(${category.image}) center center / cover no-repeat`,
-                      }}
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/0 to-black/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10">
-                      <div className="absolute bottom-0 left-0 right-0 p-2 sm:p-4">
-                        <h3 className="text-sm sm:text-base font-medium text-white mb-1 transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
-                          {category.name}
-                        </h3>
-                        <p className="text-white/80 text-xs transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300 delay-75 line-clamp-2">
-                          {category.description}
-                        </p>
-                      </div>
-                    </div>
-                  </Link>
-                ))}
+            <div className="flex flex-wrap items-end justify-between gap-x-8 gap-y-5 mb-10 sm:mb-14">
+              <div className="max-w-lg">
+                <p className="text-[11px] uppercase tracking-[0.3em] text-primary font-medium mb-3 animate-fade-up">
+                  Four small worlds of wool
+                </p>
+                <div className="relative inline-block">
+                  {/* red heart-petal flower standing at the end of the title,
+                      as if growing beside the last word */}
+                  <Image
+                    src="/flowers/flower-red-stem.png"
+                    alt=""
+                    width={320}
+                    height={372}
+                    className="absolute -bottom-1 -right-10 md:-right-[4.5rem] w-12 md:w-[4.25rem] h-auto rotate-[7deg] -z-10 pointer-events-none animate-float"
+                    style={{ animationDuration: "10s" }}
+                  />
+                  <h2 className="relative font-playfair text-3xl sm:text-4xl md:text-5xl font-light tracking-tight animate-fade-up">
+                    Explore Our Collections
+                  </h2>
+                </div>
+                <p className="mt-3 text-sm sm:text-base text-muted-foreground animate-fade-up animate-delay-100">
+                  Every collection begins on the same workshop table — pick the one your home is missing.
+                </p>
               </div>
+              <Link
+                href="/shop"
+                className="group inline-flex items-center gap-2 text-sm font-medium text-primary transition-all hover:gap-3"
+              >
+                Browse everything
+                <svg className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                </svg>
+              </Link>
+            </div>
+
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 max-w-2xl md:max-w-6xl mx-auto">
+              {categories.slice(0, 4).map((category, index) => (
+                <Link
+                  href={`/shop?category=${category.id}`}
+                  key={category.id}
+                  className="group relative aspect-[1/1.25] rounded-2xl overflow-hidden w-full ring-1 ring-foreground/5 shadow-soft transition-shadow duration-500 hover:shadow-soft-lg animate-fade-up"
+                  style={{ animationDelay: `${index * 100}ms` }}
+                >
+                  <Image
+                    src={category.image}
+                    alt={category.name || 'Category'}
+                    fill
+                    className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+                    sizes="(max-width: 768px) 50vw, 25vw"
+                    loading="lazy"
+                    quality={75}
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent z-10">
+                    <div className="absolute bottom-0 left-0 right-0 p-3.5 sm:p-5">
+                      <h3 className="font-playfair text-base sm:text-xl text-white mb-0.5">
+                        {category.name}
+                      </h3>
+                      <p className="text-white/75 text-xs line-clamp-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 hidden sm:block">
+                        {category.description}
+                      </p>
+                      <span className="mt-2 inline-flex items-center gap-1.5 text-[10px] sm:text-[11px] uppercase tracking-[0.18em] text-white/90 opacity-70 sm:opacity-0 sm:-translate-x-1 sm:group-hover:opacity-100 sm:group-hover:translate-x-0 transition-all duration-300">
+                        Shop the collection
+                        <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                        </svg>
+                      </span>
+                    </div>
+                  </div>
+                </Link>
+              ))}
             </div>
           </div>
         </section>
 
         {/* Popular Products Section */}
-        <section className="py-10">
+        <section className="py-14 md:py-20 overflow-hidden">
           <div className="container">
-            <div className="relative">
-              <h3 className="text-3xl mb-6 text-center animate-on-scroll fade-up">Start shaping your spaces</h3>
-              <div className="absolute left-1/2 -translate-x-1/2 bottom-0 w-24 h-1 bg-gradient-to-r from-transparent via-[#8B7355] to-transparent"></div>
-            </div>
-                
-            <div className="animate-on-scroll fade-up" style={{ transitionDelay: '100ms' }}>
-              <ProductSlider products={products} />
+            <div className="flex flex-wrap items-end justify-between gap-x-8 gap-y-5 mb-8 md:mb-10">
+              <div className="max-w-lg animate-on-scroll fade-up">
+                <p className="text-[11px] uppercase tracking-[0.3em] text-primary font-medium mb-3">
+                  One piece from every collection
+                </p>
+                <div className="relative inline-block">
+                  {/* pink felt bloom over the title's corner — its needle and
+                      thread trail down behind the words like a stitch in
+                      progress */}
+                  <Image
+                    src="/flowers/flower-pink-needle.png"
+                    alt=""
+                    width={320}
+                    height={385}
+                    className="absolute -top-5 -right-10 md:-top-8 md:-right-[4.25rem] w-14 md:w-20 h-auto rotate-[10deg] -z-10 pointer-events-none animate-float"
+                    style={{ animationDuration: "11s" }}
+                  />
+                  <h2 className="relative font-playfair text-3xl sm:text-4xl md:text-5xl font-light tracking-tight">
+                    Start shaping your space
+                  </h2>
+                </div>
+                <p className="mt-3 text-sm sm:text-base text-muted-foreground">
+                  A first look across the whole workshop — each of these comes from a different collection.
+                </p>
+              </div>
+              <Button variant="outline" className="rounded-full border-foreground/20 hover:border-primary hover:bg-primary/5" asChild>
+                <Link href="/shop">All products</Link>
+              </Button>
             </div>
 
-            <div className="flex justify-center mt-10 animate-on-scroll fade-up" style={{ transitionDelay: '200ms' }}>
-              <Button className="rounded-full" asChild>
-                <Link href="/shop">
-                  All Products
-                </Link>
-              </Button>
+            <div className="animate-on-scroll fade-up" style={{ transitionDelay: '100ms' }}>
+              <ProductSlider products={products} />
             </div>
           </div>
         </section>
@@ -387,11 +455,6 @@ export default function Home() {
 
               {/* Content Side */}
               <div className="space-y-6 animate-on-scroll fade-left">
-                <div className="group inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-primary/10 via-primary/5 to-primary/10 text-primary text-sm font-medium border border-primary/20 hover:border-primary/40 transition-all duration-300 cursor-default animate-shimmer bg-[length:200%_100%]">
-                  <span className="animate-bounce-subtle">✨</span>
-                  <span className="font-semibold tracking-wide">Our Story</span>
-                </div>
-                
                 <h2 className="font-playfair">
                   Crafted with Love,<br />
                   <span className="text-primary">Inspired by Tradition</span>
@@ -444,9 +507,9 @@ export default function Home() {
         <section className="py-10 md:py-12 lg:py-14">
           <div className="container">
             <div className="text-center max-w-3xl mx-auto mb-12 space-y-4 animate-on-scroll fade-up">
-              <div className="group inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-green-100/80 via-accent/40 to-green-100/80 text-foreground text-sm font-medium border border-green-200/50 hover:border-green-300 transition-all duration-300 cursor-default animate-shimmer bg-[length:200%_100%]">
-                <span className="animate-leaf-sway">🌱</span>
-                <span className="font-semibold tracking-wide text-green-800">Sustainability</span>
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-accent/30 text-foreground text-sm font-medium border border-accent/40 cursor-default">
+                <Leaf className="w-4 h-4 text-green-700" />
+                <span className="font-semibold tracking-wide uppercase text-xs text-green-800">Sustainability</span>
               </div>
               <h2 className="font-playfair">
                 Beautiful Products,<br />
@@ -457,11 +520,10 @@ export default function Home() {
               </p>
             </div>
 
-            <div className="grid md:grid-cols-3 gap-8">
-              {/* Eco-Friendly Materials */}
-              <div className="group p-8 rounded-2xl bg-white border border-border hover:border-primary/30 transition-all duration-500 hover:shadow-soft-lg animate-on-scroll fade-up">
-                <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-500">
-                  <svg className="w-8 h-8 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <div className="grid md:grid-cols-3 gap-6 md:gap-8">
+              <div className="group p-6 md:p-8 rounded-2xl bg-card border-l-4 border-l-rose-soft border border-border hover:shadow-soft-lg transition-all duration-500 animate-on-scroll fade-up">
+                <div className="w-14 h-14 rounded-2xl bg-rose-soft flex items-center justify-center mb-6 group-hover:scale-105 transition-transform duration-500">
+                  <svg className="w-7 h-7 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
                   </svg>
                 </div>
@@ -471,10 +533,9 @@ export default function Home() {
                 </p>
               </div>
 
-              {/* Zero Waste */}
-              <div className="group p-8 rounded-2xl bg-white border border-border hover:border-primary/30 transition-all duration-500 hover:shadow-soft-lg animate-on-scroll fade-up" style={{ transitionDelay: '100ms' }}>
-                <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-500">
-                  <svg className="w-8 h-8 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <div className="group p-6 md:p-8 rounded-2xl bg-card border-l-4 border-l-sage-soft border border-border hover:shadow-soft-lg transition-all duration-500 animate-on-scroll fade-up" style={{ transitionDelay: '100ms' }}>
+                <div className="w-14 h-14 rounded-2xl bg-sage-soft flex items-center justify-center mb-6 group-hover:scale-105 transition-transform duration-500">
+                  <svg className="w-7 h-7 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                   </svg>
                 </div>
@@ -484,10 +545,9 @@ export default function Home() {
                 </p>
               </div>
 
-              {/* Fair Trade */}
-              <div className="group p-8 rounded-2xl bg-white border border-border hover:border-primary/30 transition-all duration-500 hover:shadow-soft-lg animate-on-scroll fade-up" style={{ transitionDelay: '200ms' }}>
-                <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-500">
-                  <svg className="w-8 h-8 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <div className="group p-6 md:p-8 rounded-2xl bg-card border-l-4 border-l-clay-warm border border-border hover:shadow-soft-lg transition-all duration-500 animate-on-scroll fade-up" style={{ transitionDelay: '200ms' }}>
+                <div className="w-14 h-14 rounded-2xl bg-clay-warm flex items-center justify-center mb-6 group-hover:scale-105 transition-transform duration-500">
+                  <svg className="w-7 h-7 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                   </svg>
                 </div>
@@ -515,11 +575,11 @@ export default function Home() {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              <div className="group p-10 rounded-3xl bg-white shadow-soft hover:shadow-soft-lg transition-all duration-500 animate-on-scroll fade-right">
+              <div className="group p-8 md:p-10 rounded-3xl bg-card border-t-4 border-t-rose-soft shadow-soft hover:shadow-soft-lg transition-all duration-500 animate-on-scroll fade-right">
                 <div className="flex flex-col h-full">
                   <div className="mb-6">
-                    <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-500">
-                      <svg className="w-8 h-8 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <div className="w-14 h-14 rounded-2xl bg-rose-soft flex items-center justify-center mb-6 group-hover:scale-105 transition-transform duration-500">
+                      <svg className="w-7 h-7 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                       </svg>
                     </div>
@@ -532,16 +592,16 @@ export default function Home() {
 
                   <div className="mt-auto">
                     <ul className="space-y-3">
-                      <li className="flex items-start">
-                        <span className="text-primary mr-3 mt-1">✓</span>
+                      <li className="flex items-start gap-3">
+                        <Check className="w-4 h-4 text-primary shrink-0 mt-0.5" />
                         <span className="text-foreground/80">Individual artisan attention to every detail</span>
                       </li>
-                      <li className="flex items-start">
-                        <span className="text-primary mr-3 mt-1">✓</span>
+                      <li className="flex items-start gap-3">
+                        <Check className="w-4 h-4 text-primary shrink-0 mt-0.5" />
                         <span className="text-foreground/80">Time-honored traditional techniques</span>
                       </li>
-                      <li className="flex items-start">
-                        <span className="text-primary mr-3 mt-1">✓</span>
+                      <li className="flex items-start gap-3">
+                        <Check className="w-4 h-4 text-primary shrink-0 mt-0.5" />
                         <span className="text-foreground/80">Unique character in every single piece</span>
                       </li>
                     </ul>
@@ -549,11 +609,11 @@ export default function Home() {
                 </div>
               </div>
 
-              <div className="group p-10 rounded-3xl bg-white shadow-soft hover:shadow-soft-lg transition-all duration-500 animate-on-scroll fade-left" style={{ transitionDelay: '100ms' }}>
+              <div className="group p-8 md:p-10 rounded-3xl bg-card border-t-4 border-t-sage-soft shadow-soft hover:shadow-soft-lg transition-all duration-500 animate-on-scroll fade-left" style={{ transitionDelay: '100ms' }}>
                 <div className="flex flex-col h-full">
                   <div className="mb-6">
-                    <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-500">
-                      <svg className="w-8 h-8 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <div className="w-14 h-14 rounded-2xl bg-sage-soft flex items-center justify-center mb-6 group-hover:scale-105 transition-transform duration-500">
+                      <svg className="w-7 h-7 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                       </svg>
                     </div>
@@ -566,16 +626,16 @@ export default function Home() {
 
                   <div className="mt-auto">
                     <ul className="space-y-3">
-                      <li className="flex items-start">
-                        <span className="text-primary mr-3 mt-1">✓</span>
+                      <li className="flex items-start gap-3">
+                        <Check className="w-4 h-4 text-primary shrink-0 mt-0.5" />
                         <span className="text-foreground/80">100% natural, premium quality wool</span>
                       </li>
-                      <li className="flex items-start">
-                        <span className="text-primary mr-3 mt-1">✓</span>
+                      <li className="flex items-start gap-3">
+                        <Check className="w-4 h-4 text-primary shrink-0 mt-0.5" />
                         <span className="text-foreground/80">Non-toxic, eco-friendly dyes</span>
                       </li>
-                      <li className="flex items-start">
-                        <span className="text-primary mr-3 mt-1">✓</span>
+                      <li className="flex items-start gap-3">
+                        <Check className="w-4 h-4 text-primary shrink-0 mt-0.5" />
                         <span className="text-foreground/80">Ethically sourced from trusted farms</span>
                       </li>
                     </ul>
@@ -590,9 +650,6 @@ export default function Home() {
         <section className="section-spacing">
           <div className="container">
             <div className="text-center max-w-3xl mx-auto mb-16 animate-on-scroll fade-up">
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-4">
-                <span>⭐ Customer Reviews</span>
-              </div>
               <h2 className="font-playfair mb-4">Loved by Our Customers</h2>
               <p className="text-lg text-foreground/70">
                 Don't just take our word for it—hear what our community has to say
@@ -622,10 +679,10 @@ export default function Home() {
               ].map((testimonial, index) => (
                 <div 
                   key={index}
-                  className="group p-8 bg-white rounded-2xl border border-border hover:border-primary/30 shadow-soft hover:shadow-soft-lg transition-all duration-500 animate-on-scroll fade-up" 
+                  className="group relative p-8 bg-card rounded-2xl border border-border hover:border-primary/20 shadow-soft hover:shadow-soft-lg transition-all duration-500 animate-on-scroll fade-up overflow-hidden" 
                   style={{ transitionDelay: `${index * 100}ms` }}
                 >
-                  {/* Star Rating */}
+                  <span className="absolute top-4 right-6 font-playfair text-6xl text-primary/8 leading-none select-none" aria-hidden="true">&ldquo;</span>
                   <div className="flex gap-1 mb-4">
                     {[...Array(testimonial.rating)].map((_, i) => (
                       <svg key={i} className="w-5 h-5 text-primary" fill="currentColor" viewBox="0 0 20 20">
@@ -695,59 +752,57 @@ export default function Home() {
         </section>
         
         {/* Contact Section */}
-        <section className="mt-8 py-20 bg-[rgb(240,236,226)] rounded-3xl mx-4 sm:mx-8 lg:mx-12 mb-16 overflow-hidden">
+        <section className="mt-8 py-16 md:py-20 bg-secondary rounded-3xl mx-4 sm:mx-8 lg:mx-12 mb-16 overflow-hidden">
           <div className="container relative">
             <div className="max-w-4xl mx-auto">
               <div className="text-center mb-12">
                 <h2 className="text-3xl mb-4 animate-on-scroll fade-up">
-                  <span className="font-bold text-black">We believe</span> 
-                  <span className="text-[rgb(180,170,160)]"> in meaningful conversations</span>
+                  <span className="font-bold text-foreground">We believe</span> 
+                  <span className="text-muted-foreground"> in meaningful conversations</span>
                 </h2>
-                <p className="text-[rgb(180,170,160)] max-w-2xl mx-auto animate-on-scroll fade-up" style={{ transitionDelay: '100ms' }}>
-                  To help you out, we provide personalized assistance for all your felt crafting needs. Whether you have questions about our products or need custom solutions, we're here to help.
+                <p className="text-muted-foreground max-w-2xl mx-auto animate-on-scroll fade-up" style={{ transitionDelay: '100ms' }}>
+                  To help you out, we provide personalized assistance for all your felt crafting needs. Whether you have questions about our products or need custom solutions, we&apos;re here to help.
                 </p>
               </div>
 
               <form onSubmit={handleContactSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                {/* Left Side */}
                 <div className="space-y-6 animate-on-scroll fade-right">
                   <div className="space-y-2">
-                    <label htmlFor="name" className="block text-sm font-medium text-gray-700">
+                    <label htmlFor="name" className="block text-sm font-medium text-foreground/80">
                       Your Name
                     </label>
-                    <Input id="name" ref={nameRef} placeholder="Enter your name" className="rounded-lg shadow-sm border-gray-300" />
+                    <Input id="name" ref={nameRef} placeholder="Enter your name" className="rounded-lg shadow-sm border-border bg-card" />
                   </div>
 
                   <div className="space-y-2">
-                    <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+                    <label htmlFor="email" className="block text-sm font-medium text-foreground/80">
                       Email Address
                     </label>
-                    <Input id="email" ref={emailRef} type="email" placeholder="you@example.com" className="rounded-lg shadow-sm border-gray-300" />
+                    <Input id="email" ref={emailRef} type="email" placeholder="you@example.com" className="rounded-lg shadow-sm border-border bg-card" />
                   </div>
 
                   <div className="space-y-2">
-                    <label htmlFor="subject" className="block text-sm font-medium text-gray-700">
+                    <label htmlFor="subject" className="block text-sm font-medium text-foreground/80">
                       Subject
                     </label>
-                    <Input id="subject" ref={subjectRef} placeholder="How can we help you?" className="rounded-lg shadow-sm border-gray-300" />
+                    <Input id="subject" ref={subjectRef} placeholder="How can we help you?" className="rounded-lg shadow-sm border-border bg-card" />
                   </div>
                 </div>
 
-                {/* Right Side */}
                 <div className="space-y-6 animate-on-scroll fade-left">
                   <div className="space-y-2">
-                    <label htmlFor="message" className="block text-sm font-medium text-gray-700">
+                    <label htmlFor="message" className="block text-sm font-medium text-foreground/80">
                       Message
                     </label>
                     <Textarea
                       id="message"
                       ref={messageRef}
                       placeholder="Tell us about your inquiry..."
-                      className="rounded-lg shadow-sm min-h-[160px] border-gray-300"
+                      className="rounded-lg shadow-sm min-h-[160px] border-border bg-card"
                     />
                   </div>
                   <Button 
-                    className="rounded-full border border-black text-black bg-transparent hover:bg-gray-100 transition" 
+                    className="rounded-full" 
                     size="lg" 
                     type="submit"
                     disabled={contactLoading}
@@ -758,124 +813,6 @@ export default function Home() {
                   {contactError && <p className="text-red-600 mt-2">{contactError}</p>}
                 </div>
               </form>
-            </div>
-          </div>
-        </section>
-
-        {/* Features Section */}
-        <section className="py-20 relative overflow-hidden">
-          {/* Soft Abstract Green Wave Background with Flowing SVG Waves */}
-          <div className="absolute inset-0 -z-10">
-            {/* Base off-white background */}
-            <div className="absolute inset-0 bg-[#faf9f7]"></div>
-            
-            {/* SVG Wave Layer 1 - Sage Green (back) */}
-            <svg 
-              className="absolute w-[200%] h-full -left-1/4 top-0 opacity-25"
-              viewBox="0 0 1440 400" 
-              preserveAspectRatio="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path 
-                fill="#9CAF88" 
-                d="M0,160 C120,200 240,120 360,140 C480,160 600,220 720,200 C840,180 960,100 1080,120 C1200,140 1320,200 1440,180 L1440,280 C1320,260 1200,320 1080,300 C960,280 840,220 720,240 C600,260 480,320 360,300 C240,280 120,220 0,240 Z"
-              />
-            </svg>
-            
-            {/* SVG Wave Layer 2 - Eucalyptus */}
-            <svg 
-              className="absolute w-[180%] h-full -left-1/3 top-0 opacity-30"
-              viewBox="0 0 1440 400" 
-              preserveAspectRatio="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path 
-                fill="#84A98C" 
-                d="M0,180 C180,140 300,220 480,200 C660,180 780,100 960,130 C1140,160 1260,240 1440,200 L1440,260 C1260,300 1140,220 960,250 C780,280 660,360 480,330 C300,300 180,220 0,260 Z"
-              />
-            </svg>
-            
-            {/* SVG Wave Layer 3 - Moss Green */}
-            <svg 
-              className="absolute w-[220%] h-full -left-1/2 top-0 opacity-20"
-              viewBox="0 0 1440 400" 
-              preserveAspectRatio="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path 
-                fill="#8FBC8F" 
-                d="M0,200 C160,160 280,240 440,220 C600,200 720,120 880,150 C1040,180 1200,260 1360,230 C1400,222 1420,215 1440,210 L1440,250 C1420,255 1400,262 1360,270 C1200,300 1040,220 880,250 C720,280 600,360 440,330 C280,300 160,220 0,260 Z"
-              />
-            </svg>
-            
-            {/* SVG Wave Layer 4 - Mint (foreground) */}
-            <svg 
-              className="absolute w-[160%] h-full -left-1/4 top-0 opacity-35"
-              viewBox="0 0 1440 400" 
-              preserveAspectRatio="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path 
-                fill="#A8D5BA" 
-                d="M0,190 C100,220 200,160 350,175 C500,190 620,250 780,230 C940,210 1060,140 1200,160 C1340,180 1400,220 1440,210 L1440,240 C1400,250 1340,290 1200,270 C1060,250 940,180 780,200 C620,220 500,280 350,265 C200,250 100,190 0,220 Z"
-              />
-            </svg>
-            
-            {/* SVG Wave Layer 5 - Light Olive accent */}
-            <svg 
-              className="absolute w-[190%] h-full -left-1/3 top-0 opacity-15"
-              viewBox="0 0 1440 400" 
-              preserveAspectRatio="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path 
-                fill="#B4C4A4" 
-                d="M0,195 C140,170 260,230 420,210 C580,190 700,130 860,155 C1020,180 1160,250 1320,225 C1380,215 1420,205 1440,200 L1440,245 C1420,250 1380,260 1320,270 C1160,295 1020,225 860,250 C700,275 580,335 420,310 C260,285 140,225 0,250 Z"
-              />
-            </svg>
-            
-            {/* Top fade overlay */}
-            <div className="absolute top-0 left-0 right-0 h-24 bg-gradient-to-b from-[#faf9f7] to-transparent"></div>
-            
-            {/* Bottom fade overlay */}
-            <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-[#faf9f7] to-transparent"></div>
-          </div>
-          
-          <div className="container relative z-10">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              <div className="text-center animate-fade-up">
-                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-[#4A90E2]/20 flex items-center justify-center backdrop-blur-sm">
-                  <svg className="w-8 h-8 text-[#4A90E2]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                  </svg>
-                </div>
-                <h3 className="text-xl font-semibold mb-4">Handcrafted</h3>
-                <p className="text-muted-foreground">
-                  Each item is carefully made by skilled artisans using traditional techniques
-                </p>
-              </div>
-              <div className="text-center animate-fade-up animate-delay-100">
-                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-[#50C878]/20 flex items-center justify-center backdrop-blur-sm">
-                  <svg className="w-8 h-8 text-[#50C878]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </div>
-                <h3 className="text-xl font-semibold mb-4">Sustainable</h3>
-                <p className="text-muted-foreground">
-                  We use eco-friendly materials and sustainable production methods
-                </p>
-              </div>
-              <div className="text-center animate-fade-up animate-delay-200">
-                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-[#FF9F43]/20 flex items-center justify-center backdrop-blur-sm">
-                  <svg className="w-8 h-8 text-[#FF9F43]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 4a2 2 0 114 0v1a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-1a2 2 0 100 4h1a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1v-1a2 2 0 10-4 0v1a1 1 0 01-1 1H7a1 1 0 01-1-1v-3a1 1 0 00-1-1H4a2 2 0 110-4h1a1 1 0 001-1V7a1 1 0 011-1h3a1 1 0 001-1V4z" />
-                  </svg>
-                </div>
-                <h3 className="text-xl font-semibold mb-4">Unique</h3>
-                <p className="text-muted-foreground">
-                  Every piece is one-of-a-kind, made with attention to detail
-                </p>
-              </div>
             </div>
           </div>
         </section>

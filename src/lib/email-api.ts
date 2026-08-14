@@ -24,6 +24,8 @@ export interface ContactData {
   name: string;
   email: string;
   message: string;
+  subject?: string;
+  source?: string;
 }
 
 function isConfigured(): boolean {

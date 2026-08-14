@@ -4,11 +4,12 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetClose, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Menu, User, ShoppingCart } from "lucide-react";
-import CartDropdown from "@/components/cart-dropdown";
 import { SearchModal } from "@/components/search-modal";
-import { cn } from "@/lib/utils";
+import { HangingFelt } from "@/components/hanging-felt";
+import { getIntro, subscribeIntro } from "@/lib/intro-state";
+import { cn, getInitials } from "@/lib/utils";
 import Image from 'next/image';
 import { supabase } from "@/lib/supabase";
 
@@ -22,6 +23,9 @@ const mainNavItems = [
 export function SiteHeader() {
   const pathname = usePathname();
   const isHomePage = pathname === "/";
+  // the hanging characters live on the home hero and (as a small garland)
+  // on the shop page — nowhere else
+  const showHangingFelt = isHomePage || pathname === "/shop";
   const [isScrolled, setIsScrolled] = useState(false);
   const [isAnimated, setIsAnimated] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -33,30 +37,48 @@ export function SiteHeader() {
   useEffect(() => {
     setIsAnimated(true);
 
-    const checkUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+    const loadUser = async (user: { id: string; email?: string; user_metadata?: any } | null) => {
       setIsLoggedIn(!!user);
-      
-      if (user?.user_metadata?.full_name) {
-        const names = user.user_metadata.full_name.split(' ');
-        const initials = names
-          .map((name: string) => name[0])
-          .join('')
-          .toUpperCase();
-        setUserInitials(initials);
+      if (!user) {
+        setUserInitials("");
+        return;
       }
+
+      // the profiles table is the source of truth for the display name —
+      // auth metadata can lag behind profile edits
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("full_name")
+        .eq("id", user.id)
+        .single();
+
+      setUserInitials(
+        getInitials(profile?.full_name || user.user_metadata?.full_name, user.email)
+      );
     };
 
-    checkUser();
+    supabase.auth.getUser().then(({ data: { user } }) => loadUser(user));
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      loadUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
   useEffect(() => {
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
       
-      setIsScrolled(currentScrollY > 20);
-      
-      if (currentScrollY < 50) {
+      const intro = getIntro();
+      const effY = intro.enabled ? currentScrollY - intro.zoneBottom : currentScrollY;
+      setIsScrolled(effY > 20);
+
+      // during the cinematic intro the nav stays out of frame; it slides in
+      // as the film fades and stays present through the hero that follows
+      if (intro.enabled && currentScrollY < intro.zoneBottom + window.innerHeight * 0.9) {
+        setIsVisible(intro.done);
+      } else if (currentScrollY < 50) {
         setIsVisible(true);
       } else if (currentScrollY > lastScrollY && currentScrollY > 100) {
         setIsVisible(false);
@@ -85,6 +107,25 @@ export function SiteHeader() {
     };
   }, [lastScrollY]); 
 
+  // react to intro state changes that happen without a scroll event
+  // (initial mount, and the moment the film completes)
+  useEffect(() => {
+    const sync = () => {
+      const intro = getIntro();
+      if (intro.enabled && window.scrollY < intro.zoneBottom + window.innerHeight * 0.9) {
+        setIsVisible(intro.done);
+        setIsScrolled(window.scrollY - intro.zoneBottom > 20);
+      } else if (!intro.enabled && window.scrollY < 100) {
+        // intro skipped, errored or just finished while we're at the top:
+        // make sure the nav (and the dolls hanging from it) comes back
+        setIsVisible(true);
+        setIsScrolled(window.scrollY > 20);
+      }
+    };
+    sync();
+    return subscribeIntro(sync);
+  }, []);
+
   const isHomeHeaderExpanded = isHomePage && !isScrolled;
 
   return (
@@ -96,13 +137,17 @@ export function SiteHeader() {
       )}
     >
       <div className="relative mx-auto max-w-7xl">
-        
+
+        {/* Hanging felt characters suspended from the nav rail — full
+            installation on the home hero, small garland on the shop page */}
+        {showHangingFelt && <HangingFelt navHidden={!isVisible} subtle={!isHomePage} />}
+
         {/* Background Layer */}
         <div
           className={cn(
             "absolute inset-0 transition-all duration-500 ease-out border shadow-soft",
             isHomeHeaderExpanded 
-              ? "bg-white/95 backdrop-blur-md rounded-r-2xl sm:rounded-r-3xl rounded-l-none left-[80px] sm:left-[120px] md:left-[180px] lg:left-[260px] border-l-0" 
+              ? "bg-white/95 backdrop-blur-md rounded-r-2xl sm:rounded-r-3xl rounded-l-none left-[90px] sm:left-[130px] md:left-[190px] lg:left-[280px] border-l-0" 
               : "bg-white/95 backdrop-blur-md rounded-full left-0 border-border/20",
             isScrolled && "bg-white/98 border-border/30 shadow-soft-lg"
           )}
@@ -111,7 +156,7 @@ export function SiteHeader() {
         {/* Content Layer */}
         <div className={cn(
           "relative z-10 flex items-center justify-between px-2 sm:px-4 md:px-6 lg:px-8 transition-all duration-300",
-          isScrolled ? "h-9 sm:h-10 md:h-11" : "h-11 sm:h-12 md:h-14 lg:h-16"
+          isScrolled ? "h-10 sm:h-11 md:h-12" : "h-12 sm:h-14 md:h-16 lg:h-18"
         )}>
           <div className="flex items-center">
             <Link
@@ -131,10 +176,10 @@ export function SiteHeader() {
                 className={cn(
                   "w-auto object-contain transition-all duration-300",
                   isHomeHeaderExpanded
-                    ? "h-[40px] xs:h-[50px] sm:h-[65px] md:h-[80px] lg:h-[100px]"
+                    ? "h-[56px] sm:h-[72px] md:h-[90px] lg:h-[120px]"
                     : isScrolled
-                      ? "h-[26px] xs:h-[30px] sm:h-[36px] md:h-[42px]"
-                      : "h-[32px] xs:h-[38px] sm:h-[44px] md:h-[52px] lg:h-[58px]"
+                      ? "h-[32px] sm:h-[38px] md:h-[44px]"
+                      : "h-[40px] sm:h-[48px] md:h-[56px] lg:h-[64px]"
                 )}
               />
             </Link>
@@ -241,7 +286,7 @@ export function SiteHeader() {
                   aria-label="Menu"
                   className={cn(
                     "rounded-full transition-all duration-300 hover:scale-105 w-8 h-8 sm:w-9 sm:h-9",
-                    "text-gray-700 hover:bg-gray-100"
+                    "text-foreground/70 hover:bg-muted"
                   )}
                 >
                   <Menu className="h-4 w-4 sm:h-5 sm:w-5" />
@@ -254,33 +299,45 @@ export function SiteHeader() {
                   "bg-background/95 shadow-2xl"
                 )}
               >
-                <div className="flex flex-col mt-8 space-y-4">
-                  {mainNavItems.map((item, index) => (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      className={cn(
-                        "text-foreground hover:text-primary transition-all duration-300",
-                        "text-lg font-medium py-2 px-4 rounded-lg hover:bg-primary/10",
-                        "transform hover:translate-x-2"
-                      )}
-                      style={{ animationDelay: `${index * 100}ms` }}
+                <div className="flex flex-col mt-8 space-y-1">
+                  <SheetClose asChild>
+                    <button
+                      onClick={() => { setSearchOpen(true); }}
+                      className="text-foreground hover:text-primary transition-all duration-200 text-lg font-medium py-3 px-4 rounded-lg hover:bg-primary/5 text-left flex items-center gap-3"
                     >
-                      {item.name}
-                    </Link>
+                      <svg className="w-5 h-5 text-foreground/50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                      </svg>
+                      Search
+                    </button>
+                  </SheetClose>
+                  {mainNavItems.map((item, index) => (
+                    <SheetClose asChild key={item.href}>
+                      <Link
+                        href={item.href}
+                        className="text-foreground hover:text-primary transition-all duration-200 text-lg font-medium py-3 px-4 rounded-lg hover:bg-primary/5"
+                        style={{ animationDelay: `${index * 100}ms` }}
+                      >
+                        {item.name}
+                      </Link>
+                    </SheetClose>
                   ))}
-                  <Link
-                    href={isLoggedIn ? "/account" : "/signin"}
-                    className="text-foreground hover:text-primary transition-all duration-300 text-lg font-medium py-2 px-4 rounded-lg hover:bg-primary/10 transform hover:translate-x-2"
-                  >
-                    {isLoggedIn ? "Account" : "Sign In"}
-                  </Link>
-                  <Link 
-                    href="/cart" 
-                    className="text-foreground hover:text-primary transition-all duration-300 text-lg font-medium py-2 px-4 rounded-lg hover:bg-primary/10 transform hover:translate-x-2"
-                  >
-                    Cart
-                  </Link>
+                  <SheetClose asChild>
+                    <Link
+                      href={isLoggedIn ? "/account" : "/signin"}
+                      className="text-foreground hover:text-primary transition-all duration-200 text-lg font-medium py-3 px-4 rounded-lg hover:bg-primary/5"
+                    >
+                      {isLoggedIn ? "Account" : "Sign In"}
+                    </Link>
+                  </SheetClose>
+                  <SheetClose asChild>
+                    <Link
+                      href="/cart"
+                      className="text-foreground hover:text-primary transition-all duration-200 text-lg font-medium py-3 px-4 rounded-lg hover:bg-primary/5"
+                    >
+                      Cart
+                    </Link>
+                  </SheetClose>
                 </div>
               </SheetContent>
             </Sheet>

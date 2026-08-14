@@ -18,6 +18,8 @@ export type Product = {
   images: string[]
   size_stock: Record<string, number>
   minimum_quantity?: number
+  group_id?: string
+  country_codes?: string[] | null
 }
 
 export type Category = {

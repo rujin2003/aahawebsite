@@ -4,16 +4,16 @@ import { useEffect, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Product, Category, supabase } from '@/lib/supabase'
 import Link from "next/link";
+import Image from "next/image";
 import { ImageWithSkeleton } from "@/components/ui/image-with-skeleton";
 import { Heart } from 'lucide-react'
 import { Loading } from "@/components/ui/loading"
 
-import { getCategoriesQuery, getProductsQuery } from '@/lib/country';
+import { getCategoriesQuery, getProductsQuery, isAvailableInCountry } from '@/lib/country';
 import { useCountryStore } from '@/lib/countryStore';
 import { convertUSDToLocalCurrency } from '@/lib/utils';
 
@@ -22,6 +22,8 @@ export default function ShopClient() {
   const [categories, setCategories] = useState<Category[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedCategory, setSelectedCategory] = useState('all')
+  const [priceSort, setPriceSort] = useState<'featured' | 'low' | 'high'>('featured')
+  const [shipsToMeOnly, setShipsToMeOnly] = useState(false)
   const [groupedProducts, setGroupedProducts] = useState<{ [key: string]: Product[] }>({})
   const countryCode = useCountryStore(s => s.countryCode);
   const getCountry = useCountryStore(s => s.getCountry);
@@ -91,7 +93,7 @@ export default function ShopClient() {
     fetchData()
   }, [countryCode])
 
-  const filteredGroupedProducts = selectedCategory === 'all'
+  let filteredGroupedProducts = selectedCategory === 'all'
     ? groupedProducts
     : Object.fromEntries(
       Object.entries(groupedProducts).filter(([_, products]) =>
@@ -99,8 +101,25 @@ export default function ShopClient() {
       )
     )
 
-  // Sort groups by total stock (sum of size_stock across all variants) in descending order
+  // optional shipping filter — the catalog itself always shows everything,
+  // this just narrows to pieces that ship to the visitor's country
+  if (shipsToMeOnly && countryCode) {
+    filteredGroupedProducts = Object.fromEntries(
+      Object.entries(filteredGroupedProducts).filter(([_, products]) =>
+        products.some((p) => isAvailableInCountry(p.country_codes ?? null, countryCode))
+      )
+    )
+  }
+
+  // Default: groups with the most total stock first; otherwise sort by price
   const sortedGroupedEntries = Object.entries(filteredGroupedProducts).sort(([, aProducts], [, bProducts]) => {
+    if (priceSort !== 'featured') {
+      const minPrice = (products: Product[]) => Math.min(...products.map((p) => Number(p.price) || 0))
+      return priceSort === 'low'
+        ? minPrice(aProducts) - minPrice(bProducts)
+        : minPrice(bProducts) - minPrice(aProducts)
+    }
+
     const sumStock = (products: Product[]) =>
       products.reduce((groupTotal, product) => {
         const sizeStock = product.size_stock || {}
@@ -137,51 +156,51 @@ export default function ShopClient() {
 
   const totalProducts = Object.keys(filteredGroupedProducts).length;
 
+  // Group counts per category for the selector chips
+  const categoryCounts: Record<string, number> = {};
+  Object.values(groupedProducts).forEach((group) => {
+    const catId = group[0].category_id;
+    if (catId) categoryCounts[catId] = (categoryCounts[catId] || 0) + 1;
+  });
+  const totalGroups = Object.keys(groupedProducts).length;
+
   return (
     <div className="flex min-h-screen flex-col pt-20">
       <SiteHeader />
 
       <main className="flex-1 py-8">
         <div className="container">
-          {/* Hero Section */}
-          <div className="relative rounded-3xl overflow-hidden bg-gradient-to-br from-blue-50 via-white to-primary/5 py-20 px-6 md:px-10 mb-12 border border-blue-100/50">
-            <div className="absolute inset-0 z-0 opacity-40">
-              <div className="absolute top-[-20%] left-[-5%] w-[40%] h-[40%] rounded-full bg-gradient-to-r from-blue-200 to-blue-300 blur-[100px]"></div>
-              <div className="absolute bottom-[-15%] right-[-5%] w-[35%] h-[35%] rounded-full bg-gradient-to-r from-primary/20 to-primary/30 blur-[80px]"></div>
-            </div>
-            <div className="relative z-10 max-w-3xl mx-auto text-center">
-              <h1 className="text-5xl md:text-6xl font-medium mb-6 animate-fade-up bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
-                Handcrafted with Love
+          {/* Collection Heading — pink daisies tucked behind the title */}
+          <div className="mb-10">
+            <p className="relative z-10 text-[11px] uppercase tracking-[0.3em] text-primary font-medium mb-3">
+              Hand-felted in Nepal
+            </p>
+            <div className="relative inline-block">
+              <Image
+                src="/flowers/daisy-pink.png"
+                alt=""
+                width={96}
+                height={121}
+                priority
+                className="absolute -top-4 -left-1 md:-top-7 md:-left-7 w-10 md:w-16 h-auto -rotate-[8deg] -z-10 pointer-events-none animate-float"
+                style={{ animationDuration: "9s" }}
+              />
+              <Image
+                src="/flowers/daisy-pink.png"
+                alt=""
+                width={96}
+                height={121}
+                priority
+                className="absolute top-6 left-0 md:top-10 md:-left-6 w-6 md:w-9 h-auto rotate-[130deg] -z-10 pointer-events-none"
+              />
+              <h1 className="relative font-playfair text-4xl md:text-5xl lg:text-6xl font-light tracking-tight text-foreground">
+                Our Collection
               </h1>
-              <p className="text-lg text-muted-foreground animate-fade-up animate-delay-200 max-w-2xl mx-auto leading-relaxed">
-                Discover our exclusive collection of handcrafted felt products. Each piece tells a story of traditional craftsmanship,
-                made with passion by skilled artisans using time-honored techniques.
-              </p>
-              <div className="flex items-center justify-center gap-6 mt-8 text-sm text-muted-foreground animate-fade-up animate-delay-300">
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                  <span>Premium Quality</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                  <span>Eco-Friendly</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
-                  <span>Artisan Made</span>
-                </div>
-              </div>
             </div>
-          </div>
-
-          {/* Category Filter & Product Count */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
-            <div className="flex items-center gap-4">
-              <h2 className="text-2xl font-saans font-medium">Our Collection</h2>
-              <span className="px-3 py-1 bg-muted rounded-full text-sm text-muted-foreground">
-                {totalProducts} {totalProducts === 1 ? 'product' : 'products'}
-              </span>
-            </div>
+            <p className="mt-3 text-sm md:text-base text-muted-foreground max-w-md">
+              Wool blooms, ornaments and slippers — every piece needled by hand, one at a time.
+            </p>
+            <div className="mt-4 w-16 h-px bg-primary/40"></div>
           </div>
 
           <Tabs
@@ -190,32 +209,75 @@ export default function ShopClient() {
             onValueChange={setSelectedCategory}
             className="mb-12"
           >
-            <div className="flex justify-start mb-8 overflow-x-auto scroll-pl-4 scrollbar-hide">
-              <TabsList className="bg-white border border-gray-200 p-1.5 rounded-2xl flex gap-1 min-w-max shadow-sm">
+            <div className="mb-8">
+              <div className="flex justify-start overflow-x-auto scroll-pl-4 scrollbar-hide py-1">
+              <TabsList className="bg-transparent p-0 h-auto flex gap-2 min-w-max">
                 <TabsTrigger
                   value="all"
-                  className="rounded-xl whitespace-nowrap px-6 py-2.5 data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-sm transition-all"
+                  className="group rounded-full whitespace-nowrap px-5 py-2.5 text-sm bg-white border border-gray-200 text-muted-foreground shadow-none transition-all hover:border-primary/40 hover:text-foreground data-[state=active]:bg-primary data-[state=active]:border-primary data-[state=active]:text-white data-[state=active]:shadow-md data-[state=active]:shadow-primary/20"
                 >
                   All Products
+                  <span className="ml-2 rounded-full bg-foreground/[0.06] px-2 py-0.5 text-[11px] tabular-nums transition-colors group-data-[state=active]:bg-white/20">
+                    {totalGroups}
+                  </span>
                 </TabsTrigger>
                 {categories.map((category) => (
                   <TabsTrigger
                     key={category.id}
                     value={category.id}
-                    className="rounded-xl whitespace-nowrap px-6 py-2.5 data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-sm transition-all"
+                    className="group rounded-full whitespace-nowrap px-5 py-2.5 text-sm bg-white border border-gray-200 text-muted-foreground shadow-none transition-all hover:border-primary/40 hover:text-foreground data-[state=active]:bg-primary data-[state=active]:border-primary data-[state=active]:text-white data-[state=active]:shadow-md data-[state=active]:shadow-primary/20"
                   >
                     {category.name}
+                    <span className="ml-2 rounded-full bg-foreground/[0.06] px-2 py-0.5 text-[11px] tabular-nums transition-colors group-data-[state=active]:bg-white/20">
+                      {categoryCounts[category.id] || 0}
+                    </span>
                   </TabsTrigger>
                 ))}
               </TabsList>
+              </div>
+
+              {/* Price sort + shipping filter — the catalog always shows
+                  everything; these only reorder or narrow the view */}
+              <div className="mt-4 flex flex-wrap items-center gap-3">
+                <label className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <span className="text-[11px] uppercase tracking-[0.15em] font-semibold text-foreground/50">Price</span>
+                  <select
+                    value={priceSort}
+                    onChange={(e) => setPriceSort(e.target.value as 'featured' | 'low' | 'high')}
+                    className="rounded-full border border-gray-200 bg-white px-4 py-2 text-sm text-foreground shadow-none outline-none transition-colors hover:border-primary/40 focus:border-primary"
+                  >
+                    <option value="featured">Featured</option>
+                    <option value="low">Low to high</option>
+                    <option value="high">High to low</option>
+                  </select>
+                </label>
+
+                {countryCode && (
+                  <button
+                    type="button"
+                    onClick={() => setShipsToMeOnly((v) => !v)}
+                    className={`rounded-full border px-4 py-2 text-sm transition-all ${
+                      shipsToMeOnly
+                        ? 'border-primary bg-primary text-white shadow-md shadow-primary/20'
+                        : 'border-gray-200 bg-white text-muted-foreground hover:border-primary/40 hover:text-foreground'
+                    }`}
+                  >
+                    Ships to {countryCode}
+                  </button>
+                )}
+              </div>
             </div>
 
             {/* Products Grid */}
             {totalProducts === 0 ? (
               <div className="text-center py-16">
-                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-muted flex items-center justify-center">
-                  <Heart className="w-8 h-8 text-muted-foreground" />
-                </div>
+                <Image
+                  src="/flowers/daisies.png"
+                  alt=""
+                  width={512}
+                  height={410}
+                  className="w-32 h-auto mx-auto mb-6 opacity-80"
+                />
                 <h3 className="text-lg font-medium mb-2">No products found</h3>
                 <p className="text-muted-foreground max-w-md mx-auto">
                   We couldn't find any products in this category. Try selecting a different category or check back later.
@@ -234,6 +296,44 @@ export default function ShopClient() {
               </div>
             )}
           </Tabs>
+
+          {/* Closing note — a loose scatter of felt flowers */}
+          <div className="mt-16 mb-4 flex flex-col items-center text-center">
+            <div className="relative w-full h-28 pointer-events-none" aria-hidden>
+              <Image
+                src="/flowers/flower-purple-head.png"
+                alt=""
+                width={130}
+                height={125}
+                className="absolute left-0 bottom-1 w-16 -rotate-12"
+              />
+              <Image
+                src="/flowers/flower-white-head.png"
+                alt=""
+                width={99}
+                height={128}
+                className="absolute left-16 top-0 w-12 rotate-6"
+              />
+              <Image
+                src="/flowers/flower-blue-head.png"
+                alt=""
+                width={92}
+                height={133}
+                className="absolute left-36 bottom-4 w-14 rotate-[18deg]"
+              />
+              <Image
+                src="/flowers/flower-yellow-head.png"
+                alt=""
+                width={131}
+                height={113}
+                className="absolute left-56 top-5 w-16 -rotate-6"
+              />
+            </div>
+            <p className="mt-5 font-playfair text-lg md:text-xl text-foreground/70 italic max-w-sm">
+              Every piece begins as raw wool, shaped entirely by hand.
+            </p>
+            <div className="mt-4 w-10 h-px bg-primary/40"></div>
+          </div>
         </div>
       </main>
       <SiteFooter />
@@ -326,28 +426,34 @@ function ProductCard({ product, colorVariants, isPriority = false }: { product: 
             </button>
 
             {/* Product Image */}
-            <div className="aspect-[4/3] overflow-hidden bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center rounded-xl relative product-image-container">
+            <div className="aspect-square overflow-hidden bg-gray-50 rounded-xl relative">
               <ImageWithSkeleton
                 src={selectedVariant.images?.[0] || '/placeholder.png'}
                 alt={selectedVariant.title}
-                width={280}
-                height={210}
+                fill
                 draggable={false}
                 priority={isPriority}
                 loading={isPriority ? "eager" : "lazy"}
                 fallbackSrc="/placeholder.png"
                 sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-                className="object-contain w-full h-full rounded-xl sm:transition-transform sm:duration-500 sm:group-hover:scale-110"
+                className="object-contain p-5 sm:transition-transform sm:duration-500 sm:group-hover:scale-105"
               />
 
               {/* Subtle overlay on hover */}
               <div className="absolute inset-0 bg-gradient-to-t from-black/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-xl"></div>
+
+              {/* View Details — slides up over the image on hover, always visible on mobile */}
+              <div className="absolute inset-x-3 bottom-3 sm:opacity-0 sm:group-hover:opacity-100 sm:translate-y-2 sm:group-hover:translate-y-0 sm:transition-all sm:duration-300">
+                <div className="w-full rounded-full bg-white/90 backdrop-blur-sm border border-black/[0.06] py-2 text-center text-xs font-medium text-foreground shadow-sm hover:bg-primary hover:text-white transition-colors">
+                  View Details
+                </div>
+              </div>
             </div>
           </div>
 
-          <CardContent className="p-4 pt-0 flex flex-col gap-4 flex-grow">
+          <CardContent className="p-4 pt-1 flex flex-col gap-3 flex-grow">
             <div className="space-y-1">
-              <h3 className="font-medium text-base leading-tight line-clamp-2 group-hover:text-primary transition-colors">
+              <h3 className="font-medium text-base leading-snug line-clamp-2 min-h-[2.75rem] group-hover:text-primary transition-colors">
                 {selectedVariant.title}
               </h3>
               {/* Price Display */}
@@ -362,12 +468,12 @@ function ProductCard({ product, colorVariants, isPriority = false }: { product: 
               </div>
             </div>
 
-            {/* Color Variants */}
-            <div className="mt-auto">
+            {/* Color Variants — container keeps its height even without variants so cards stay aligned */}
+            <div className="mt-auto min-h-[2.75rem]">
               {colorVariants.length > 1 && (
-                <div className="space-y-3">
-                  <p className="text-xs text-muted-foreground font-medium">Available Colors</p>
-                  <div className="flex gap-2 items-center">
+                <div className="space-y-2">
+                  <p className="text-[10px] uppercase tracking-[0.15em] font-semibold text-foreground/50">Available Colors</p>
+                  <div className="flex gap-2 items-center pl-0.5 pt-0.5">
                     {colorVariants.slice(0, 6).map((variant) => {
                       const isLight = isLightColor(variant.color);
 
@@ -409,14 +515,6 @@ function ProductCard({ product, colorVariants, isPriority = false }: { product: 
               )}
             </div>
 
-            {/* View Product Button — always visible on mobile, hover-reveal on desktop */}
-            <Button
-              variant="outline"
-              size="sm"
-              className="w-full mt-4 sm:opacity-0 sm:group-hover:opacity-100 sm:translate-y-2 sm:group-hover:translate-y-0 sm:transition-all sm:duration-300 border-primary/20 hover:bg-primary hover:text-white"
-            >
-              View Details
-            </Button>
           </CardContent>
         </Link>
       </Card>

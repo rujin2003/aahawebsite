@@ -2,7 +2,6 @@
 
 import { Facebook, Instagram, Linkedin, Youtube } from "lucide-react";
 import Link from "next/link";
-import { Button } from "./ui/button";
 import { Separator } from "./ui/separator";
 import Image from "next/image";
 
@@ -24,7 +23,7 @@ export function SiteFooter() {
                   alt="Aaha Felt Logo"
                   width={70}
                   height={70}
-                  className="h-[70px] w-[70px] filter invert"
+                  className="h-[70px] w-[70px] brightness-0 invert"
                 />
               </Link>
 
@@ -72,12 +71,12 @@ export function SiteFooter() {
                 <ul className="space-y-2">
                   <li>
 
-                    <Link href="https://www.herdy.co.uk/did-ewe-know/what-is-felting-how-does-it-work/#" className="text-sm text-white/60 hover:text-white transition-colors">
+                    <Link href="https://www.herdy.co.uk/did-ewe-know/what-is-felting-how-does-it-work/#" className="text-sm text-white/60 hover:text-white transition-colors hover:underline underline-offset-4">
                       Felting Process
                     </Link>
                   </li>
                   <li>
-                    <Link href="https://sewport.com/fabrics-directory/felt-fabric" className="text-sm text-white/60 hover:text-white transition-colors">
+                    <Link href="https://sewport.com/fabrics-directory/felt-fabric" className="text-sm text-white/60 hover:text-white transition-colors hover:underline underline-offset-4">
                       Materials
                     </Link>
                   </li>
@@ -173,13 +172,12 @@ export function SiteFooter() {
               These products are handcrafted with care. Each piece is unique and may vary slightly from the images shown. Colors may appear differently depending on your monitor settings.
             </p>
 
-            {/* Payment Icons */}
-            <span>
             <div className="flex flex-wrap gap-3 mt-6">
-              <Image src="https://upload.wikimedia.org/wikipedia/commons/2/2a/Mastercard-logo.svg" alt="Mastercard" width={32} height={20} className="h-[20px] w-[32px] object-contain" />
-              <Image src="https://upload.wikimedia.org/wikipedia/commons/5/5e/Visa_Inc._logo.svg" alt="Visa" width={32} height={20} className="h-[20px] w-[32px] object-contain" />
-              <Image src="https://www.logo.wine/a/logo/American_Express/American_Express-Logo.wine.svg" alt="Amex" width={32} height={20} className="h-[20px] w-[32px] object-contain" />
-              <Image src="https://upload.wikimedia.org/wikipedia/commons/b/b5/PayPal.svg" alt="PayPal" width={32} height={20} className="h-[20px] w-[32px] object-contain" />
+              {['Visa', 'Mastercard', 'Amex', 'PayPal'].map((name) => (
+                <div key={name} className="px-3 py-1 rounded border border-white/15 text-[10px] font-medium text-white/50 tracking-wider uppercase">
+                  {name}
+                </div>
+              ))}
             </div>
 
             {/* Credit */}
@@ -190,7 +188,6 @@ export function SiteFooter() {
                 Rujin / @rujin2003
               </Link>
             </p>
-            </span>
           </div>
         </div>
       </div>

@@ -42,10 +42,16 @@ export default {
         border: 'hsl(var(--border))',
         input: 'hsl(var(--input))',
         ring: 'hsl(var(--ring))',
+        'rose-soft': 'hsl(var(--rose-soft))',
+        'sage-soft': 'hsl(var(--sage-soft))',
+        'clay-warm': 'hsl(var(--clay-warm))',
+        'sky-soft': 'hsl(var(--sky-soft))',
       },
       fontFamily: {
-        sans: ["var(--font-sans)"],
-        saans: ["var(--font-saans)"],
+        sans: ["var(--font-montserrat)"],
+        saans: ["var(--font-montserrat)"],
+        montserrat: ["var(--font-montserrat)"],
+        playfair: ["var(--font-playfair)"],
       },
       borderRadius: {
         lg: 'var(--radius)',

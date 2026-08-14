@@ -1,1 +1,1 @@
-export const SUPPORTED_COUNTRIES = ['IN', 'NZ', 'CAN'] as const; 
+export const SUPPORTED_COUNTRIES = ['AU', 'IN', 'NZ'] as const;

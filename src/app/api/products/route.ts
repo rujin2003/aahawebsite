@@ -1,28 +1,14 @@
-import { NextResponse, NextRequest } from 'next/server'
+import { NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
-import { SUPPORTED_COUNTRIES } from '@/lib/constants'
 
-type SupportedCountry = (typeof SUPPORTED_COUNTRIES)[number];
-
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
-    const searchParams = request.nextUrl.searchParams
-    const countryCode = searchParams.get('countryCode')
-    const isSupported = SUPPORTED_COUNTRIES.includes(countryCode as SupportedCountry)
-
-    let query = supabase
+    // The full catalog is listed everywhere — country only affects
+    // shipping/pricing on the client, never what is returned here.
+    const query = supabase
       .from('products')
       .select('*')
       .order('created_at', { ascending: false })
-
-    if (isSupported) {
-      // Proper filtering using PostgreSQL array literal
-      query = query.filter('country_codes', 'cs', `{${countryCode}}`)
-    } else {
-      // Not supported: show ALL products (not just null country_codes)
-      // This allows users from unsupported regions to see all products
-      // but they won't be able to order them
-    }
 
     const { data: productsDataFromSupabase, error } = await query
 
