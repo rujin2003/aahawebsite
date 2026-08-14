@@ -50,6 +50,8 @@ export function SignUpForm() {
           data: {
             full_name: fullName,
             username: username,
+            phone: phone,
+            address: addressString,
           },
           emailRedirectTo: `${window.location.origin}/signin`,
         },
@@ -67,45 +69,19 @@ export function SignUpForm() {
         throw new Error('Registration failed - no user data returned');
       }
 
-      console.log('User created successfully, creating profile...');
+      // The profile row is created by the on_auth_user_created DB trigger from
+      // the metadata above — with email confirmation enabled there is no
+      // session yet, so RLS would reject a client-side insert here.
 
-      const { data: profileData, error: profileError } = await supabase
-        .from('profiles')
-        .insert([
-          {
-            id: authData.user.id,
-            full_name: fullName,
-            email: email,
-            username: username,
-            phone: phone,
-            address: addressString,
-          },
-        ])
-        .select()
-        .single();
-
-      console.log('Profile creation response:', { profileData, profileError });
-
-      if (profileError) {
-        console.error('Profile creation error:', profileError);
-        // If profile creation fails, we should clean up the auth user
-        await supabase.auth.admin.deleteUser(authData.user.id);
-        throw new Error(`Profile creation failed: ${profileError.message}`);
-      }
-
-      if (!profileData) {
-        console.error('No profile data returned after creation');
-        // If profile creation fails, we should clean up the auth user
-        await supabase.auth.admin.deleteUser(authData.user.id);
-        throw new Error('Profile creation failed - no data returned');
-      }
-
-      // Save first address to addresses table if available
-      try {
-        const { insertAddress } = await import('@/lib/addresses');
-        await insertAddress(supabase, authData.user.id, address, { setDefault: true });
-      } catch (addrErr) {
-        console.warn('Could not save address to addresses table:', addrErr);
+      // Save first address to addresses table if we already have a session;
+      // otherwise cart page migrates it from profile.address on first login.
+      if (authData.session) {
+        try {
+          const { insertAddress } = await import('@/lib/addresses');
+          await insertAddress(supabase, authData.user.id, address, { setDefault: true });
+        } catch (addrErr) {
+          console.warn('Could not save address to addresses table:', addrErr);
+        }
       }
 
       console.log('Registration completed successfully');
