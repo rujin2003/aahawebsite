@@ -6,25 +6,10 @@ const nextConfig = {
   reactStrictMode: true,
 
   images: {
-    remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: '**',
-      },
-      {
-        protocol: 'http',
-        hostname: '**',
-      },
-
-    ],
-    formats: ['image/avif', 'image/webp'],
-    deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
-    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
-    // Increase cache duration for optimized images (1 year)
-    minimumCacheTTL: 31536000,
-    // Reduce quality slightly for faster loading while maintaining visual quality
-    dangerouslyAllowSVG: true,
-    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
+    // Cloudflare Pages has no image optimizer — /_next/image is an uncached
+    // passthrough there. Route everything through our own loader instead.
+    loader: 'custom',
+    loaderFile: './src/lib/image-loader.ts',
   },
 
   // Enable compression

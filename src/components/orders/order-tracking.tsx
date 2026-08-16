@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { useCountryStore } from '@/lib/countryStore';
 import { convertUSDToLocalCurrency } from '@/lib/utils';
+import { cachedImageUrl } from '@/lib/img';
 
 interface OrderTrackingProps {
   order: Order;
@@ -127,7 +128,7 @@ export function OrderTracking({ order }: OrderTrackingProps) {
             <div key={item.id} className="flex items-center gap-4">
               {item.product_image && (
                 <img
-                  src={item.product_image}
+                  src={cachedImageUrl(item.product_image)}
                   alt={item.product_name}
                   className="w-16 h-16 object-cover rounded"
                 />

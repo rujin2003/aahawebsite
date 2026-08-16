@@ -439,7 +439,7 @@ export default function Home() {
               <div className="relative animate-on-scroll fade-right">
                 <div className="relative aspect-[4/5] rounded-3xl overflow-hidden shadow-soft-lg">
                   <Image
-                    src="/artisan-img.png"
+                    src="/artisan-img.webp"
                     alt="Artisan crafting felt products"
                     fill
                     className="object-cover"

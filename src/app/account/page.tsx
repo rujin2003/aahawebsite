@@ -17,6 +17,7 @@ import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { format } from "date-fns";
 import { cn, getInitials } from "@/lib/utils";
+import { cachedImageUrl } from "@/lib/img";
 import { Loading } from "@/components/ui/loading";
 import { useCountryStore } from "@/lib/countryStore";
 import { convertUSDToLocalCurrency } from "@/lib/utils";
@@ -486,7 +487,7 @@ export default function AccountPage() {
                             <div key={item.id} className="flex items-center gap-4">
                               {item.product_image && (
                                 <img
-                                  src={item.product_image}
+                                  src={cachedImageUrl(item.product_image)}
                                   alt={item.product_name}
                                   className="w-16 h-16 object-cover rounded-xl"
                                 />
@@ -581,7 +582,7 @@ export default function AccountPage() {
                                 <div key={item.id} className="flex items-center gap-4 p-2 bg-muted/50 rounded-xl">
                                   {item.product_image && (
                                     <img
-                                      src={item.product_image}
+                                      src={cachedImageUrl(item.product_image)}
                                       alt={item.product_name}
                                       className="w-16 h-16 object-cover rounded-lg"
                                     />

@@ -1,0 +1,53 @@
+# Cloudflare Pages honors this file for static assets; the headers() block in
+# next.config.ts does not apply on Pages. Hashed build output is immutable.
+
+/_next/static/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/fonts/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/flowers/*
+  Cache-Control: public, max-age=2592000
+
+/hanging/*
+  Cache-Control: public, max-age=2592000
+
+/logo.png
+  Cache-Control: public, max-age=2592000
+
+/logo.svg
+  Cache-Control: public, max-age=2592000
+
+/aahafelt.png
+  Cache-Control: public, max-age=2592000
+
+/artisan-img.webp
+  Cache-Control: public, max-age=2592000
+
+/hello.jpg
+  Cache-Control: public, max-age=2592000
+
+/homedecor.jpg
+  Cache-Control: public, max-age=2592000
+
+/hero-table.webp
+  Cache-Control: public, max-age=2592000
+
+/leader.webp
+  Cache-Control: public, max-age=2592000
+
+/intro-poster.jpg
+  Cache-Control: public, max-age=2592000
+
+/product2.jpg
+  Cache-Control: public, max-age=2592000
+
+/placeholder.png
+  Cache-Control: public, max-age=2592000
+
+/intro.mp4
+  Cache-Control: public, max-age=2592000
+
+/intro-mobile.mp4
+  Cache-Control: public, max-age=2592000
