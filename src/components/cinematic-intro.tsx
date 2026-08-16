@@ -47,13 +47,16 @@ const CAM: CamKey[] = [
 // object-cover, so the desktop opening (1.55x zoom, 6px blur, heavy veil)
 // lands on an abstract smear of wool. Mobile opens close to full frame and
 // keeps the focal point centred on the characters.
+// (no blur on mobile at all — a full-screen blur over playing video is the
+// single most expensive filter a phone GPU can be asked for; the veil alone
+// carries the dreamy opening)
 const CAM_MOBILE: CamKey[] = [
-  { p: 0.0, s: 1.14, fx: 50, fy: 44, blur: 2, sat: 0.94, br: 1.04, veil: 0.34 },
-  { p: 0.3, s: 1.06, fx: 50, fy: 48, blur: 0.4, sat: 0.98, br: 1.02, veil: 0.18 },
+  { p: 0.0, s: 1.14, fx: 50, fy: 44, blur: 0, sat: 0.94, br: 1.04, veil: 0.4 },
+  { p: 0.3, s: 1.06, fx: 50, fy: 48, blur: 0, sat: 0.98, br: 1.02, veil: 0.18 },
   { p: 0.58, s: 1.0, fx: 50, fy: 50, blur: 0, sat: 1, br: 1, veil: 0.08 },
   { p: 0.8, s: 1.0, fx: 50, fy: 50, blur: 0, sat: 1, br: 1, veil: 0.06 },
   { p: 0.93, s: 1.16, fx: 50, fy: 72, blur: 0, sat: 0.97, br: 1.02, veil: 0.1 },
-  { p: 1.0, s: 1.2, fx: 50, fy: 78, blur: 0.5, sat: 0.95, br: 1.03, veil: 0.14 },
+  { p: 1.0, s: 1.2, fx: 50, fy: 78, blur: 0, sat: 0.95, br: 1.03, veil: 0.14 },
 ];
 
 const CAPTIONS = [
@@ -211,6 +214,20 @@ export function CinematicIntro() {
 
     let playing = false;
     let autoplayBlocked = false;
+    // once the video is reliably painting its own frames, the poster copy
+    // underneath is invisible — but it still costs a second full-screen
+    // filtered layer every frame, so retire it (unless we're on the
+    // autoplay-blocked scrub fallback, where dropped seeks fall through to it)
+    let posterRetired = false;
+    let posterTimer = 0;
+    const retirePoster = () => {
+      posterTimer = window.setTimeout(() => {
+        if (!autoplayBlocked && posterRef.current) {
+          posterRef.current.style.visibility = "hidden";
+          posterRetired = true;
+        }
+      }, 700); // after the video's 500ms fade-in has finished
+    };
 
     // iOS will not paint a frame of a video that has never played, so prime
     // it as soon as there is data. Desktop pauses again straight away and
@@ -228,6 +245,7 @@ export function CinematicIntro() {
             } else {
               video.pause();
             }
+            retirePoster();
           })
           .catch(() => {
             autoplayBlocked = true;
@@ -236,6 +254,7 @@ export function CinematicIntro() {
           });
       } else if (!small) {
         video.pause();
+        retirePoster();
       }
     };
     video.addEventListener("loadeddata", onReady);
@@ -261,6 +280,8 @@ export function CinematicIntro() {
       setDisabled(true);
     };
 
+    let lastP = -1;
+
     const tick = () => {
       const layerHeight = layer.offsetHeight;
       const max = Math.max(el.offsetHeight - layerHeight, 1);
@@ -285,14 +306,27 @@ export function CinematicIntro() {
 
       // scrub — desktop only. Seeking is exactly what phones can't do here,
       // and on mobile the frames are already arriving from playback.
-      if (!small || autoplayBlocked) {
+      const scrubbing = !small || autoplayBlocked;
+      if (scrubbing) {
         const dur = video.duration || 10;
         const target = p * Math.max(dur - 0.05, 0);
         current += (target - current) * (small ? 0.4 : 0.22);
-        if (video.readyState >= 2 && !video.seeking && Math.abs(video.currentTime - current) > 0.005) {
+        // snap the exponential tail instead of chasing it forever
+        if (Math.abs(target - current) < 0.02) current = target;
+        // don't seek finer than a frame — sub-frame seeks are pure decode
+        // churn that stutter the scroll without changing the picture
+        if (video.readyState >= 2 && !video.seeking && Math.abs(video.currentTime - current) > 0.033) {
           video.currentTime = current;
         }
       }
+
+      // nothing moved since the last frame: keep the loop alive but skip the
+      // style writes, so an idle page costs (almost) nothing per frame
+      if (p === lastP && (!scrubbing || current === p * Math.max((video.duration || 10) - 0.05, 0))) {
+        raf = requestAnimationFrame(tick);
+        return;
+      }
+      lastP = p;
 
       // camera: recompose the frame as the story progresses
       const k = cam(p, keys);
@@ -306,7 +340,7 @@ export function CinematicIntro() {
       video.style.filter = filter;
       // the poster rides the same camera, so a dropped or missing frame
       // reveals the same composition rather than an empty rectangle
-      if (posterRef.current) {
+      if (posterRef.current && !posterRetired) {
         posterRef.current.style.transform = transform;
         posterRef.current.style.filter = filter;
       }
@@ -351,6 +385,7 @@ export function CinematicIntro() {
     return () => {
       cancelAnimationFrame(raf);
       window.clearTimeout(readyTimer);
+      window.clearTimeout(posterTimer);
       window.removeEventListener("resize", measure);
       window.removeEventListener("orientationchange", measure);
       video.removeEventListener("error", bail);
@@ -415,15 +450,24 @@ export function CinematicIntro() {
         />
 
         {/* natural window light — warm amber falling from the upper left,
-            a whisper of cool lavender in the far corner */}
+            a whisper of cool lavender in the far corner. Blend modes force
+            the GPU to re-composite the video underneath every frame, which
+            phones can't afford — mobile gets the same wash without the blend */}
         <div
           aria-hidden
           className="absolute inset-0"
-          style={{
-            background:
-              "linear-gradient(118deg, rgba(255,192,132,0.5) 0%, rgba(255,232,205,0.18) 34%, rgba(255,255,255,0) 55%, rgba(168,142,190,0.16) 100%)",
-            mixBlendMode: "soft-light",
-          }}
+          style={
+            mobile
+              ? {
+                  background:
+                    "linear-gradient(118deg, rgba(255,192,132,0.16) 0%, rgba(255,232,205,0.07) 34%, rgba(255,255,255,0) 55%, rgba(168,142,190,0.06) 100%)",
+                }
+              : {
+                  background:
+                    "linear-gradient(118deg, rgba(255,192,132,0.5) 0%, rgba(255,232,205,0.18) 34%, rgba(255,255,255,0) 55%, rgba(168,142,190,0.16) 100%)",
+                  mixBlendMode: "soft-light",
+                }
+          }
         />
 
         {/* dreamy cream vignette, strongest at the opening */}
@@ -495,10 +539,21 @@ export function CinematicIntro() {
         {/* scroll hint */}
         <div
           ref={hintRef}
-          className="absolute bottom-6 sm:bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-foreground/70 transition-opacity duration-700"
+          className="absolute bottom-6 sm:bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 transition-opacity duration-700"
+          style={{
+            color: "#3a2c1b",
+            textShadow:
+              "0 1px 2px rgba(248,243,234,0.95), 0 0 16px rgba(248,243,234,0.9), 0 0 32px rgba(248,243,234,0.75)",
+          }}
         >
-          <span className="text-xs font-medium tracking-[0.25em] uppercase">Scroll</span>
-          <svg className="w-5 h-5 animate-bounce" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <span className="text-xs font-semibold tracking-[0.25em] uppercase">Scroll</span>
+          <svg
+            className="w-5 h-5 animate-bounce"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            style={{ filter: "drop-shadow(0 1px 2px rgba(248,243,234,0.95)) drop-shadow(0 0 10px rgba(248,243,234,0.9))" }}
+          >
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
           </svg>
         </div>
