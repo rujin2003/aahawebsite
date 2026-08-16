@@ -152,6 +152,16 @@
   max-width: 1400px;
 }
 
+/* Used by the horizontal filter strips — the class was in the markup long
+   before anything defined it, so the bars were still showing */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
 /* Luminous Labs card style */
 .benefit-card {
   @apply relative rounded-2xl overflow-hidden bg-card p-8 md:p-10;

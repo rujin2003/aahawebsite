@@ -210,14 +210,18 @@ export default function ShopClient() {
             className="mb-12"
           >
             <div className="mb-8">
-              <div className="flex justify-start overflow-x-auto scroll-pl-4 scrollbar-hide py-1">
-              <TabsList className="bg-transparent p-0 h-auto flex gap-2 min-w-max">
+              {/* the strip scrolls sideways rather than wrapping, so it bleeds
+                  past the container padding on small screens — a pill cut off
+                  at the screen edge reads as "there's more", one cut off at an
+                  arbitrary inset just looks broken */}
+              <div className="-mx-4 px-4 md:mx-0 md:px-0 flex justify-start overflow-x-auto scroll-pl-4 scrollbar-hide py-1">
+              <TabsList className="bg-transparent p-0 h-auto flex gap-2 min-w-max md:flex-wrap">
                 <TabsTrigger
                   value="all"
-                  className="group rounded-full whitespace-nowrap px-5 py-2.5 text-sm bg-white border border-gray-200 text-muted-foreground shadow-none transition-all hover:border-primary/40 hover:text-foreground data-[state=active]:bg-primary data-[state=active]:border-primary data-[state=active]:text-white data-[state=active]:shadow-md data-[state=active]:shadow-primary/20"
+                  className="group rounded-full whitespace-nowrap px-4 py-2 text-[13px] sm:px-5 sm:py-2.5 sm:text-sm bg-white border border-gray-200 text-muted-foreground shadow-none transition-all hover:border-primary/40 hover:text-foreground data-[state=active]:bg-primary data-[state=active]:border-primary data-[state=active]:text-white data-[state=active]:shadow-md data-[state=active]:shadow-primary/20"
                 >
                   All Products
-                  <span className="ml-2 rounded-full bg-foreground/[0.06] px-2 py-0.5 text-[11px] tabular-nums transition-colors group-data-[state=active]:bg-white/20">
+                  <span className="ml-1.5 sm:ml-2 rounded-full bg-foreground/[0.06] px-1.5 sm:px-2 py-0.5 text-[10px] sm:text-[11px] tabular-nums transition-colors group-data-[state=active]:bg-white/20">
                     {totalGroups}
                   </span>
                 </TabsTrigger>
@@ -225,10 +229,10 @@ export default function ShopClient() {
                   <TabsTrigger
                     key={category.id}
                     value={category.id}
-                    className="group rounded-full whitespace-nowrap px-5 py-2.5 text-sm bg-white border border-gray-200 text-muted-foreground shadow-none transition-all hover:border-primary/40 hover:text-foreground data-[state=active]:bg-primary data-[state=active]:border-primary data-[state=active]:text-white data-[state=active]:shadow-md data-[state=active]:shadow-primary/20"
+                    className="group rounded-full whitespace-nowrap px-4 py-2 text-[13px] sm:px-5 sm:py-2.5 sm:text-sm bg-white border border-gray-200 text-muted-foreground shadow-none transition-all hover:border-primary/40 hover:text-foreground data-[state=active]:bg-primary data-[state=active]:border-primary data-[state=active]:text-white data-[state=active]:shadow-md data-[state=active]:shadow-primary/20"
                   >
                     {category.name}
-                    <span className="ml-2 rounded-full bg-foreground/[0.06] px-2 py-0.5 text-[11px] tabular-nums transition-colors group-data-[state=active]:bg-white/20">
+                    <span className="ml-1.5 sm:ml-2 rounded-full bg-foreground/[0.06] px-1.5 sm:px-2 py-0.5 text-[10px] sm:text-[11px] tabular-nums transition-colors group-data-[state=active]:bg-white/20">
                       {categoryCounts[category.id] || 0}
                     </span>
                   </TabsTrigger>
@@ -238,13 +242,13 @@ export default function ShopClient() {
 
               {/* Price sort + shipping filter — the catalog always shows
                   everything; these only reorder or narrow the view */}
-              <div className="mt-4 flex flex-wrap items-center gap-3">
-                <label className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <span className="text-[11px] uppercase tracking-[0.15em] font-semibold text-foreground/50">Price</span>
+              <div className="mt-4 flex flex-wrap items-center gap-2 sm:gap-3">
+                <label className="flex min-w-0 items-center gap-2 text-sm text-muted-foreground">
+                  <span className="text-[10px] sm:text-[11px] uppercase tracking-[0.15em] font-semibold text-foreground/50">Price</span>
                   <select
                     value={priceSort}
                     onChange={(e) => setPriceSort(e.target.value as 'featured' | 'low' | 'high')}
-                    className="rounded-full border border-gray-200 bg-white px-4 py-2 text-sm text-foreground shadow-none outline-none transition-colors hover:border-primary/40 focus:border-primary"
+                    className="min-w-0 rounded-full border border-gray-200 bg-white px-3 py-2 text-[13px] sm:px-4 sm:text-sm text-foreground shadow-none outline-none transition-colors hover:border-primary/40 focus:border-primary"
                   >
                     <option value="featured">Featured</option>
                     <option value="low">Low to high</option>
@@ -256,7 +260,7 @@ export default function ShopClient() {
                   <button
                     type="button"
                     onClick={() => setShipsToMeOnly((v) => !v)}
-                    className={`rounded-full border px-4 py-2 text-sm transition-all ${
+                    className={`whitespace-nowrap rounded-full border px-3 py-2 text-[13px] sm:px-4 sm:text-sm transition-all ${
                       shipsToMeOnly
                         ? 'border-primary bg-primary text-white shadow-md shadow-primary/20'
                         : 'border-gray-200 bg-white text-muted-foreground hover:border-primary/40 hover:text-foreground'
