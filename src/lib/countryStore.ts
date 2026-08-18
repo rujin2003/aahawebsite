@@ -1,10 +1,18 @@
 import { create } from 'zustand';
 import { SUPPORTED_COUNTRIES, type SupportedCountry } from './country';
 
+// 'pending' means we genuinely don't know where the visitor is yet. Nothing
+// price- or shipping-related should render until this flips to 'ready',
+// otherwise the page paints "not available" at every visitor and then
+// swaps it out a few hundred ms later.
+export type CountryStatus = 'pending' | 'ready';
+
 interface CountryStore {
   countryCode: string | null;
+  status: CountryStatus;
   isLoading: boolean;
   isSupportedCountry: boolean;
+  init: () => void;
   getCountry: () => Promise<string>;
 }
 
@@ -31,23 +39,44 @@ const writeCachedCountry = (code: string) => {
 const isSupported = (code: string) =>
   SUPPORTED_COUNTRIES.includes(code as SupportedCountry);
 
+const resolved = (code: string) => ({
+  countryCode: code,
+  status: 'ready' as const,
+  isLoading: false,
+  isSupportedCountry: isSupported(code),
+});
+
 export const useCountryStore = create<CountryStore>((set, get) => {
   let sharedPromise: Promise<string> | null = null;
-
-  const cached = readCachedCountry();
+  let started = false;
 
   return {
-    countryCode: cached,
-    isLoading: false,
-    isSupportedCountry: cached ? isSupported(cached) : false,
+    // Server and client must agree on this first render or hydration tears
+    // and the whole page flashes. The cache is applied from init() instead,
+    // which only ever runs in the browser.
+    countryCode: null,
+    status: 'pending',
+    isLoading: true,
+    isSupportedCountry: false,
+
+    init: () => {
+      if (started || typeof window === 'undefined') return;
+      started = true;
+
+      const cached = readCachedCountry();
+      if (cached) {
+        set(resolved(cached));
+        return;
+      }
+
+      void get().getCountry();
+    },
 
     getCountry: async () => {
       const { countryCode } = get();
       if (countryCode) return countryCode;
 
       if (sharedPromise) return sharedPromise;
-
-      set({ isLoading: true });
 
       sharedPromise = (async () => {
         try {
@@ -56,19 +85,13 @@ export const useCountryStore = create<CountryStore>((set, get) => {
           const code = data.country_code || 'US';
 
           writeCachedCountry(code);
-          set({
-            countryCode: code,
-            isLoading: false,
-            isSupportedCountry: isSupported(code),
-          });
+          set(resolved(code));
 
           return code;
         } catch {
-          set({
-            countryCode: 'US',
-            isLoading: false,
-            isSupportedCountry: isSupported('US'),
-          });
+          // Unknown location is still a resolved state — the visitor gets the
+          // "we don't ship here yet" path rather than a spinner forever.
+          set(resolved('US'));
 
           return 'US';
         }
@@ -79,5 +102,7 @@ export const useCountryStore = create<CountryStore>((set, get) => {
   };
 });
 
-// ✅ Automatically start fetching on first load
-useCountryStore.getState().getCountry();
+// init() is deliberately NOT called at module scope: on the client this file
+// evaluates before React hydrates, so applying the cached country here would
+// make the first client render disagree with the server HTML. It is called
+// from useShopAvailability() and from ClientBody on mount instead.

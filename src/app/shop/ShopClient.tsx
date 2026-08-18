@@ -14,7 +14,8 @@ import { Heart } from 'lucide-react'
 import { Loading } from "@/components/ui/loading"
 
 import { getCategoriesQuery, getProductsQuery, isAvailableInCountry } from '@/lib/country';
-import { useCountryStore } from '@/lib/countryStore';
+import { useShopAvailability } from '@/lib/shop-availability';
+import { PricePending, PriceOnEnquiryLabel } from '@/components/shipping-availability';
 import { convertUSDToLocalCurrency } from '@/lib/utils';
 
 export default function ShopClient() {
@@ -25,8 +26,7 @@ export default function ShopClient() {
   const [priceSort, setPriceSort] = useState<'featured' | 'low' | 'high'>('featured')
   const [shipsToMeOnly, setShipsToMeOnly] = useState(false)
   const [groupedProducts, setGroupedProducts] = useState<{ [key: string]: Product[] }>({})
-  const countryCode = useCountryStore(s => s.countryCode);
-  const getCountry = useCountryStore(s => s.getCountry);
+  const { countryCode, countryName } = useShopAvailability();
   const searchParams = useSearchParams();
 
   // Read category from URL on mount
@@ -38,12 +38,7 @@ export default function ShopClient() {
   }, [searchParams]);
 
   useEffect(() => {
-    getCountry();
-  }, [getCountry]);
-
-  useEffect(() => {
     const fetchData = async () => {
-      if (!countryCode) return;
       try {
         // Fetch products using getProductsQuery
         const { data: productsData, error: productsError } = await getProductsQuery(supabase, countryCode || '')
@@ -90,8 +85,10 @@ export default function ShopClient() {
       }
     }
 
+    // The catalog is identical everywhere — country only affects pricing and
+    // the "ships to me" filter, so this no longer waits on the IP lookup.
     fetchData()
-  }, [countryCode])
+  }, [])
 
   let filteredGroupedProducts = selectedCategory === 'all'
     ? groupedProducts
@@ -266,7 +263,7 @@ export default function ShopClient() {
                         : 'border-gray-200 bg-white text-muted-foreground hover:border-primary/40 hover:text-foreground'
                     }`}
                   >
-                    Ships to {countryCode}
+                    Ships to {countryName ?? countryCode}
                   </button>
                 )}
               </div>
@@ -348,8 +345,7 @@ export default function ShopClient() {
 function ProductCard({ product, colorVariants, isPriority = false }: { product: Product, colorVariants: Product[], isPriority?: boolean }) {
   const [selectedVariant, setSelectedVariant] = useState(product)
   const [isLiked, setIsLiked] = useState(false)
-  const isSupportedCountry = useCountryStore(s => s.isSupportedCountry);
-  const countryCode = useCountryStore(s => s.countryCode);
+  const { isPending, canShop, countryCode } = useShopAvailability();
   const [localPrice, setLocalPrice] = useState<{ amount: number; symbol: string; code: string } | null>(null);
 
   useEffect(() => {
@@ -461,13 +457,13 @@ function ProductCard({ product, colorVariants, isPriority = false }: { product: 
                 {selectedVariant.title}
               </h3>
               {/* Price Display */}
-              <div className="text-lg font-semibold text-primary mt-1">
-                {isSupportedCountry ? (
-                  localPrice
-                    ? `${localPrice.symbol}${localPrice.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-                    : '...'
+              <div className="text-lg font-semibold text-primary mt-1 min-h-[1.75rem] flex items-center">
+                {isPending || (canShop && !localPrice) ? (
+                  <PricePending className="h-5 w-20" />
+                ) : canShop ? (
+                  `${localPrice!.symbol}${localPrice!.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
                 ) : (
-                  <span></span>
+                  <PriceOnEnquiryLabel />
                 )}
               </div>
             </div>

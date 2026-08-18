@@ -5,7 +5,8 @@ import { Order } from "@/lib/supabase";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
-import { useCountryStore } from '@/lib/countryStore';
+import { useShopAvailability } from '@/lib/shop-availability';
+import { PricePending } from '@/components/shipping-availability';
 import { convertUSDToLocalCurrency } from '@/lib/utils';
 import { cachedImageUrl } from '@/lib/img';
 
@@ -52,14 +53,13 @@ const getStatusDescription = (status: string) => {
 };
 
 export function OrderTracking({ order }: OrderTrackingProps) {
-  const countryCode = useCountryStore(s => s.countryCode);
-  const isSupportedCountry = useCountryStore(s => s.isSupportedCountry);
+  const { canShop, countryCode } = useShopAvailability();
   const [localPrices, setLocalPrices] = useState<Record<string, { amount: number; symbol: string; code: string }>>({});
   const [localTotalPrice, setLocalTotalPrice] = useState<{ amount: number; symbol: string; code: string } | null>(null);
 
   // Convert prices to local currency
   useEffect(() => {
-    if (!isSupportedCountry || !order.items.length) return;
+    if (!canShop || !order.items.length) return;
     
     const convertPrices = async () => {
       const newLocalPrices: Record<string, { amount: number; symbol: string; code: string }> = {};
@@ -85,7 +85,7 @@ export function OrderTracking({ order }: OrderTrackingProps) {
     };
     
     convertPrices();
-  }, [order.items, order.total_amount, countryCode, isSupportedCountry]);
+  }, [order.items, order.total_amount, countryCode, canShop]);
 
   return (
     <Card className="p-6 mt-24">
@@ -140,15 +140,15 @@ export function OrderTracking({ order }: OrderTrackingProps) {
                   {item.size && ` | Size: ${item.size}`}
                 </p>
               </div>
-              <p className="font-medium">
-                {isSupportedCountry ? (
-                  localPrices[item.id] 
+              {canShop && !localPrices[item.id] ? (
+                <PricePending className="h-5 w-20" />
+              ) : (
+                <p className="font-medium">
+                  {localPrices[item.id]
                     ? `${localPrices[item.id].symbol}${(localPrices[item.id].amount * item.quantity).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-                    : '...'
-                ) : (
-                  <span className="text-destructive font-semibold">We'll be bringing service to your country soon</span>
-                )}
-              </p>
+                    : `$${(item.price * item.quantity).toFixed(2)}`}
+                </p>
+              )}
             </div>
           ))}
         </div>
@@ -156,15 +156,15 @@ export function OrderTracking({ order }: OrderTrackingProps) {
         <div className="pt-4 border-t">
           <div className="flex justify-between items-center">
             <p className="font-medium">Total Amount</p>
-            <p className="font-medium">
-              {isSupportedCountry ? (
-                localTotalPrice 
+            {canShop && !localTotalPrice ? (
+              <PricePending className="h-5 w-24" />
+            ) : (
+              <p className="font-medium">
+                {localTotalPrice
                   ? `${localTotalPrice.symbol}${localTotalPrice.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-                  : '...'
-              ) : (
-                <span className="text-destructive font-semibold">We'll be bringing service to your country soon</span>
-              )}
-            </p>
+                  : `$${order.total_amount.toFixed(2)}`}
+              </p>
+            )}
           </div>
         </div>
       </div>

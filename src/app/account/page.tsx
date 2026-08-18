@@ -19,7 +19,8 @@ import { format } from "date-fns";
 import { cn, getInitials } from "@/lib/utils";
 import { cachedImageUrl } from "@/lib/img";
 import { Loading } from "@/components/ui/loading";
-import { useCountryStore } from "@/lib/countryStore";
+import { useShopAvailability } from "@/lib/shop-availability";
+import { PricePending } from "@/components/shipping-availability";
 import { convertUSDToLocalCurrency } from "@/lib/utils";
 import {
   LogOut,
@@ -42,8 +43,7 @@ export default function AccountPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSavingProfile, setIsSavingProfile] = useState(false);
   const router = useRouter();
-  const isSupportedCountry = useCountryStore((s) => s.isSupportedCountry);
-  const countryCode = useCountryStore((s) => s.countryCode);
+  const { canShop, countryCode } = useShopAvailability();
   const [localPrices, setLocalPrices] = useState<Record<string, { amount: number; symbol: string; code: string }>>({});
   const [localOrderTotals, setLocalOrderTotals] = useState<Record<string, { amount: number; symbol: string; code: string }>>({});
 
@@ -76,7 +76,7 @@ export default function AccountPage() {
 
   // Convert prices to local currency when orders change
   useEffect(() => {
-    if (!isSupportedCountry || !orders.length) return;
+    if (!canShop || !orders.length) return;
 
     const convertPrices = async () => {
       const newLocalPrices: Record<string, { amount: number; symbol: string; code: string }> = {};
@@ -105,7 +105,7 @@ export default function AccountPage() {
     };
 
     convertPrices();
-  }, [orders, countryCode, isSupportedCountry]);
+  }, [orders, countryCode, canShop]);
 
   const fetchProfile = async (userId: string) => {
     try {
@@ -377,18 +377,14 @@ export default function AccountPage() {
                   <UserRound className="w-4 h-4" />
                   Profile
                 </TabsTrigger>
-                {isSupportedCountry && (
-                  <>
-                    <TabsTrigger value="orders" className="rounded-full px-4 py-2 gap-2">
-                      <Package className="w-4 h-4" />
-                      Orders
-                    </TabsTrigger>
-                    <TabsTrigger value="returns" className="rounded-full px-4 py-2 gap-2">
-                      <RotateCcw className="w-4 h-4" />
-                      Returns
-                    </TabsTrigger>
-                  </>
-                )}
+                <TabsTrigger value="orders" className="rounded-full px-4 py-2 gap-2">
+                  <Package className="w-4 h-4" />
+                  Orders
+                </TabsTrigger>
+                <TabsTrigger value="returns" className="rounded-full px-4 py-2 gap-2">
+                  <RotateCcw className="w-4 h-4" />
+                  Returns
+                </TabsTrigger>
                 <TabsTrigger value="security" className="rounded-full px-4 py-2 gap-2">
                   <ShieldCheck className="w-4 h-4" />
                   Security
@@ -448,208 +444,205 @@ export default function AccountPage() {
                 </Card>
               </TabsContent>
 
-              {/* Orders Tab */}
-              {isSupportedCountry && (
-                <TabsContent value="orders" className="space-y-6">
-                  {orders.length === 0 ? (
-                    <Card className="p-12 rounded-3xl border-border/40 shadow-soft text-center">
-                      <Package className="w-10 h-10 mx-auto text-muted-foreground/50 mb-3" />
-                      <p className="text-muted-foreground">You haven't placed any orders yet.</p>
-                      <Button className="rounded-full mt-4" onClick={() => router.push("/shop")}>
-                        Browse the Shop
-                      </Button>
-                    </Card>
-                  ) : (
-                    orders.map((order) => (
-                      <Card key={order.id} className="p-6 rounded-3xl border-border/40 shadow-soft">
-                        <div className="flex justify-between items-start mb-4">
-                          <div>
-                            <h3 className="text-lg font-medium">Order #{order.id.slice(0, 8)}</h3>
-                            <p className="text-sm text-muted-foreground">
-                              Placed on {format(new Date(order.created_at), "PPP")}
-                            </p>
-                          </div>
-                          <Badge className={cn(
-                            "capitalize",
-                            order.status === "to_be_verified" && "bg-yellow-500",
-                            order.status === "pending" && "bg-yellow-500",
-                            order.status === "processing" && "bg-blue-500",
-                            order.status === "shipped" && "bg-purple-500",
-                            order.status === "delivered" && "bg-green-500",
-                            order.status === "cancelled" && "bg-red-500"
-                          )}>
-                            {order.status.replace("_", " ")}
-                          </Badge>
+              {/* Orders Tab — always available: a customer travelling outside
+                  the delivery range still needs their own history. */}
+              <TabsContent value="orders" className="space-y-6">
+                {orders.length === 0 ? (
+                  <Card className="p-12 rounded-3xl border-border/40 shadow-soft text-center">
+                    <Package className="w-10 h-10 mx-auto text-muted-foreground/50 mb-3" />
+                    <p className="text-muted-foreground">You haven't placed any orders yet.</p>
+                    <Button className="rounded-full mt-4" onClick={() => router.push("/shop")}>
+                      Browse the Shop
+                    </Button>
+                  </Card>
+                ) : (
+                  orders.map((order) => (
+                    <Card key={order.id} className="p-6 rounded-3xl border-border/40 shadow-soft">
+                      <div className="flex justify-between items-start mb-4">
+                        <div>
+                          <h3 className="text-lg font-medium">Order #{order.id.slice(0, 8)}</h3>
+                          <p className="text-sm text-muted-foreground">
+                            Placed on {format(new Date(order.created_at), "PPP")}
+                          </p>
                         </div>
+                        <Badge className={cn(
+                          "capitalize",
+                          order.status === "to_be_verified" && "bg-yellow-500",
+                          order.status === "pending" && "bg-yellow-500",
+                          order.status === "processing" && "bg-blue-500",
+                          order.status === "shipped" && "bg-purple-500",
+                          order.status === "delivered" && "bg-green-500",
+                          order.status === "cancelled" && "bg-red-500"
+                        )}>
+                          {order.status.replace("_", " ")}
+                        </Badge>
+                      </div>
 
-                        <div className="space-y-4">
-                          {order.items.map((item) => (
-                            <div key={item.id} className="flex items-center gap-4">
-                              {item.product_image && (
-                                <img
-                                  src={cachedImageUrl(item.product_image)}
-                                  alt={item.product_name}
-                                  className="w-16 h-16 object-cover rounded-xl"
-                                />
-                              )}
-                              <div className="flex-1">
-                                <p className="font-medium">{item.product_name}</p>
-                                <p className="text-sm text-muted-foreground">
-                                  Quantity: {item.quantity}
-                                </p>
-                              </div>
-                              <p className="font-medium">
-                                {isSupportedCountry ? (
-                                  localPrices[item.id]
-                                    ? `${localPrices[item.id].symbol}${(localPrices[item.id].amount * item.quantity).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-                                    : "..."
-                                ) : (
-                                  `$${(item.price * item.quantity).toFixed(2)}`
-                                )}
+                      <div className="space-y-4">
+                        {order.items.map((item) => (
+                          <div key={item.id} className="flex items-center gap-4">
+                            {item.product_image && (
+                              <img
+                                src={cachedImageUrl(item.product_image)}
+                                alt={item.product_name}
+                                className="w-16 h-16 object-cover rounded-xl"
+                              />
+                            )}
+                            <div className="flex-1">
+                              <p className="font-medium">{item.product_name}</p>
+                              <p className="text-sm text-muted-foreground">
+                                Quantity: {item.quantity}
                               </p>
                             </div>
+                            {canShop && !localPrices[item.id] ? (
+                              <PricePending className="h-5 w-20" />
+                            ) : (
+                              <p className="font-medium">
+                                {localPrices[item.id]
+                                  ? `${localPrices[item.id].symbol}${(localPrices[item.id].amount * item.quantity).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                                  : `$${(item.price * item.quantity).toFixed(2)}`}
+                              </p>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+
+                      <div className="mt-4 pt-4 border-t">
+                        <div className="flex justify-between items-center">
+                          <p className="font-medium">Total</p>
+                          {canShop && !localOrderTotals[order.id] ? (
+                            <PricePending className="h-5 w-24" />
+                          ) : (
+                            <p className="font-medium">
+                              {localOrderTotals[order.id]
+                                ? `${localOrderTotals[order.id].symbol}${localOrderTotals[order.id].amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                                : `$${order.total_amount.toFixed(2)}`}
+                            </p>
+                          )}
+                        </div>
+                        {order.tracking_number && (
+                          <p className="text-sm text-muted-foreground mt-2">
+                            Tracking: {order.tracking_number}
+                          </p>
+                        )}
+                        {order.status !== "shipped" && order.status !== "delivered" && order.status !== "cancelled" && (
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            className="mt-4 rounded-full"
+                            onClick={() => handleCancelOrder(order.id)}
+                          >
+                            Cancel Order
+                          </Button>
+                        )}
+                      </div>
+                    </Card>
+                  ))
+                )}
+              </TabsContent>
+
+              {/* Returns Tab */}
+              <TabsContent value="returns" className="space-y-6">
+                <Card className="p-6 md:p-8 rounded-3xl border-border/40 shadow-soft">
+                  <h2 className="text-xl font-semibold mb-4">Create Return Request</h2>
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label>Select Order</Label>
+                      <select
+                        className="w-full p-2 border rounded-md bg-background"
+                        value={selectedOrder?.id || ""}
+                        onChange={(e) => {
+                          const order = orders.find((o) => o.id === e.target.value);
+                          setSelectedOrder(order || null);
+                        }}
+                      >
+                        <option value="">Select an order</option>
+                        {orders
+                          .filter((order) => order.status === "delivered")
+                          .map((order) => (
+                            <option key={order.id} value={order.id}>
+                              Order #{order.id.slice(0, 8)} - {format(new Date(order.created_at), "PPP")}
+                            </option>
                           ))}
+                      </select>
+                    </div>
+
+                    {selectedOrder && (
+                      <div className="space-y-4">
+                        <div className="space-y-2">
+                          <Label>Order Items</Label>
+                          <div className="space-y-2">
+                            {selectedOrder.items.map((item) => (
+                              <div key={item.id} className="flex items-center gap-4 p-2 bg-muted/50 rounded-xl">
+                                {item.product_image && (
+                                  <img
+                                    src={cachedImageUrl(item.product_image)}
+                                    alt={item.product_name}
+                                    className="w-16 h-16 object-cover rounded-lg"
+                                  />
+                                )}
+                                <div className="flex-1">
+                                  <p className="font-medium">{item.product_name}</p>
+                                  <p className="text-sm text-muted-foreground">
+                                    Quantity: {item.quantity}
+                                  </p>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
                         </div>
 
-                        <div className="mt-4 pt-4 border-t">
-                          <div className="flex justify-between items-center">
-                            <p className="font-medium">Total</p>
-                            <p className="font-medium">
-                              {isSupportedCountry ? (
-                                localOrderTotals[order.id]
-                                  ? `${localOrderTotals[order.id].symbol}${localOrderTotals[order.id].amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-                                  : "..."
-                              ) : (
-                                `$${order.total_amount.toFixed(2)}`
-                              )}
+                        <div className="space-y-2">
+                          <Label>Return Reason</Label>
+                          <Textarea
+                            value={returnReason}
+                            onChange={(e) => setReturnReason(e.target.value)}
+                            placeholder="Please provide a reason for your return..."
+                            required
+                          />
+                        </div>
+
+                        <Button
+                          onClick={handleCreateReturn}
+                          disabled={!returnReason}
+                          className="rounded-full"
+                        >
+                          Submit Return Request
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                </Card>
+
+                <div className="space-y-4">
+                  <h2 className="text-xl font-semibold">Return History</h2>
+                  {returns.length === 0 ? (
+                    <p className="text-muted-foreground">No return requests found</p>
+                  ) : (
+                    returns.map((returnRequest) => (
+                      <Card key={returnRequest.id} className="p-6 rounded-3xl border-border/40 shadow-soft">
+                        <div className="flex justify-between items-start mb-4">
+                          <div>
+                            <p className="text-sm text-muted-foreground">
+                              Return #{returnRequest.id.slice(0, 8)}
+                            </p>
+                            <p className="text-sm text-muted-foreground">
+                              {format(new Date(returnRequest.created_at), "PPP")}
                             </p>
                           </div>
-                          {order.tracking_number && (
-                            <p className="text-sm text-muted-foreground mt-2">
-                              Tracking: {order.tracking_number}
-                            </p>
-                          )}
-                          {order.status !== "shipped" && order.status !== "delivered" && order.status !== "cancelled" && (
-                            <Button
-                              variant="destructive"
-                              size="sm"
-                              className="mt-4 rounded-full"
-                              onClick={() => handleCancelOrder(order.id)}
-                            >
-                              Cancel Order
-                            </Button>
-                          )}
+                          <Badge className={getStatusColor(returnRequest.status)}>
+                            {returnRequest.status.charAt(0).toUpperCase() + returnRequest.status.slice(1)}
+                          </Badge>
+                        </div>
+                        <div className="space-y-2">
+                          <p className="font-medium">Reason:</p>
+                          <p className="text-muted-foreground">{returnRequest.reason}</p>
                         </div>
                       </Card>
                     ))
                   )}
-                </TabsContent>
-              )}
-
-              {/* Returns Tab */}
-              {isSupportedCountry && (
-                <TabsContent value="returns" className="space-y-6">
-                  <Card className="p-6 md:p-8 rounded-3xl border-border/40 shadow-soft">
-                    <h2 className="text-xl font-semibold mb-4">Create Return Request</h2>
-                    <div className="space-y-4">
-                      <div className="space-y-2">
-                        <Label>Select Order</Label>
-                        <select
-                          className="w-full p-2 border rounded-md bg-background"
-                          value={selectedOrder?.id || ""}
-                          onChange={(e) => {
-                            const order = orders.find((o) => o.id === e.target.value);
-                            setSelectedOrder(order || null);
-                          }}
-                        >
-                          <option value="">Select an order</option>
-                          {orders
-                            .filter((order) => order.status === "delivered")
-                            .map((order) => (
-                              <option key={order.id} value={order.id}>
-                                Order #{order.id.slice(0, 8)} - {format(new Date(order.created_at), "PPP")}
-                              </option>
-                            ))}
-                        </select>
-                      </div>
-
-                      {selectedOrder && (
-                        <div className="space-y-4">
-                          <div className="space-y-2">
-                            <Label>Order Items</Label>
-                            <div className="space-y-2">
-                              {selectedOrder.items.map((item) => (
-                                <div key={item.id} className="flex items-center gap-4 p-2 bg-muted/50 rounded-xl">
-                                  {item.product_image && (
-                                    <img
-                                      src={cachedImageUrl(item.product_image)}
-                                      alt={item.product_name}
-                                      className="w-16 h-16 object-cover rounded-lg"
-                                    />
-                                  )}
-                                  <div className="flex-1">
-                                    <p className="font-medium">{item.product_name}</p>
-                                    <p className="text-sm text-muted-foreground">
-                                      Quantity: {item.quantity}
-                                    </p>
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-
-                          <div className="space-y-2">
-                            <Label>Return Reason</Label>
-                            <Textarea
-                              value={returnReason}
-                              onChange={(e) => setReturnReason(e.target.value)}
-                              placeholder="Please provide a reason for your return..."
-                              required
-                            />
-                          </div>
-
-                          <Button
-                            onClick={handleCreateReturn}
-                            disabled={!returnReason}
-                            className="rounded-full"
-                          >
-                            Submit Return Request
-                          </Button>
-                        </div>
-                      )}
-                    </div>
-                  </Card>
-
-                  <div className="space-y-4">
-                    <h2 className="text-xl font-semibold">Return History</h2>
-                    {returns.length === 0 ? (
-                      <p className="text-muted-foreground">No return requests found</p>
-                    ) : (
-                      returns.map((returnRequest) => (
-                        <Card key={returnRequest.id} className="p-6 rounded-3xl border-border/40 shadow-soft">
-                          <div className="flex justify-between items-start mb-4">
-                            <div>
-                              <p className="text-sm text-muted-foreground">
-                                Return #{returnRequest.id.slice(0, 8)}
-                              </p>
-                              <p className="text-sm text-muted-foreground">
-                                {format(new Date(returnRequest.created_at), "PPP")}
-                              </p>
-                            </div>
-                            <Badge className={getStatusColor(returnRequest.status)}>
-                              {returnRequest.status.charAt(0).toUpperCase() + returnRequest.status.slice(1)}
-                            </Badge>
-                          </div>
-                          <div className="space-y-2">
-                            <p className="font-medium">Reason:</p>
-                            <p className="text-muted-foreground">{returnRequest.reason}</p>
-                          </div>
-                        </Card>
-                      ))
-                    )}
-                  </div>
-                </TabsContent>
-              )}
+                </div>
+              </TabsContent>
 
               {/* Security Tab */}
               <TabsContent value="security" className="space-y-6">

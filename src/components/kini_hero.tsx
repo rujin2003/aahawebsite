@@ -2,11 +2,13 @@
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { useCountryStore } from "@/lib/countryStore";
+import { useShopAvailability } from "@/lib/shop-availability";
+import { EnquireButton } from "@/components/shipping-availability";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function KiniHeroBanner() {
-  const isSupportedCountry = useCountryStore(s=>s.isSupportedCountry)
-  
+  const { isPending, canShop } = useShopAvailability();
+
   return (
     <div className="relative w-full h-[600px] overflow-hidden">
       <div className="absolute inset-0">
@@ -31,24 +33,42 @@ export default function KiniHeroBanner() {
             Experience the perfect blend of comfort and style with our premium collection
           </p>
         </div>
-        <div className="absolute bottom-8 left-0 right-0 flex justify-center">
-          <div className="flex items-center gap-3 bg-[#614741] bg-opacity-80 text-white px-20 py-2 rounded-full shadow-md">
-            <span className="opacity-90 text-sm font-saans">Get to know Kini now!</span>
-            {isSupportedCountry ? (
-              <span className="font-saans font-medium text-base">€149</span>
+        <div className="absolute bottom-8 left-0 right-0 flex justify-center px-4">
+          {/* One pill, three states — the width is driven by the copy so the
+              bar doesn't jump when the country resolves. */}
+          <div className="flex items-center gap-3 bg-[#614741]/80 text-white px-6 sm:px-10 py-2.5 rounded-full shadow-md">
+            <span className="opacity-90 text-sm font-saans hidden sm:inline">
+              Get to know Kini now!
+            </span>
+
+            {isPending ? (
+              <>
+                <Skeleton className="h-5 w-16 rounded-full bg-white/25" />
+                <Skeleton className="h-9 w-24 rounded-full bg-white/25" />
+              </>
+            ) : canShop ? (
+              <>
+                <span className="font-saans font-medium text-base">€149</span>
+                <Button
+                  variant="secondary"
+                  className="bg-white text-black px-4 py-1.5 rounded-full font-saans font-medium shadow-sm hover:bg-white/90"
+                  asChild
+                >
+                  <Link href="/shop">Buy now</Link>
+                </Button>
+              </>
             ) : (
-              <span className="font-saans text-sm opacity-90">Contact us for pricing</span>
+              <>
+                <span className="font-saans text-sm opacity-90">
+                  Made to order
+                </span>
+                <EnquireButton
+                  variant="secondary"
+                  label="Enquire"
+                  className="bg-white text-black px-4 py-1.5 rounded-full font-saans font-medium shadow-sm hover:bg-white/90"
+                />
+              </>
             )}
-            <Button 
-              variant="secondary" 
-              className="bg-white text-black px-3 py-1.5 rounded-full font-saans font-medium shadow-sm hover:bg-white/90"
-              asChild
-              disabled={!isSupportedCountry}
-            >
-              <Link href="/shop">
-                {isSupportedCountry ? 'Buy now' : 'Shopping not available'}
-              </Link>
-            </Button>
           </div>
         </div>
       </div>

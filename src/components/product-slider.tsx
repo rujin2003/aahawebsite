@@ -11,7 +11,8 @@ import { supabase } from '@/lib/supabase';
 import { useCart } from '@/components/cart-provider';
 import { useAuth } from '@/hooks/use-auth';
 import { useWishlist } from '@/contexts/WishlistContext';
-import { useCountryStore } from "@/lib/countryStore";
+import { useShopAvailability } from "@/lib/shop-availability";
+import { PricePending, PriceOnEnquiryLabel } from "@/components/shipping-availability";
 import { getCategoriesQuery, getProductsQuery } from '@/lib/country';
 import { toast } from 'sonner';
 import { cn } from "@/lib/utils";
@@ -31,7 +32,7 @@ export function ProductSlider({ title, products: initialProducts, categoryId, co
   const [visibleProducts, setVisibleProducts] = useState(3);
   const [loading, setLoading] = useState(!initialProducts);
   const { addItem } = useCart();
-  const isSupportedCountry = useCountryStore(s=>s.isSupportedCountry)
+  const { canShop } = useShopAvailability();
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -124,8 +125,8 @@ export function ProductSlider({ title, products: initialProducts, categoryId, co
   };
 
   const handleAddToCart = (product: Product) => {
-    if (!isSupportedCountry) {
-      toast.error('Shopping is not available in your country');
+    if (!canShop) {
+      toast.error("We don't ship to your country yet — get in touch and we'll arrange it");
       return;
     }
     
@@ -250,15 +251,15 @@ export function ProductCard({ product }: { product: Product }) {
   const { addItem } = useCart();
   const { isAuthenticated } = useAuth();
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
-  const isSupportedCountry = useCountryStore(s => s.isSupportedCountry);
+  const { isPending, canShop } = useShopAvailability();
   const inWishlist = isInWishlist(product.id);
 
   const handleQuickAdd = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     
-    if (!isSupportedCountry) {
-      toast.error('Shopping is not available in your country');
+    if (!canShop) {
+      toast.error("We don't ship to your country yet — get in touch and we'll arrange it");
       return;
     }
     
@@ -342,7 +343,7 @@ export function ProductCard({ product }: { product: Product }) {
         </button>
 
         {/* Quick Add Button */}
-        {isSupportedCountry && (
+        {canShop && (
           isAuthenticated ? (
             <button
               onClick={handleQuickAdd}
@@ -408,12 +409,14 @@ export function ProductCard({ product }: { product: Product }) {
           {product.title || "Untitled Product"}
         </h3>
         
-        {isSupportedCountry ? (
+        {isPending ? (
+          <PricePending className="h-4 w-14" />
+        ) : canShop ? (
           <p className="text-sm text-foreground/70">
             ${Number(product.price).toFixed(2)}
           </p>
         ) : (
-          <p className="text-xs text-muted-foreground">Contact for pricing</p>
+          <PriceOnEnquiryLabel className="text-xs" />
         )}
       </div>
     </Link>

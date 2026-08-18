@@ -4,11 +4,12 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { Button, ButtonProps } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { ShoppingCart, LogIn, UserPlus } from 'lucide-react';
+import { ShoppingCart, LogIn, UserPlus, Check } from 'lucide-react';
 import { useCart } from './cart-provider';
 import { useAuth } from '@/hooks/use-auth';
 import { toast } from 'sonner';
-import { useCountryStore } from '@/lib/countryStore';
+import { useShopAvailability } from '@/lib/shop-availability';
+import { EnquireButton } from '@/components/shipping-availability';
 
 interface AddToCartButtonProps extends Omit<ButtonProps, 'onClick'> {
   product: {
@@ -81,46 +82,42 @@ export default function AddToCartButton({
   const [isAdding, setIsAdding] = useState(false);
   const { addItem } = useCart();
   const { isAuthenticated } = useAuth();
-  const isSupportedCountry = useCountryStore(s => s.isSupportedCountry);
+  const { isPending, canShop } = useShopAvailability();
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-
-    if (!isSupportedCountry) {
-      toast.error("Shopping is not available in your country");
-      return;
-    }
 
     if (!productSize) {
       toast.error("Please select a size");
       return;
     }
 
+    // The cart is local state, so this lands immediately. The old version sat
+    // on a 500ms setTimeout that made every add feel like a network round-trip.
     setIsAdding(true);
+    addItem(
+      {
+        id: product.id,
+        name: product.name,
+        price: product.price,
+        image: product.image,
+        size: productSize,
+        color,
+        stock: product.stock,
+        minQuantity: product.minQuantity
+      },
+      quantity
+    );
 
-    setTimeout(() => {
-      addItem(
-        {
-          id: product.id,
-          name: product.name,
-          price: product.price,
-          image: product.image,
-          size: productSize,
-          color,
-          stock: product.stock,
-          minQuantity: product.minQuantity
-        },
-        quantity
-      );
+    if (onAddedToCart) onAddedToCart();
 
-      setIsAdding(false);
-      if (onAddedToCart) onAddedToCart();
-    }, 500);
+    // Brief confirmation tick so the button visibly acknowledges the click.
+    setTimeout(() => setIsAdding(false), 350);
   };
 
-  const addButtonDisabled = isAdding || disabled || !isSupportedCountry;
-  const showSignInPrompt = !isAuthenticated && isSupportedCountry;
+  const addButtonDisabled = isAdding || disabled || isPending;
+  const showSignInPrompt = !isAuthenticated && canShop;
 
   const addToCartButtonIcon = (
     <Button
@@ -130,7 +127,7 @@ export default function AddToCartButton({
       {...props}
     >
       {isAdding ? (
-        <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+        <Check className="h-4 w-4" />
       ) : (
         <ShoppingCart className="h-4 w-4" />
       )}
@@ -146,13 +143,11 @@ export default function AddToCartButton({
     >
       {isAdding ? (
         <span className="flex items-center">
-          <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-          Adding...
+          <Check className="mr-2 h-4 w-4" />
+          Added to cart
         </span>
-      ) : !isSupportedCountry ? (
-        "Shopping not available"
       ) : disabled ? (
-        "Select Size"
+        "Select a size"
       ) : (
         <>
           <ShoppingCart className="mr-2 h-4 w-4" />
@@ -161,6 +156,22 @@ export default function AddToCartButton({
       )}
     </Button>
   );
+
+  // Out of delivery range: offer the enquiry path instead of a dead button
+  // wearing an error message.
+  if (!isPending && !canShop) {
+    if (buttonVariant === "icon") {
+      return (
+        <EnquireButton
+          variant="outline"
+          size="icon"
+          label=""
+          className={props.className}
+        />
+      );
+    }
+    return <EnquireButton className={props.className} />;
+  }
 
   if (showSignInPrompt) {
     if (buttonVariant === "icon") {
@@ -175,11 +186,7 @@ export default function AddToCartButton({
     }
     return (
       <SignInToCartPopover buttonVariant="full">
-        <Button
-          disabled={!isSupportedCountry}
-          variant="outline"
-          {...props}
-        >
+        <Button variant="outline" {...props}>
           <ShoppingCart className="mr-2 h-4 w-4" />
           Add to Cart
         </Button>

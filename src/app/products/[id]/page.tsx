@@ -11,7 +11,8 @@ import { Card } from "@/components/ui/card";
 import { Product, supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import Image from "next/image";
-import { useCountryStore } from '@/lib/countryStore';
+import { useShopAvailability } from '@/lib/shop-availability';
+import { PricePending, ShippingNotice } from '@/components/shipping-availability';
 import { convertUSDToLocalCurrency } from '@/lib/utils';
 
 // UUID validation function
@@ -33,8 +34,7 @@ export default async function ProductPage(props: { params: paramsType }) {
   const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
   const fallbackImage = "/path/to/fallback/image.jpg"; // Replace with actual fallback image path
   const [localPrice, setLocalPrice] = useState<{ amount: number; symbol: string; code: string } | null>(null);
-  const countryCode = useCountryStore(s => s.countryCode);
-  const isSupportedCountry = useCountryStore(s => s.isSupportedCountry);
+  const { isPending, canShop, countryCode, countryName } = useShopAvailability();
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -101,7 +101,7 @@ export default async function ProductPage(props: { params: paramsType }) {
 
   // Convert price to local currency
   useEffect(() => {
-    if (!product || !isSupportedCountry) return;
+    if (!product || !canShop) return;
     
     const convertPrice = async () => {
       if (!countryCode) {
@@ -113,7 +113,7 @@ export default async function ProductPage(props: { params: paramsType }) {
     };
     
     convertPrice();
-  }, [product, countryCode, isSupportedCountry]);
+  }, [product, countryCode, canShop]);
 
   const handleOrder = async () => {
     setIsOrdering(true);
@@ -228,14 +228,14 @@ export default async function ProductPage(props: { params: paramsType }) {
             <div className="space-y-6">
               <div>
                 <h1 className="text-3xl font-bold">{product.title}</h1>
-                {isSupportedCountry ? (
+                {isPending || (canShop && !localPrice) ? (
+                  <PricePending className="mt-2 h-8 w-28" />
+                ) : canShop ? (
                   <p className="text-2xl font-semibold mt-2">
-                    {localPrice 
-                      ? `${localPrice.symbol}${localPrice.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-                      : '...'}
+                    {`${localPrice!.symbol}${localPrice!.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
                   </p>
                 ) : (
-                  <p className="text-lg text-muted-foreground mt-2">Contact us for pricing</p>
+                  <ShippingNotice countryName={countryName} className="mt-3" />
                 )}
               </div>
               <p className="text-muted-foreground">{product.description}</p>

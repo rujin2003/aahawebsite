@@ -16,7 +16,8 @@ import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { Label } from "@/components/ui/label";
-import { useCountryStore } from "@/lib/countryStore";
+import { useShopAvailability } from "@/lib/shop-availability";
+import { PricePending, PriceOnEnquiryLabel, ShippingNotice } from "@/components/shipping-availability";
 import { convertUSDToLocalCurrency, calculateShippingCost } from '@/lib/utils';
 import { useAuth } from "@/hooks/use-auth";
 import { CartSignInDialog } from "@/components/cart-signin-dialog";
@@ -50,8 +51,7 @@ const emptyAddress: AddressParts = {
 export default function CartPage() {
   const { items, removeItem, updateQuantity, totalPrice, clearCart, promoCode, promoCodeValid, promoDiscount, applyPromoCode, removePromoCode } = useCart();
   const { user, isAuthenticated } = useAuth();
-  const countryCode = useCountryStore(s=>s.countryCode)
-  const isSupportedCountry = useCountryStore(s=>s.isSupportedCountry)
+  const { isPending, canShop, countryCode, countryName } = useShopAvailability();
   const [loading, setLoading] = useState(false);
   const [orderCompleted, setOrderCompleted] = useState(false);
   const [promoCodeInput, setPromoCodeInput] = useState('');
@@ -104,7 +104,7 @@ export default function CartPage() {
 
   // Convert prices to local currency
   useEffect(() => {
-    if (!isSupportedCountry || !items.length) return;
+    if (!canShop || !items.length) return;
 
     const convertPrices = async () => {
       const newLocalPrices: Record<string, { amount: number; symbol: string; code: string }> = {};
@@ -147,7 +147,7 @@ export default function CartPage() {
     };
 
     convertPrices();
-  }, [items, totalPrice, promoDiscount, countryCode, isSupportedCountry]);
+  }, [items, totalPrice, promoDiscount, countryCode, canShop]);
 
   const handleQuantityChange = (id: string, delta: number, currentQty: number) => {
     const item = items.find(i => i.id === id);
@@ -501,14 +501,14 @@ export default function CartPage() {
                           <div className="flex-1">
                             <div className="flex justify-between">
                               <h3 className="font-medium">{item.name}</h3>
-                              {isSupportedCountry ? (
+                              {isPending || (canShop && !localPrices[item.id]) ? (
+                                <PricePending className="h-5 w-20" />
+                              ) : canShop ? (
                                 <p className="font-medium">
-                                  {localPrices[item.id]
-                                    ? `${localPrices[item.id].symbol}${(localPrices[item.id].amount * item.quantity).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-                                    : '...'}
+                                  {`${localPrices[item.id].symbol}${(localPrices[item.id].amount * item.quantity).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
                                 </p>
                               ) : (
-                                <p className="text-sm text-muted-foreground">Contact us for pricing</p>
+                                <PriceOnEnquiryLabel />
                               )}
                             </div>
 
@@ -718,16 +718,14 @@ export default function CartPage() {
 
                     <Separator />
 
-                    <div className="flex justify-between">
+                    <div className="flex items-center justify-between">
                       <span className="text-muted-foreground">Subtotal</span>
-                      {isSupportedCountry ? (
-                        <span>
-                          {localTotalPrice
-                            ? `${localTotalPrice.symbol}${(localTotalPrice.amount + (promoDiscount > 0 ? localPromoDiscount?.amount || 0 : 0)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-                            : '...'}
-                        </span>
+                      {isPending || !localTotalPrice ? (
+                        <PricePending className="h-5 w-20" />
                       ) : (
-                        <span className="text-sm text-muted-foreground">Contact us for pricing</span>
+                        <span>
+                          {`${localTotalPrice.symbol}${(localTotalPrice.amount + (promoDiscount > 0 ? localPromoDiscount?.amount || 0 : 0)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                        </span>
                       )}
                     </div>
 
@@ -735,7 +733,7 @@ export default function CartPage() {
                       <div className="flex justify-between text-green-600">
                         <span>Discount</span>
                         <span>
-                          {isSupportedCountry && localPromoDiscount
+                          {canShop && localPromoDiscount
                             ? `-${localPromoDiscount.symbol}${localPromoDiscount.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
                             : `-$${promoDiscount.toFixed(2)}`}
                         </span>
@@ -744,29 +742,27 @@ export default function CartPage() {
 
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Shipping</span>
-                      {isSupportedCountry ? (
+                      {isPending ? (
+                        <PricePending className="h-5 w-16" />
+                      ) : (
                         <span className={promoCodeValid && promoCode?.includes('SHIPPING') ? 'text-green-600' : ''}>
                           {shippingCost.amount > 0
                             ? `${shippingCost.symbol}${shippingCost.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-                            : promoCodeValid && promoCode?.includes('SHIPPING') ? 'Free (Promo Applied)' : 'Free'}
+                            : promoCodeValid && promoCode?.includes('SHIPPING') ? 'Free (promo applied)' : 'Free'}
                         </span>
-                      ) : (
-                        <span>Free</span>
                       )}
                     </div>
 
                     <Separator />
 
-                    <div className="flex justify-between font-medium">
+                    <div className="flex items-center justify-between font-medium">
                       <span>Total</span>
-                      {isSupportedCountry ? (
-                        <span>
-                          {localTotalPrice
-                            ? `${localTotalPrice.symbol}${localTotalPrice.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-                            : '...'}
-                        </span>
+                      {isPending || !localTotalPrice ? (
+                        <PricePending className="h-5 w-24" />
                       ) : (
-                        <span className="text-sm text-muted-foreground">Contact us for pricing</span>
+                        <span>
+                          {`${localTotalPrice.symbol}${localTotalPrice.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                        </span>
                       )}
                     </div>
 
@@ -790,23 +786,27 @@ export default function CartPage() {
                         </button>
                       </p>
                     )}
-                    <Button
-                      className="w-full rounded-full mt-4"
-                      onClick={handlePayment}
-                      disabled={loading || !isSupportedCountry}
-                    >
-                      {loading ? (
-                        <span className="flex items-center">
-                          <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"></div>
-                          Processing...
-                        </span>
-                      ) : (
-                        <span className="flex items-center">
-                          <CreditCard className="w-4 h-4 mr-2" />
-                          {isSupportedCountry ? 'Pay Now' : 'Shopping not available'}
-                        </span>
-                      )}
-                    </Button>
+                    {canShop || isPending ? (
+                      <Button
+                        className="w-full rounded-full mt-4"
+                        onClick={handlePayment}
+                        disabled={loading || isPending}
+                      >
+                        {loading ? (
+                          <span className="flex items-center">
+                            <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"></div>
+                            Processing...
+                          </span>
+                        ) : (
+                          <span className="flex items-center">
+                            <CreditCard className="w-4 h-4 mr-2" />
+                            Pay now
+                          </span>
+                        )}
+                      </Button>
+                    ) : (
+                      <ShippingNotice countryName={countryName} className="mt-4" />
+                    )}
                   </div>
                 </div>
               </div>

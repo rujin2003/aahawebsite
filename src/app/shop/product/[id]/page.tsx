@@ -21,16 +21,15 @@ import { Product } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { use } from 'react';
 import { Loading } from "@/components/ui/loading"
-import { useCountryStore } from '@/lib/countryStore';
+import { useShopAvailability } from '@/lib/shop-availability';
+import { PricePending, ShippingNotice } from '@/components/shipping-availability';
 import { useRouter } from 'next/navigation';
 import { convertUSDToLocalCurrency } from '@/lib/utils';
-import { isCountrySupported } from '@/lib/validCountries';
 
 
 export default function ProductPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
-  const countryCode = useCountryStore(s => s.countryCode);
-  const isSupportedCountry = isCountrySupported(countryCode);
+  const { isPending, canShop, countryCode, countryName } = useShopAvailability();
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const [isOrdering, setIsOrdering] = useState(false);
@@ -92,7 +91,7 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
 
         if (!variantsError && variants) {
           // Filter variants based on user's region
-          const filteredVariants = isSupportedCountry 
+          const filteredVariants = canShop 
             ? variants.filter(variant => 
                 !variant.country_codes || 
                 variant.country_codes.includes(countryCode)
@@ -112,7 +111,7 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
 
           if (!relatedError && related) {
             // Filter related products based on user's region
-            const filteredRelated = isSupportedCountry 
+            const filteredRelated = canShop 
               ? related.filter(rel => 
                   !rel.country_codes || 
                   rel.country_codes.includes(countryCode)
@@ -139,7 +138,7 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
   }, [resolvedParams.id]);
 
   useEffect(() => {
-    if (!product || !isSupportedCountry) return;
+    if (!product || !canShop) return;
     let mounted = true;
     async function fetchPrice() {
       if (!countryCode) {
@@ -151,7 +150,7 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
     }
     fetchPrice();
     return () => { mounted = false; };
-  }, [product, countryCode, isSupportedCountry]);
+  }, [product, countryCode, canShop]);
 
   const handleColorChange = (variant: Product) => {
     setProduct(variant);
@@ -338,22 +337,14 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
             <div className="space-y-8 animate-fade-left">
               <div>
                 <h1 className="text-3xl font-medium mb-2">{product.title}</h1>
-                {isSupportedCountry ? (
+                {isPending || (canShop && !localPrice) ? (
+                  <PricePending className="h-9 w-32" />
+                ) : canShop ? (
                   <p className="text-3xl font-medium text-primary">
-                    {localPrice
-                      ? `${localPrice.symbol}${localPrice.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-                      : '...'}
+                    {`${localPrice!.symbol}${localPrice!.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
                   </p>
                 ) : (
-                  <div className="flex items-start gap-3 p-4 rounded-xl bg-amber-50 border border-amber-200/70 mt-1">
-                    <svg className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <div>
-                      <p className="text-sm font-semibold text-amber-800">Not yet available in your region</p>
-                      <p className="text-xs text-amber-700/80 mt-0.5 leading-relaxed">We&apos;re expanding globally. Stay tuned — we&apos;ll notify you when we launch in your country.</p>
-                    </div>
-                  </div>
+                  <ShippingNotice countryName={countryName} className="mt-1" />
                 )}
               </div>
 
@@ -452,9 +443,9 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
                     color={product.color}
                     quantity={quantity}
                     className="rounded-full flex-1 md:flex-none"
-                    disabled={!selectedSize || availableSizes.length === 0 || !isSupportedCountry}
+                    disabled={!selectedSize || availableSizes.length === 0}
                   />
-                  <Button size="lg" variant="outline" className="rounded-full" disabled={!isSupportedCountry}>
+                  <Button size="lg" variant="outline" className="rounded-full" disabled={!canShop}>
                     <Heart className="w-5 h-5" />
                     <span className="sr-only">Add to Wishlist</span>
                   </Button>
@@ -465,7 +456,7 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
 
               <div className="space-y-4">
                 <h3 className="font-medium">Features</h3>
-                {isSupportedCountry ? (
+                {product.features?.length ? (
                   <ul className="space-y-2">
                     {product.features.map((feature: string, i: number) => (
                       <li key={i} className="flex items-start">

@@ -17,7 +17,8 @@ import { Product } from '@/lib/supabase';
 import { toast } from "sonner";
 import { Leaf, Check } from "lucide-react";
 import { getCategoriesQuery, isAvailableInCountry } from '@/lib/country';
-import { useCountryStore } from "@/lib/countryStore";
+import { useShopAvailability } from "@/lib/shop-availability";
+import { PricePending, PriceOnEnquiryLabel } from "@/components/shipping-availability";
 import { convertUSDToLocalCurrency } from '@/lib/utils';
 
 import Categories from "./category";
@@ -39,9 +40,7 @@ export default function Home() {
   const emailRef = useRef<HTMLInputElement>(null)
   const subjectRef = useRef<HTMLInputElement>(null)
   const messageRef = useRef<HTMLTextAreaElement>(null)
-  const countryCode = useCountryStore(s=>s.countryCode)
-  const isSupportedCountry = useCountryStore(s => s.isSupportedCountry)
-  const countryLoading = useCountryStore(s=>s.isLoading)
+  const { isPending, canShop, countryCode } = useShopAvailability()
   const introDone = useIntroDone()
 
   // staged hero reveal, released the moment the cinematic intro lets go
@@ -135,14 +134,14 @@ export default function Home() {
       }
     }
 
-    if (!countryLoading) {
-      fetchData()
-    }
-  }, [countryCode, countryLoading])
+    // The catalog is the same everywhere, so this doesn't wait on the
+    // country lookup — holding it back only delayed the first paint.
+    fetchData()
+  }, [])
 
   // Convert prices to local currency when products change
   useEffect(() => {
-    if (!isSupportedCountry || !products.length) return;
+    if (!canShop || !products.length) return;
     
     const convertPrices = async () => {
       const newLocalPrices: Record<string, { amount: number; symbol: string; code: string }> = {};
@@ -159,7 +158,7 @@ export default function Home() {
     };
     
     convertPrices();
-  }, [products, countryCode, isSupportedCountry]);
+  }, [products, countryCode, canShop]);
 
   async function handleContactSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -203,20 +202,18 @@ export default function Home() {
     }
   }
 
-  // Update the product display to hide prices for unsupported countries
+  // Prices only exist once we know where the visitor is — until then this
+  // holds a placeholder rather than guessing at "unavailable".
   const renderProductPrice = (product: Product) => {
-    if (!isSupportedCountry) {
-      return (
-        <p className="text-sm text-muted-foreground">
-          Contact us for pricing
-        </p>
-      )
+    if (isPending || (canShop && !localPrices[product.id])) {
+      return <PricePending className="h-6 w-24" />
+    }
+    if (!canShop) {
+      return <PriceOnEnquiryLabel />
     }
     return (
       <p className="text-lg font-medium">
-        {localPrices[product.id] 
-          ? `${localPrices[product.id].symbol}${localPrices[product.id].amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-          : '...'}
+        {`${localPrices[product.id].symbol}${localPrices[product.id].amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
       </p>
     )
   }

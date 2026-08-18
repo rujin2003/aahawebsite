@@ -7,13 +7,13 @@ import { ShoppingCart, X, Plus, Minus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useCart } from "./cart-provider";
 import { cn } from "@/lib/utils";
-import { useCountryStore } from "@/lib/countryStore";
+import { useShopAvailability } from "@/lib/shop-availability";
+import { PricePending, PriceOnEnquiryLabel, ShippingNoticeCompact } from "@/components/shipping-availability";
 import { convertUSDToLocalCurrency } from '@/lib/utils';
 
 export default function CartDropdown() {
   const { items, removeItem, updateQuantity, totalPrice } = useCart();
-  const isSupportedCountry = useCountryStore(s=>s.isSupportedCountry)
-  const countryCode = useCountryStore(s => s.countryCode);
+  const { isPending, canShop, countryCode, countryName } = useShopAvailability();
   const [isOpen, setIsOpen] = useState(false);
   const [localPrices, setLocalPrices] = useState<Record<string, { amount: number; symbol: string; code: string }>>({});
   const [localTotalPrice, setLocalTotalPrice] = useState<{ amount: number; symbol: string; code: string } | null>(null);
@@ -22,7 +22,7 @@ export default function CartDropdown() {
 
   // Convert prices to local currency
   useEffect(() => {
-    if (!isSupportedCountry || !items.length) return;
+    if (!canShop || !items.length) return;
     
     const convertPrices = async () => {
       const newLocalPrices: Record<string, { amount: number; symbol: string; code: string }> = {};
@@ -48,7 +48,7 @@ export default function CartDropdown() {
     };
     
     convertPrices();
-  }, [items, totalPrice, countryCode, isSupportedCountry]);
+  }, [items, totalPrice, countryCode, canShop]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -127,14 +127,14 @@ export default function CartDropdown() {
                           </p>
                         )}
                         <div className="flex items-center justify-between mt-1">
-                          {isSupportedCountry ? (
+                          {isPending || (canShop && !localPrices[item.id]) ? (
+                            <PricePending className="h-4 w-16" />
+                          ) : canShop ? (
                             <span className="text-sm font-medium">
-                              {localPrices[item.id] 
-                                ? `${localPrices[item.id].symbol}${localPrices[item.id].amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-                                : '...'}
+                              {`${localPrices[item.id].symbol}${localPrices[item.id].amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
                             </span>
                           ) : (
-                            <span className="text-xs text-muted-foreground">Contact us for pricing</span>
+                            <PriceOnEnquiryLabel className="text-xs" />
                           )}
                           <div className="flex items-center">
                             <button
@@ -175,28 +175,34 @@ export default function CartDropdown() {
               </div>
 
               <div className="p-4 border-t border-border">
-                <div className="flex justify-between mb-4">
-                  <span className="font-medium">Total:</span>
-                  {isSupportedCountry ? (
-                    <span className="font-medium">
-                      {localTotalPrice 
-                        ? `${localTotalPrice.symbol}${localTotalPrice.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-                        : '...'}
-                    </span>
-                  ) : (
-                    <span className="text-sm text-muted-foreground">Contact us for pricing</span>
-                  )}
-                </div>
-                <Button
-                  asChild
-                  className="w-full rounded-full"
-                  onClick={() => setIsOpen(false)}
-                  disabled={!isSupportedCountry}
-                >
-                  <Link href="/cart">
-                    {isSupportedCountry ? 'Checkout' : 'Shopping not available'}
-                  </Link>
-                </Button>
+                {(isPending || canShop) && (
+                  <div className="flex items-center justify-between mb-4">
+                    <span className="font-medium">Total:</span>
+                    {isPending || !localTotalPrice ? (
+                      <PricePending className="h-5 w-20" />
+                    ) : (
+                      <span className="font-medium">
+                        {`${localTotalPrice.symbol}${localTotalPrice.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                      </span>
+                    )}
+                  </div>
+                )}
+
+                {canShop ? (
+                  <Button
+                    asChild
+                    className="w-full rounded-full"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    <Link href="/cart">Checkout</Link>
+                  </Button>
+                ) : isPending ? (
+                  <Button className="w-full rounded-full" disabled>
+                    Checkout
+                  </Button>
+                ) : (
+                  <ShippingNoticeCompact countryName={countryName} />
+                )}
               </div>
             </>
           )}
