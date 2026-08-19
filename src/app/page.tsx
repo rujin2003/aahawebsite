@@ -55,7 +55,6 @@ export default function Home() {
 
   useEffect(() => {
     const fetchData = async () => {
-      if(!countryCode) return;
       try {
         // Fetch categories
         const categoriesResponse = await getCategoriesQuery(supabase, countryCode || '')
